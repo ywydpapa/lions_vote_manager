@@ -1,0 +1,71 @@
+# ==========================================
+# .gitignore - FastAPI/Python 프로젝트용
+# ==========================================
+
+# 환경 변수 및 설정 (보안상 절대 커밋 금지)
+.env
+.env.local
+.env.*.local
+
+# 가상 환경 (의존성 패키지 포함)
+venv/
+env/
+ENV/
+
+# Python 컴파일 및 빌드 결과물
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# 테스트 및 커버리지 관련
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# IDE 및 에디터 설정 (개인 설정 제외)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# 로컬 데이터베이스 (개발용 DB 파일)
+*.db
+*.sqlite
+*.sqlite3
+
+# 로그 파일
+*.log
+*.log.*
+
+# 운영체제 시스템 파일
+.DS_Store
+Thumbs.db
+
+# 프로젝트 특정 (Alembic 마이그레이션 이력 등)
+# 주의: 팀 협업 시에는 마이그레이션 파일을 포함해야 할 수도 있습니다.
+/migrations/versions/
