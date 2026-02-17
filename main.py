@@ -15,7 +15,7 @@ from sqlalchemy import text
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
-candiNo = int(os.getenv("candino"))
+candiNo = int(os.getenv("candiNo"))
 engine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
