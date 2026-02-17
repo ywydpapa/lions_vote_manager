@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">금일 스케줄</span></h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-11 col-xl-9 col-xxl-8">
+                <div class="schedule-wrap">
+                    <div class="d-flex align-items-end justify-content-between mb-3">
+                        <h2 class="h4 m-0 fw-bolder">3월 10일</h2>
+                        <div class="text-muted small">10:00 ~ 17:00 (10분 단위)</div>
+                    </div>
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <div class="schedule-grid">
+                                <!-- 10:00 ~ 17:00 (10분 단위) -->
+                                <div class="slot"><span class="time">10:00</span></div>
+                                <div class="slot"><span class="time">10:10</span></div>
+                                <div class="slot"><span class="time">10:20</span></div>
+                                <div class="slot"><span class="time">10:30</span></div>
+                                <div class="slot"><span class="time">10:40</span></div>
+                                <div class="slot"><span class="time">10:50</span></div>
+
+                                <div class="slot"><span class="time">11:00</span></div>
+                                <div class="slot"><span class="time">11:10</span></div>
+                                <div class="slot"><span class="time">11:20</span></div>
+                                <div class="slot"><span class="time">11:30</span></div>
+                                <div class="slot"><span class="time">11:40</span></div>
+                                <div class="slot"><span class="time">11:50</span></div>
+
+                                <div class="slot"><span class="time">12:00</span></div>
+                                <div class="slot"><span class="time">12:10</span></div>
+                                <div class="slot"><span class="time">12:20</span></div>
+                                <div class="slot"><span class="time">12:30</span></div>
+                                <div class="slot"><span class="time">12:40</span></div>
+                                <div class="slot"><span class="time">12:50</span></div>
+
+                                <div class="slot"><span class="time">13:00</span></div>
+                                <div class="slot"><span class="time">13:10</span></div>
+                                <div class="slot"><span class="time">13:20</span></div>
+                                <div class="slot"><span class="time">13:30</span></div>
+                                <div class="slot"><span class="time">13:40</span></div>
+                                <div class="slot"><span class="time">13:50</span></div>
+
+                                <div class="slot"><span class="time">14:00</span></div>
+                                <div class="slot"><span class="time">14:10</span></div>
+                                <div class="slot"><span class="time">14:20</span></div>
+                                <div class="slot"><span class="time">14:30</span></div>
+                                <div class="slot"><span class="time">14:40</span></div>
+                                <div class="slot"><span class="time">14:50</span></div>
+
+                                <div class="slot"><span class="time">15:00</span></div>
+                                <div class="slot"><span class="time">15:10</span></div>
+                                <div class="slot"><span class="time">15:20</span></div>
+                                <div class="slot"><span class="time">15:30</span></div>
+                                <div class="slot"><span class="time">15:40</span></div>
+                                <div class="slot"><span class="time">15:50</span></div>
+
+                                <div class="slot"><span class="time">16:00</span></div>
+                                <div class="slot"><span class="time">16:10</span></div>
+                                <div class="slot"><span class="time">16:20</span></div>
+                                <div class="slot"><span class="time">16:30</span></div>
+                                <div class="slot"><span class="time">16:40</span></div>
+                                <div class="slot"><span class="time">16:50</span></div>
+
+                                <div class="slot"><span class="time">17:00</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <style>
+                    /* 컨테이너 폭(가로 전체)로 꽉 차게 */
+                    .schedule-wrap {
+                        width: 100%;
+                    }
+
+                    /* 10분 슬롯을 세로로 쌓는 타임라인 */
+                    .schedule-grid {
+                        display: grid;
+                        grid-template-columns: 1fr; /* 가로 전체 */
+                    }
+
+                    .slot {
+                        position: relative;
+                        min-height: 44px; /* 한 슬롯 높이 */
+                        border-top: 1px solid #eef0f3; /* 구분선 */
+                        padding: 10px 14px;
+                        background: #fff;
+                    }
+
+                    .slot:first-child {
+                        border-top: 0;
+                    }
+
+                    .time {
+                        font-weight: 700;
+                        color: #495057;
+                        font-variant-numeric: tabular-nums;
+                    }
+
+                    /* 가독성을 위한 홀수 줄 배경 */
+                    .slot:nth-child(2n) {
+                        background: #fafbfc;
+                    }
+                </style>
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+</body>
+</html>

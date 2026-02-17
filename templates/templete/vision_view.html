@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 비전</span></h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-11 col-xl-9 col-xxl-8">
+                <div class="d-flex justify-content-center">
+                    <div class="w-100" style="max-width: 1100px;">
+                        <div class="ratio ratio-16x9 shadow rounded overflow-hidden bg-dark">
+                            <iframe
+                                    src="https://www.youtube.com/embed/QDSKCKfNbjc?si=Zas5Mf8GXP2-Sjqx"
+                                    title="YouTube video player"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+</body>
+</html>
