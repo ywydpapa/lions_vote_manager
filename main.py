@@ -134,6 +134,7 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse("templete/sched_week.html", {"request": request, "reservations": reservs})
 
 
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
