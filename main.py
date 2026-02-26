@@ -199,7 +199,6 @@ async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
         "url": url_path,
     }
 
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
