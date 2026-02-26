@@ -1,3 +1,7 @@
+from fastapi import UploadFile, File
+from fastapi.responses import JSONResponse
+from datetime import datetime
+import shutil
 from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -12,6 +16,7 @@ import dotenv
 import os
 import uvicorn
 from sqlalchemy import text
+import re
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
@@ -39,6 +44,31 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/thumbnails", StaticFiles(directory="static/img/members/"), name="thumbnails")
 THUMBNAIL_DIR = "./static/img/members"
 BASE_DIR = Path(__file__).resolve().parent
+# 업로드 저장 경로(원하는 위치로 변경 가능)
+PHOTO_DIR = Path("./static/img/event_photos")
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+EXT_BY_CONTENT_TYPE = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+
+
+def next_negative_index(event_no: int, directory: Path) -> int:
+    pattern = re.compile(rf"^{re.escape(str(event_no))}-(\-?\d+)\..+$")
+    indices = []
+    for p in directory.iterdir():
+        if not p.is_file():
+            continue
+        m = pattern.match(p.name)
+        if m:
+            try:
+                indices.append(int(m.group(1)))
+            except ValueError:
+                pass
+    if not indices:
+        return -1
+    return min(indices)
 
 
 async def get_db():
@@ -133,6 +163,41 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
     reservs = await get_reservations(candino,db)
     return templates.TemplateResponse("templete/sched_week.html", {"request": request, "reservations": reservs})
 
+
+@app.post("/api/eventphotoupload/{eventNo}")
+async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
+    # 1) 컨텐츠 타입 검증
+    if photo.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported content type: {photo.content_type}",
+        )
+    # 2) 확장자 결정 (원본 파일명보다 content-type 우선)
+    ext = EXT_BY_CONTENT_TYPE.get(photo.content_type, "")
+    # 3) eventNo-1, eventNo-2 ... 형식으로 저장
+    idx = next_negative_index(eventNo, PHOTO_DIR)
+    filename = f"{eventNo}{idx}{ext}"  # 예: 123-1.jpg, 123-2.jpg ...
+    save_path = PHOTO_DIR / filename
+    # (안전장치) 혹시라도 같은 이름이 존재하면 더 내려가서 재시도
+    while save_path.exists():
+        idx -= 1
+        filename = f"{eventNo}{idx}{ext}"
+        save_path = PHOTO_DIR / filename
+    # 4) 저장
+    try:
+        with save_path.open("wb") as buffer:
+            shutil.copyfileobj(photo.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+    # 5) 접근 가능한 URL 반환
+    url_path = f"/static/img/event_photos/{filename}"
+    return {
+        "eventNo": eventNo,
+        "filename": filename,
+        "contentType": photo.content_type,
+        "savedPath": str(save_path),
+        "url": url_path,
+    }
 
 
 if __name__ == "__main__":
