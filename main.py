@@ -2,7 +2,7 @@ from fastapi import UploadFile, File
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, HTTPException, Form, Response
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
@@ -92,9 +92,44 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def login_form(request: Request):
-    if request.session.get("user_No"):
+    if request.session.get("vote_user_No"):
         return RedirectResponse(url="/success", status_code=303)
     return templates.TemplateResponse("login/login.html", {"request": request})
+
+
+@app.post("/login")
+async def login_post(
+        request: Request,
+        username: str = Form(...),
+        password: str = Form(...),
+        db: AsyncSession = Depends(get_db)
+):
+    query = text(
+        "SELECT userNo, userName, userRole FROM voteUser WHERE userId = :username AND userPasswd = password(:password)")
+    result = await db.execute(query, {"username": username, "password": password})
+    user = result.fetchone()
+    query2 = text("UPDATE voteUser SET loginStamp = :now , logoutStamp = NULL WHERE userNo = :userNo")
+    await db.execute(query2, {"now": datetime.now(), "userNo": user[0]})
+    await db.commit()
+    if user is None:
+        return templates.TemplateResponse("login/login.html", {"request": request, "error": "Invalid credentials"})
+    request.session["vote_user_No"] = user[0]
+    request.session["vote_user_Name"] = user[1]
+    request.session["vote_user_Role"] = user[2]
+    return RedirectResponse(url="/success", status_code=303)
+
+
+@app.get("/logout")
+async def logout(request: Request, db: AsyncSession = Depends(get_db)):
+    try:
+        user_No = request.session.get("vote_user_No")
+        query2 = text("UPDATE voteUser SET logoutStamp = :now WHERE userNo = :userNo")
+        await db.execute(query2, {"now": datetime.now(), "userNo": user_No})
+        await db.commit()
+        request.session.clear()  # 세션 삭제
+        return RedirectResponse(url="/")
+    except Exception as e:
+        return RedirectResponse(url="/", status_code=303)
 
 
 @app.get("/reservation", response_class=HTMLResponse)
