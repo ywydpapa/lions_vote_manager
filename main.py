@@ -1,4 +1,4 @@
-from fastapi import UploadFile, File
+from fastapi import UploadFile, File, Body
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil
@@ -17,6 +17,14 @@ import os
 import uvicorn
 from sqlalchemy import text
 import re
+from pydantic import BaseModel
+from typing import List
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint
+from datetime import datetime, date
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import DeclarativeBase
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
@@ -53,6 +61,53 @@ EXT_BY_CONTENT_TYPE = {
     "image/webp": ".webp",
 }
 
+class Base(DeclarativeBase):
+    pass
+
+class RegReservIn(BaseModel):
+    dateno: str        # 예: "02271" (MMDD + 오전/오후코드)
+    visitTime: str     # 예: "09:00"
+    visitorCount: int
+    memberNos: List[int]
+
+class RegReservOut(BaseModel):
+    reservNo: int
+
+class VoteReserv(Base):
+    __tablename__ = "voteReserv"
+    reservNo: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    clubNo: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    circleNo: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    reservFrom: Mapped["datetime"] = mapped_column(DateTime, nullable=False)  # DateTime
+    visitorCount: Mapped[int] = mapped_column(Integer, nullable=False)
+    __table_args__ = (
+        CheckConstraint(
+            "(clubNo IS NULL) <> (circleNo IS NULL)",
+            name="ck_voteReserv_exactly_one_of_clubNo_circleNo",
+        ),
+    )
+
+
+class VisitMembers(Base):
+    __tablename__ = "visitMembers"
+    visitNo: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    reservNo: Mapped[int] = mapped_column(ForeignKey("voteReserv.reservNo"), nullable=False)
+    memberNo: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+def dateno_time_to_datetime(dateno: str, visit_time: str) -> datetime:
+    # dateno: "MMDDX" (X=오전/오후코드), visit_time: "HH:MM"
+    if not dateno or len(dateno) < 4:
+        raise ValueError("invalid dateno")
+    mm = int(dateno[0:2])
+    dd = int(dateno[2:4])
+
+    hh, mi = visit_time.split(":")
+    hh = int(hh); mi = int(mi)
+
+    y = date.today().year
+    return datetime(y, mm, dd, hh, mi, 0)
+
 
 def next_negative_index(event_no: int, directory: Path) -> int:
     pattern = re.compile(rf"^{re.escape(str(event_no))}-(\-?\d+)\..+$")
@@ -84,6 +139,88 @@ async def get_reservations(candino:int,db: AsyncSession):
         return reserv_list
     except:
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
+
+
+async def get_club_reserv(clubno:int,db: AsyncSession):
+    try:
+        query = text("SELECT * FROM voteReserv where attrib not like :attpatt and clubNo = :clubno")
+        result = await db.execute(query, {"attpatt": "%XXX%", "clubno": clubno})
+        reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        return reserv_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
+
+
+async def get_circle_reserv(circleno: int, db: AsyncSession):
+    try:
+        query = text("""
+            SELECT reservNo, reservFrom, visitorCount
+            FROM voteReserv
+            WHERE attrib NOT LIKE :attpatt
+              AND circleNo = :circleno
+            ORDER BY reservFrom DESC
+        """)
+        result = await db.execute(query, {"attpatt": "%XXX%", "circleno": circleno})
+        return result.mappings().all()  # <-- list[dict]
+    except Exception:
+        raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
+
+
+async def get_clubmembers(clubno:int,db: AsyncSession):
+    try:
+        query = text("SELECT a.memberNo, a.memberName, a.rankNo, b.rankTitlekor FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo where a.clubNo = :clubno")
+        result = await db.execute(query, {"clubno": clubno})
+        member_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        return member_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(CLUBMEMBER_LIST)")
+
+
+async def get_allmembers(db: AsyncSession):
+    try:
+        query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo, b.rankTitlekor, c.clubName FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo  left join lionsClub c on a.clubNo = c.clubNo where a.clubNo != :cno order by c.clubNo")
+        result = await db.execute(query,{"cno": 0})
+        member_list = result.fetchall()  # 회원 데이터를 모두 가져오기
+        return member_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(ALLMEMBER_LIST)")
+
+
+async def get_distmembers(db: AsyncSession):
+    try:
+        query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo, b.rankTitlekor, c.clubName FROM lionsMember a "
+                     "left join lionsRank b on a.rankNo = b.rankNo  left join lionsClub c on a.clubNo = c.clubNo "
+                     "where a.clubNo != :cno and a.rankNo not in (19,29,48)order by c.clubNo")
+        result = await db.execute(query,{"cno": 0})
+        member_list = result.fetchall()  # 회원 데이터를 모두 가져오기
+        return member_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(ALLMEMBER_LIST)")
+
+
+async def get_clublist(db: AsyncSession):
+    try:
+        query = text("select * from lionsClub where attrib not like :attpatt")
+        result = await db.execute(query, {"attpatt": "%XXX%"})
+        club_list = result.fetchall()
+        return club_list
+    except:
+        raise HTTPException(status_code=500, detail="Database query failed(CLUBLIST)")
+
+
+async def get_circlelist(db: AsyncSession):
+    try:
+        query = text("select * from lionsCircle where attrib = :attpatt and circleType=:ctype")
+        result = await db.execute(query, {"attpatt": "1000010000", "ctype": "VOTEC"})
+        circle_list = result.fetchall()
+        return circle_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(CIRCLELIST)")
+
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -137,6 +274,54 @@ async def reservations(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
     reservs = await get_reservations(candino,db)
     return templates.TemplateResponse("reserv/resume.html", {"request": request, "reservations": reservs})
+
+
+@app.get("/circle_reservs/{circleno}")
+async def circle_reservs(circleno: int, db: AsyncSession = Depends(get_db)):
+    rows = await get_circle_reserv(circleno, db)
+    return rows
+
+
+@app.get("/reserv_new/{dateno}", response_class=HTMLResponse)
+async def new_reservations(request: Request, dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    clubs = await get_clublist(db)
+    return templates.TemplateResponse("reserv/new_reserv.html", {"request": request, "candino": candino, "dateno": dateno, "clubs": clubs})
+
+
+@app.post("/reserv_canc/{reservno}")
+async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
+    try:
+        query = text("""
+            update voteReserv
+            set modDate = :now, attrib = :attr
+            where reservNo = :reservno
+        """)
+        await db.execute(query, {
+            "now": datetime.now(),
+            "attr": "XXXUPXXXUP",
+            "reservno": reservno,
+        })
+        await db.commit()
+        return JSONResponse({"canceled": True})
+    except Exception as e:
+        return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
+
+
+@app.get("/reserv_newclub/{clubno}/{dateno}", response_class=HTMLResponse)
+async def new_reservations(request: Request,clubno:int ,dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    cmembers = await get_clubmembers(clubno,db)
+    reservs = await get_club_reserv(clubno,db)
+    return templates.TemplateResponse("reserv/new_reserv_club.html", {"request": request, "candino": candino, "dateno": dateno, "clubno": clubno, "cmembers": cmembers, "reservs": reservs})
+
+
+@app.get("/reserv_newcircle/{dateno}", response_class=HTMLResponse)
+async def new_reservations(request: Request,dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    members = await get_distmembers(db)
+    circlelist = await get_circlelist(db)
+    return templates.TemplateResponse("reserv/new_reserv_cirl.html", {"request": request, "candino": candino, "dateno": dateno, "members": members, "circles": circlelist})
 
 
 @app.get("/history", response_class=HTMLResponse)
@@ -201,30 +386,24 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.post("/api/eventphotoupload/{eventNo}")
 async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
-    # 1) 컨텐츠 타입 검증
     if photo.content_type not in ALLOWED_CONTENT_TYPES:
         raise HTTPException(
             status_code=415,
             detail=f"Unsupported content type: {photo.content_type}",
         )
-    # 2) 확장자 결정 (원본 파일명보다 content-type 우선)
     ext = EXT_BY_CONTENT_TYPE.get(photo.content_type, "")
-    # 3) eventNo-1, eventNo-2 ... 형식으로 저장
     idx = next_negative_index(eventNo, PHOTO_DIR)
     filename = f"{eventNo}{idx}{ext}"  # 예: 123-1.jpg, 123-2.jpg ...
     save_path = PHOTO_DIR / filename
-    # (안전장치) 혹시라도 같은 이름이 존재하면 더 내려가서 재시도
     while save_path.exists():
         idx -= 1
         filename = f"{eventNo}{idx}{ext}"
         save_path = PHOTO_DIR / filename
-    # 4) 저장
     try:
         with save_path.open("wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
-    # 5) 접근 가능한 URL 반환
     url_path = f"/static/img/event_photos/{filename}"
     return {
         "eventNo": eventNo,
@@ -233,6 +412,108 @@ async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
         "savedPath": str(save_path),
         "url": url_path,
     }
+
+
+@app.post("/insert_newcircle")
+async def insert_circ(
+    request: Request,
+    circlename: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        name = circlename.strip()
+        if not name:
+            raise HTTPException(status_code=400, detail="circlename is empty")
+
+        query = text("""
+            INSERT INTO lionsCircle (circleName, circleType)
+            VALUES (:circlename, 'VOTEC')
+        """)
+        await db.execute(query, {"circlename": name})
+        await db.commit()
+        return {"inserted": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to insert new circle: {e}")
+
+
+@app.post("/reg_reserv/{clubNo}", response_model=RegReservOut)
+async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depends(get_db)):
+    if payload.visitorCount != len(payload.memberNos):
+        raise HTTPException(status_code=400, detail="visitorCount와 선택 인원 수가 다릅니다.")
+    if payload.visitorCount <= 0:
+        raise HTTPException(status_code=400, detail="방문 회원을 1명 이상 선택하세요.")
+
+    try:
+        reserv_from_dt = dateno_time_to_datetime(payload.dateno, payload.visitTime)
+
+        vr = VoteReserv(
+            clubNo=clubNo,
+            circleNo=None,
+            reservFrom=reserv_from_dt,
+            visitorCount=payload.visitorCount,
+        )
+        db.add(vr)
+        await db.flush()  # reservNo 생성
+
+        db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
+
+        await db.commit()
+        return RegReservOut(reservNo=vr.reservNo)
+
+    except ValueError as ve:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        print(e)
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="DB 저장 중 오류가 발생했습니다.")
+
+
+@app.post("/reg_reservc/{circleNo}", response_model=RegReservOut)
+async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Depends(get_db)):
+    if payload.visitorCount != len(payload.memberNos):
+        raise HTTPException(status_code=400, detail="visitorCount와 선택 인원 수가 다릅니다.")
+    if payload.visitorCount <= 0:
+        raise HTTPException(status_code=400, detail="방문 회원을 1명 이상 선택하세요.")
+
+    try:
+        reserv_from_dt = dateno_time_to_datetime(payload.dateno, payload.visitTime)
+
+        vr = VoteReserv(
+            circleNo=circleNo,
+            clubNo=None,
+            reservFrom=reserv_from_dt,
+            visitorCount=payload.visitorCount,
+        )
+        db.add(vr)
+        await db.flush()  # reservNo 생성
+
+        db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
+
+        await db.commit()
+        return RegReservOut(reservNo=vr.reservNo)
+
+    except ValueError as ve:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        print(e)
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="DB 저장 중 오류가 발생했습니다.")
+
+
+@app.get("/circles")
+async def get_circles(db: AsyncSession = Depends(get_db)):
+    rows = (await db.execute(text("""
+        SELECT circleNo, circleName
+        FROM lionsCircle
+        WHERE circleType = 'VOTEC'
+        ORDER BY circleName
+    """))).all()
+    return [{"id": r[0], "name": r[1]} for r in rows]
+
 
 if __name__ == "__main__":
     import uvicorn
