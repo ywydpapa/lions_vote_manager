@@ -20,7 +20,7 @@ import re
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint
+from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint, String
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -69,6 +69,7 @@ class RegReservIn(BaseModel):
     visitTime: str     # 예: "09:00"
     visitorCount: int
     memberNos: List[int]
+    reservMemo: str | None = None
 
 class RegReservOut(BaseModel):
     reservNo: int
@@ -80,6 +81,7 @@ class VoteReserv(Base):
     circleNo: Mapped[int | None] = mapped_column(Integer, nullable=True)
     reservFrom: Mapped["datetime"] = mapped_column(DateTime, nullable=False)  # DateTime
     visitorCount: Mapped[int] = mapped_column(Integer, nullable=False)
+    reservMemo: Mapped[str | None] = mapped_column(String(255), nullable=True)
     __table_args__ = (
         CheckConstraint(
             "(clubNo IS NULL) <> (circleNo IS NULL)",
@@ -453,6 +455,7 @@ async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depen
             circleNo=None,
             reservFrom=reserv_from_dt,
             visitorCount=payload.visitorCount,
+            reservMemo=payload.reservMemo,
         )
         db.add(vr)
         await db.flush()  # reservNo 생성
@@ -486,6 +489,7 @@ async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Dep
             clubNo=None,
             reservFrom=reserv_from_dt,
             visitorCount=payload.visitorCount,
+            reservMemo=payload.reservMemo,
         )
         db.add(vr)
         await db.flush()  # reservNo 생성

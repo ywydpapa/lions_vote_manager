@@ -166,11 +166,15 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-end mt-6">
-                                <button id="btnSubmit" class="btn btn-primary rounded-pill"
-                                        type="button">
-                                    신청
-                                </button>
+                            <div class="row g-3 align-items-end mt-4">
+                                <div class="col-12 col-lg-9">
+                                    <label for="reservMemo" class="form-label fw-semibold mb-1">방문메모</label>
+                                    <textarea id="reservMemo" class="form-control" rows="2" maxlength="200" placeholder="예) 검색안되는 방문자 기록등"></textarea>
+                                    <div class="form-text">최대 200자</div>
+                                </div>
+                                <div class="col-12 col-lg-3 d-flex justify-content-lg-end">
+                                    <button id="btnSubmit" class="btn btn-primary rounded-pill w-100 w-lg-auto" type="button">신청</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -199,278 +203,193 @@
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
 <script>
-    const clubNo = "{{ clubno }}";
-    const dateno = "{{ dateno }}";
+  // ===== 서버 템플릿 변수 =====
+  const clubNo = "{{ clubno }}";
+  const dateno = "{{ dateno }}"; // "MMDD{1|2}"
 
-    const membersData = [
-        {% for m in members %}
-            {
-                id: {{ m[0] }},
-                label: "{{ (m[5] ~ ' / ' ~ m[1])|replace('\\', '\\\\')|replace('"', '\\"') }}",
-                position: "{{ (m[4] or '')|replace('\\', '\\\\')|replace('"', '\\"') }}"
-            },
-        {% endfor %}
-    ];
+  // membersData: [{id,label,position}, ...]
+  const membersData = [
+    {% for m in members %}
+      {
+        id: {{ m[0] }},
+        label: "{{ (m[5] ~ ' / ' ~ m[1])|replace('\\', '\\\\')|replace('"', '\\"') }}",
+        position: "{{ (m[4] or '')|replace('\\', '\\\\')|replace('"', '\\"') }}"
+      },
+    {% endfor %}
+  ];
 
+  // ===== DOM =====
+  const circleSelect = document.getElementById('circlen');
+  const customInput = document.getElementById('circle_custom');
+  const btnCircleSave = document.getElementById('btnCircleSave');
 
-    async function cancelReservation(reservNo) {
-        if (!confirm(`예약번호 ${reservNo} 를 취소하시겠습니까?`)) return;
+  const elSearch = document.getElementById('memberSearch');
+  const elPool = document.getElementById('memberPool');
+  const elPicked = document.getElementById('memberPicked');
+  const elSearchCount = document.getElementById('searchCount');
+  const elPickedCount = document.getElementById('pickedCount');
+  const btnRemoveSelected = document.getElementById('btnRemoveSelected');
+  const btnClearPicked = document.getElementById('btnClearPicked');
 
-        const res = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, {
-            method: 'POST'
-        });
-
-        if (!res.ok) return alert('취소 실패: ' + await res.text());
-
-        const data = await res.json();
-        if (!data.canceled) return alert('취소 처리 실패');
-
-        // 목록에서 없애기: 가장 간단/확실
-        location.reload();
-    }
-
-    const circleSelect = document.getElementById('circlen');
-    const customInput = document.getElementById('circle_custom');
-
-
-    const btnCircleSave = document.getElementById('btnCircleSave');
-
-    function syncCircleUI() {
-        const isCustom = circleSelect.value === '__custom__';
-        customInput.disabled = !isCustom;
-        btnCircleSave.disabled = !isCustom;
-
-        if (!isCustom) customInput.value = '';
-        if (isCustom) customInput.focus();
-    }
-
-    async function reloadCirclesAndSelectByName(circleName) {
-        const res = await fetch('/circles');
-        if (!res.ok) throw new Error(await res.text());
-        const circles = await res.json(); // [{id, name}, ...]
-
-        // 옵션 재구성
-        circleSelect.innerHTML = '';
-        for (const c of circles) {
-            const opt = document.createElement('option');
-            opt.value = String(c.id);
-            opt.textContent = c.name;
-            circleSelect.appendChild(opt);
-        }
-
-        // 직접입력 옵션은 항상 마지막에 붙이기
-        const customOpt = document.createElement('option');
-        customOpt.value = '__custom__';
-        customOpt.textContent = '직접입력';
-        circleSelect.appendChild(customOpt);
-
-        // 방금 저장한 이름과 동일한 항목을 찾아 선택
-        const found = circles.find(c => (c.name || '').trim() === circleName.trim());
-        if (found) {
-            circleSelect.value = String(found.id);
-        } else {
-            // 못 찾으면 그냥 직접입력으로 유지
-            circleSelect.value = '__custom__';
-        }
-
-        syncCircleUI();
-    }
-
-    btnCircleSave.addEventListener('click', async () => {
-        if (circleSelect.value !== '__custom__') return;
-
-        const name = customInput.value.trim();
-        if (!name) return alert('모임명을 입력해주세요.');
-
-        // 1) 프론트에서 중복 확인 → 있으면 자동 선택하고 종료
-        const existingValue = findCircleValueByName(name);
-
-        // 기존: if (existingValue) {
-        if (existingValue !== null) {
-            circleSelect.value = existingValue;
-            syncCircleUI();
-            return alert('이미 목록에 존재합니다. 해당 모임을 선택했습니다.');
-        }
-
-
-        // 2) 없으면 서버에 저장
-        btnCircleSave.disabled = true;
-
-        try {
-            const res = await fetch('/insert_newcircle', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({circlename: name})
-            });
-            if (!res.ok) return alert('저장 실패: ' + await res.text());
-
-            const data = await res.json();
-            if (!data.inserted) return alert('저장 처리 실패');
-
-            // 3) 저장 후 목록 다시 받아오기
-            await reloadCirclesAndSelectByName(name); // (기존에 만들어둔 함수 사용)
-            alert('저장 완료! 목록에 추가하고 선택했습니다.');
-        } catch (e) {
-            alert('오류: ' + (e?.message || e));
-        } finally {
-            btnCircleSave.disabled = (circleSelect.value !== '__custom__');
-        }
-    });
-
-    circleSelect.addEventListener('change', syncCircleUI);
-    syncCircleUI();
-
-    function normalizeName(s) {
-        return (s || '')
-            .trim()
-            .replace(/\s+/g, ' ')
-            .toLowerCase();
-    }
-
-    function findCircleValueByName(inputName) {
-        const target = normalizeName(inputName);
-        if (!target) return null;
-
-        for (const opt of circleSelect.options) {
-            if (opt.value === '__custom__') continue;
-
-            const optName = normalizeName(opt.textContent);
-            if (optName === target) return opt.value; // "0"여도 그대로 반환
-        }
-        return null;
-    }
-</script>
-<script>
-    const elSearch = document.getElementById('memberSearch');
-    const elPool = document.getElementById('memberPool');
-    const elPicked = document.getElementById('memberPicked');
-    const elSearchCount = document.getElementById('searchCount');
-    const elPickedCount = document.getElementById('pickedCount');
-    const btnRemoveSelected = document.getElementById('btnRemoveSelected');
-    const btnClearPicked = document.getElementById('btnClearPicked');
-
-    // 선택된 member id를 Set으로 관리(중복 방지)
-    const pickedSet = new Set();
-
-    function normalize(s) {
-        return (s || '').toLowerCase().trim();
-    }
-
-    function matches(member, q) {
-        if (!q) return true;
-        const hay = normalize(member.label + ' ' + (member.position || ''));
-        return hay.includes(q);
-    }
-
-    function render() {
-        const q = normalize(elSearch.value);
-
-        // 왼쪽(검색결과): picked에 없는 것만 표시
-        const poolList = membersData
-            .filter(m => !pickedSet.has(m.id))
-            .filter(m => matches(m, q))
-            .slice(0, 500); // 성능/UX 위해 상위 300개만 표시(원하면 조정)
-
-        elPool.innerHTML = '';
-        for (const m of poolList) {
-            const opt = document.createElement('option');
-            opt.value = String(m.id);
-            opt.textContent = m.label;
-            elPool.appendChild(opt);
-        }
-        elSearchCount.textContent = `${poolList.length}명`;
-
-        // 오른쪽(선택목록): pickedSet 기준으로 표시(추가 순서 유지하려면 배열로 따로 관리 가능)
-        const pickedList = membersData.filter(m => pickedSet.has(m.id));
-
-        elPicked.innerHTML = '';
-        for (const m of pickedList) {
-            const opt = document.createElement('option');
-            opt.value = String(m.id);
-            opt.textContent = m.label;
-            elPicked.appendChild(opt);
-        }
-        elPickedCount.textContent = `선택 ${pickedList.length}명`;
-    }
-
-    function addPicked(idStr) {
-        const id = Number(idStr);
-        if (!Number.isFinite(id)) return;
-        pickedSet.add(id);
-        render();
-    }
-
-    function removePicked(idStr) {
-        const id = Number(idStr);
-        if (!Number.isFinite(id)) return;
-        pickedSet.delete(id);
-        render();
-    }
-
-    // 더블클릭 이동
-    elPool.addEventListener('dblclick', () => {
-        const opt = elPool.selectedOptions[0];
-        if (!opt) return;
-        addPicked(opt.value);
-    });
-
-    elPicked.addEventListener('dblclick', () => {
-        const opt = elPicked.selectedOptions[0];
-        if (!opt) return;
-        removePicked(opt.value);
-    });
-
-    // 검색 입력
-    elSearch.addEventListener('input', () => render());
-
-    // 버튼: 선택 제거(오른쪽에서 선택된 것들)
-    btnRemoveSelected.addEventListener('click', () => {
-        const ids = Array.from(elPicked.selectedOptions).map(o => o.value);
-        for (const id of ids) removePicked(id);
-    });
-
-    // 버튼: 전체 비우기
-    btnClearPicked.addEventListener('click', () => {
-        pickedSet.clear();
-        render();
-    });
-
-    render();
-</script>
-<script>
-    document.getElementById('btnSubmit').addEventListener('click', async function () {
-        const visitTime = document.getElementById('visit_time').value;
-
-        const circleNo = document.getElementById('circlen').value;
-        if (!circleNo || circleNo === '__custom__') {
-            return alert('모임(서클)을 선택(또는 저장)해주세요.');
-        }
-
-        const memberNos = Array.from(pickedSet);
-
-        if (!visitTime) return alert('방문예정시간을 선택해주세요.');
-        if (memberNos.length === 0) return alert('방문 회원을 1명 이상 선택해주세요.');
-
-        const res = await fetch(`/reg_reservc/${encodeURIComponent(circleNo)}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                dateno,
-                visitTime,
-                visitorCount: memberNos.length,
-                memberNos
-            })
-        });
-
-        if (!res.ok) return alert('신청 실패: ' + await res.text());
-        const data = await res.json();
-        alert(`신청 완료! 예약번호: ${data.reservNo}`);
-        location.reload();
-    });
-</script>
-<script>
   const reservListArea = document.getElementById('reservListArea');
+  const visitTimeSelect = document.getElementById('visit_time');
+  const btnSubmit = document.getElementById('btnSubmit');
 
+  // ===== 상태 =====
+  const pickedSet = new Set();        // 선택된 회원
+  let currentReservList = [];         // 현재 선택된 circle의 예약 목록(서버에서 받은 원본)
+  let currentReservIndex = new Map(); // key(dateno__HH:MM) -> {reservNo, dateno, time}
+
+  // ===== 유틸: 문자열 정규화 =====
+  function normalizeName(s) {
+    return (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  function normalize(s) {
+    return (s || '').toLowerCase().trim();
+  }
+
+  // ===== 1) Circle UI (직접입력/저장) =====
+  function syncCircleUI() {
+    const isCustom = circleSelect.value === '__custom__';
+    customInput.disabled = !isCustom;
+    btnCircleSave.disabled = !isCustom;
+
+    if (!isCustom) customInput.value = '';
+    if (isCustom) customInput.focus();
+  }
+
+  function findCircleValueByName(inputName) {
+    const target = normalizeName(inputName);
+    if (!target) return null;
+
+    for (const opt of circleSelect.options) {
+      if (opt.value === '__custom__') continue;
+      const optName = normalizeName(opt.textContent);
+      if (optName === target) return opt.value; // "0"여도 OK
+    }
+    return null;
+  }
+
+  async function reloadCirclesAndSelectByName(circleName) {
+    const res = await fetch('/circles');
+    if (!res.ok) throw new Error(await res.text());
+    const circles = await res.json(); // [{id, name}, ...]
+
+    circleSelect.innerHTML = '';
+    for (const c of circles) {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      opt.textContent = c.name;
+      circleSelect.appendChild(opt);
+    }
+    const customOpt = document.createElement('option');
+    customOpt.value = '__custom__';
+    customOpt.textContent = '직접입력';
+    circleSelect.appendChild(customOpt);
+
+    const found = circles.find(c => (c.name || '').trim() === circleName.trim());
+    circleSelect.value = found ? String(found.id) : '__custom__';
+
+    syncCircleUI();
+  }
+
+  // ===== 2) Member picker (검색/선택) =====
+  function matches(member, q) {
+    if (!q) return true;
+    const hay = normalize(member.label + ' ' + (member.position || ''));
+    return hay.includes(q);
+  }
+
+  function renderMembers() {
+    const q = normalize(elSearch.value);
+
+    // pool: picked 아닌 것 중 검색 매치
+    const poolList = membersData
+      .filter(m => !pickedSet.has(m.id))
+      .filter(m => matches(m, q))
+      .slice(0, 500);
+
+    elPool.innerHTML = '';
+    for (const m of poolList) {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = m.label;
+      elPool.appendChild(opt);
+    }
+    elSearchCount.textContent = `${poolList.length}명`;
+
+    const pickedList = membersData.filter(m => pickedSet.has(m.id));
+    elPicked.innerHTML = '';
+    for (const m of pickedList) {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = m.label;
+      elPicked.appendChild(opt);
+    }
+    elPickedCount.textContent = `선택 ${pickedList.length}명`;
+  }
+
+  function addPicked(idStr) {
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return;
+    pickedSet.add(id);
+    renderMembers();
+  }
+
+  function removePicked(idStr) {
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return;
+    pickedSet.delete(id);
+    renderMembers();
+  }
+
+  // ===== 3) 예약 중복 방지: reservFrom(문자열) -> dateno/time 계산 =====
+  function toDatenoAndTimeFromReservFrom(reservFrom) {
+    const d = new Date(reservFrom);
+    if (Number.isNaN(d.getTime())) return null;
+
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+
+    // 기존 규칙 유지: 12:00은 오전(1), 13:00부터 오후(2)
+    const ap = (d.getHours() <= 12) ? '1' : '2';
+    return { dateno: `${mm}${dd}${ap}`, time: `${hh}:${mi}` };
+  }
+
+  function rebuildReservIndexFromCurrentList() {
+    const map = new Map();
+    for (const r of (currentReservList || [])) {
+      const reservNo = Number(r.reservNo);
+      const reservFrom = r.reservFrom;
+      const parsed = toDatenoAndTimeFromReservFrom(reservFrom);
+      if (!parsed || !Number.isFinite(reservNo)) continue;
+      const key = `${parsed.dateno}__${parsed.time}`;
+      // 같은 키가 여러 개면(이미 중복이 발생한 상태) 마지막 것을 넣되, 존재 자체가 중요
+      map.set(key, { reservNo, dateno: parsed.dateno, time: parsed.time });
+    }
+    currentReservIndex = map;
+  }
+
+  function disableReservedTimesForThisDateno() {
+    for (const opt of visitTimeSelect.options) {
+      const t = (opt.value || '').trim();
+      if (!t) continue;
+      const key = `${dateno}__${t}`;
+      const reserved = currentReservIndex.has(key);
+      opt.disabled = reserved;
+      if (reserved && opt.selected) opt.selected = false;
+    }
+  }
+
+  function getHitReservation(selectedTime) {
+    const key = `${dateno}__${selectedTime}`;
+    return currentReservIndex.get(key) || null;
+  }
+
+  // ===== 4) 예약 목록 렌더링/로딩 =====
   function renderReservList(list) {
     if (!Array.isArray(list) || list.length === 0) {
       reservListArea.innerHTML = '<div class="text-muted">예약 내역이 없습니다.</div>';
@@ -479,7 +398,7 @@
 
     const items = list.map(r => {
       const reservNo = r.reservNo;
-      const reservFrom = r.reservFrom;      // 서버에서 ISO 문자열로 올 가능성 높음
+      const reservFrom = r.reservFrom;
       const visitorCount = r.visitorCount;
 
       return `
@@ -497,7 +416,8 @@
             </div>
             <button type="button"
                     class="btn btn-outline-danger btn-sm"
-                    onclick="cancelReservation(${reservNo})">
+                    data-action="cancel"
+                    data-reservno="${reservNo}">
               취소
             </button>
           </div>
@@ -510,8 +430,13 @@
 
   async function loadCircleReservs() {
     const circleNo = circleSelect.value;
+
+    // 모임 선택이 유효하지 않으면 UI 안내 + 인덱스 비우기 + 시간 disable 초기화
     if (!circleNo || circleNo === '__custom__') {
       reservListArea.innerHTML = '<div class="text-muted">모임(서클)을 선택(또는 저장)해주세요.</div>';
+      currentReservList = [];
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
       return;
     }
 
@@ -519,22 +444,182 @@
       const res = await fetch(`/circle_reservs/${encodeURIComponent(circleNo)}`);
       if (!res.ok) throw new Error(await res.text());
       const list = await res.json();
-      renderReservList(list);
+
+      currentReservList = Array.isArray(list) ? list : [];
+      renderReservList(currentReservList);
+
+      // 목록 기반으로 중복 인덱스 생성 후, 시간 옵션 disable 반영
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
     } catch (e) {
+      currentReservList = [];
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
       reservListArea.innerHTML = `<div class="text-danger">예약 내역 로드 실패: ${e?.message || e}</div>`;
     }
   }
 
-  // 모임 변경 시마다 로드
-  circleSelect.addEventListener('change', () => {
-    syncCircleUI();      // 기존 UI 동기화
-    loadCircleReservs(); // 예약내역 갱신
+  // ===== 5) API: 취소/신청 =====
+  async function cancelReservation(reservNo) {
+    if (!confirm(`예약번호 ${reservNo} 를 취소하시겠습니까?`)) return;
+
+    const res = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, { method: 'POST' });
+    if (!res.ok) return alert('취소 실패: ' + await res.text());
+
+    const data = await res.json();
+    if (!data.canceled) return alert('취소 처리 실패');
+
+    // 취소 후: 현재 circle 예약 목록만 다시 로드(전체 reload 대신)
+    await loadCircleReservs();
+  }
+
+  async function submitReservation() {
+    if (btnSubmit.dataset.busy === '1') return;
+
+    const visitTime = visitTimeSelect.value;
+    const circleNo = circleSelect.value;
+    const reservMemo = (document.getElementById('reservMemo').value || '').trim();
+
+    if (!circleNo || circleNo === '__custom__') {
+      return alert('모임(서클)을 선택(또는 저장)해주세요.');
+    }
+    if (!visitTime) return alert('방문예정시간을 선택해주세요.');
+
+    // 중복(동일 dateno+time) 검사
+    const hit = getHitReservation(visitTime);
+    if (hit) {
+      return alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+    }
+
+    const memberNos = Array.from(pickedSet);
+    if (memberNos.length === 0) return alert('방문 회원을 1명 이상 선택해주세요.');
+
+    try {
+      btnSubmit.dataset.busy = '1';
+      btnSubmit.disabled = true;
+
+      const res = await fetch(`/reg_reservc/${encodeURIComponent(circleNo)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dateno,
+          visitTime,
+          visitorCount: memberNos.length,
+          memberNos,
+            reservMemo
+        })
+      });
+
+      if (!res.ok) return alert('신청 실패: ' + await res.text());
+
+      const data = await res.json();
+      alert(`신청 완료! 예약번호: ${data.reservNo}`);
+
+      // 신청 후: 현재 circle 예약 목록 다시 로드(시간 disable 갱신까지 자동)
+      await loadCircleReservs();
+    } finally {
+      btnSubmit.dataset.busy = '0';
+      btnSubmit.disabled = false;
+    }
+  }
+
+  // ===== 이벤트 바인딩 =====
+
+  // circle 직접입력 UI
+  circleSelect.addEventListener('change', async () => {
+    syncCircleUI();
+    await loadCircleReservs();
   });
 
-  // 페이지 첫 로드시 1회 로드
-  loadCircleReservs();
+  btnCircleSave.addEventListener('click', async () => {
+    if (circleSelect.value !== '__custom__') return;
+
+    const name = customInput.value.trim();
+    if (!name) return alert('모임명을 입력해주세요.');
+
+    // 프론트 중복 확인: 있으면 선택하고 예약 로드
+    const existingValue = findCircleValueByName(name);
+    if (existingValue !== null) {
+      circleSelect.value = existingValue;
+      syncCircleUI();
+      await loadCircleReservs();
+      return alert('이미 목록에 존재합니다. 해당 모임을 선택했습니다.');
+    }
+
+    btnCircleSave.disabled = true;
+    try {
+      const res = await fetch('/insert_newcircle', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ circlename: name })
+      });
+      if (!res.ok) return alert('저장 실패: ' + await res.text());
+
+      const data = await res.json();
+      if (!data.inserted) return alert('저장 처리 실패');
+
+      await reloadCirclesAndSelectByName(name);
+      await loadCircleReservs();
+      alert('저장 완료! 목록에 추가하고 선택했습니다.');
+    } catch (e) {
+      alert('오류: ' + (e?.message || e));
+    } finally {
+      btnCircleSave.disabled = (circleSelect.value !== '__custom__');
+    }
+  });
+
+  // member picker
+  elSearch.addEventListener('input', renderMembers);
+
+  elPool.addEventListener('dblclick', () => {
+    const opt = elPool.selectedOptions[0];
+    if (!opt) return;
+    addPicked(opt.value);
+  });
+
+  elPicked.addEventListener('dblclick', () => {
+    const opt = elPicked.selectedOptions[0];
+    if (!opt) return;
+    removePicked(opt.value);
+  });
+
+  btnRemoveSelected.addEventListener('click', () => {
+    const ids = Array.from(elPicked.selectedOptions).map(o => o.value);
+    for (const id of ids) removePicked(id);
+  });
+
+  btnClearPicked.addEventListener('click', () => {
+    pickedSet.clear();
+    renderMembers();
+  });
+
+  // 시간 변경 시 즉시 안내
+  visitTimeSelect.addEventListener('change', function() {
+    const hit = getHitReservation(this.value);
+    if (hit) {
+      alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+      this.value = '';
+    }
+  });
+
+  // 신청
+  btnSubmit.addEventListener('click', submitReservation);
+
+  // 예약 취소 버튼 (이벤트 위임)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action="cancel"][data-reservno]');
+    if (!btn) return;
+    const reservNo = Number(btn.dataset.reservno);
+    if (!Number.isFinite(reservNo)) return;
+    cancelReservation(reservNo);
+  });
+
+  // ===== 초기화 =====
+  (function init() {
+    syncCircleUI();
+    renderMembers();
+    loadCircleReservs(); // 첫 로드 1회
+  })();
 </script>
-
-
 </body>
 </html>

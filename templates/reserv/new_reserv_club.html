@@ -1,255 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    {% include '/common/header.html' %}
+  {% include '/common/header.html' %}
 </head>
 <body class="d-flex flex-column h-100 bg-light">
 <main class="flex-shrink-0">
-    <!-- Navigation-->
-    {% include '/common/topnav.html' %}
-    <!-- Page Content-->
-    <div class="container px-5 my-5">
-        <div class="text-center mb-5">
-            {% set s = dateno|string %}
-            {% set mm = s[0:2] %}
-            {% set dd = s[2:4] %}
-            {% set ap = '오전' if s[4:5] == '1' else '오후' if s[4:5] == '2' else '' %}
-            <h1 class="display-5 fw-bolder mb-0">
-                <span class="text-gradient d-inline">{{ mm }}월 {{ dd }}일{% if ap %} ({{ ap }}){% endif %}
-                    클럽 방문 접수</span>
-            </h1>
-        </div>
-        <div class="row gx-5 justify-content-center">
-            <div class="col-lg-11 col-xl-9 col-xxl-8">
-                <section>
-                    <div class="card shadow border-0 rounded-4 mb-5">
-                        <div class="card-body p-5">
-                            <div class="mb-5">
-                                <div class="d-flex align-items-center mb-4">
-                                    <div class="row g-4">
-                                        <div class="col-12 col-lg-6">
-                                            <div class="card h-100 shadow-sm border-0 rounded-4">
-                                                <div class="card-body p-4">
-                                                    <h5 class="fw-bolder mb-3">방문 예정 시간 선택</h5>
+  {% include '/common/topnav.html' %}
 
-                                                    <div class="mb-2 text-muted">
-                                                        선택 구간:
-                                                        {% if ap == '오전' %}
-                                                            오전 09:00 ~ 12:00 (20분 간격)
-                                                        {% elif ap == '오후' %}
-                                                            오후 13:00 ~ 17:00 (20분 간격)
-                                                        {% else %}
-                                                            (오전/오후 정보 없음)
-                                                        {% endif %}
-                                                    </div>
-                                                    <label for="visit_time"
-                                                           class="form-label fw-semibold">방문예정시간</label>
-                                                    <select class="form-select" id="visit_time" name="visit_time"
-                                                            required>
-                                                        {% if ap == '오전' %}
-                                                            {% for h in range(9, 12) %}
-                                                                {% for m in [0,20,40] %}
-                                                                    {% set mm = "%02d"|format(m) %}
-                                                                    <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
-                                                                {% endfor %}
-                                                            {% endfor %}
-                                                            <option value="12:00">12:00</option>
-                                                        {% elif ap == '오후' %}
-                                                            {% for h in range(13, 17) %}
-                                                                {% for m in [0,20,40] %}
-                                                                    {% set mm = "%02d"|format(m) %}
-                                                                    <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
-                                                                {% endfor %}
-                                                            {% endfor %}
-                                                            <option value="17:00">17:00</option>
-                                                        {% else %}
-                                                            <option value="" selected disabled>오전/오후를 확인할 수 없습니다
-                                                            </option>
-                                                        {% endif %}
-                                                    </select>
-                                                    <div class="form-text mt-2">
-                                                        20분 단위로 선택됩니다.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-12 col-lg-6">
-                                            <div class="card h-100 shadow-sm border-0 rounded-4">
-                                                <div class="card-body p-4">
-                                                    <h5 class="fw-bolder mb-3">방문 회원 선택 (복수 선택)</h5>
-
-                                                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
-                                                        <span class="fw-semibold">보기:</span>
-
-                                                        <div class="btn-group btn-group-sm" role="group"
-                                                             aria-label="member view toggle">
-                                                            <input type="radio" class="btn-check" name="memberView"
-                                                                   id="viewAll" autocomplete="off">
-                                                            <label class="btn btn-outline-primary"
-                                                                   for="viewAll">전체회원보기</label>
-
-                                                            <input type="radio" class="btn-check" name="memberView"
-                                                                   id="viewExec" autocomplete="off" checked>
-                                                            <label class="btn btn-outline-primary"
-                                                                   for="viewExec">임원보기</label>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between align-items-center">
-                                                        <label for="member_ids" class="form-label fw-semibold mb-0">회원
-                                                            목록</label>
-                                                        <small id="memberCount" class="text-muted">선택 0명</small>
-                                                    </div>
-                                                    <select class="form-select" id="member_ids" name="member_ids"
-                                                            multiple size="12" required>
-                                                        {% for m in cmembers %}
-                                                            <option value="{{ m[0] }}"
-                                                                    data-position="{{ m[3] }}">{{ m[3] }}
-                                                                / {{ m[1] }}</option>
-                                                        {% endfor %}
-                                                    </select>
-                                                    <div class="form-text mt-2">
-                                                        Ctrl(Windows) / Cmd(Mac) 로 여러 명을 선택할 수 있습니다.
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <div class="d-flex justify-content-end mt-6">
-                        <button id="btnSubmit" class="btn btn-primary rounded-pill"
-                                type="button">
-                            신청
-                        </button>
-                    </div>
-                        </div>
-                    </div>
-
-                </section>
-            </div>
-        </div>
-        {# ===== 예약 내역 카드 ===== #}
-        <div class="card shadow border-0 rounded-4 mb-5">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h5 class="fw-bolder mb-0">방문 예약 내역</h5>
-                    <small class="text-muted">최근/현재 예약</small>
-                </div>
-                {% if reservs %}
-                    {% if reservs is sequence and reservs is not string %}
-                        {% set reserv_list = reservs %}
-                    {% else %}
-                        {% set reserv_list = [reservs] %}
-                    {% endif %}
-                    <div class="list-group list-group-flush">
-                        {% for r in reserv_list %}
-                            {% set reservNo = r['reservNo'] if r is mapping else r.reservNo %}
-                            {% set reservFrom = r['reservFrom'] if r is mapping else r.reservFrom %}
-                            {% set visitorCount = r['visitorCount'] if r is mapping else r.visitorCount %}
-                            <div class="list-group-item px-0">
-                                <div class="d-flex justify-content-between align-items-center gap-3">
-                                    <div>
-                                        <div class="fw-semibold">
-                                            예약번호: <span class="text-primary">{{ reservNo }}</span>
-                                        </div>
-                                        <div class="text-muted small">
-                                            일자: {{ reservFrom }}
-                                            <span class="mx-2">|</span>
-                                            방문자수: {{ visitorCount }}
-                                        </div>
-                                    </div>
-                                    <button
-                                            type="button"
-                                            class="btn btn-outline-danger btn-sm"
-                                            onclick="cancelReservation({{ reservNo }})">
-                                        취소
-                                    </button>
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-muted">예약 내역이 없습니다.</div>
-                {% endif %}
-            </div>
-        </div>
-
+  <div class="container px-5 my-5">
+    <div class="text-center mb-5">
+      {% set s = dateno|string %}
+      {% set mm = s[0:2] %}
+      {% set dd = s[2:4] %}
+      {% set ap = '오전' if s[4:5] == '1' else '오후' if s[4:5] == '2' else '' %}
+      <h1 class="display-5 fw-bolder mb-0">
+        <span class="text-gradient d-inline">
+          {{ mm }}월 {{ dd }}일{% if ap %} ({{ ap }}){% endif %} 클럽 방문 접수
+        </span>
+      </h1>
     </div>
+
+    <div class="row gx-5 justify-content-center">
+      <div class="col-lg-11 col-xl-9 col-xxl-8">
+        <section>
+          <div class="card shadow border-0 rounded-4 mb-5">
+            <div class="card-body p-5">
+
+              <div class="row g-4">
+                <!-- 시간 선택 -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4">
+                      <h5 class="fw-bolder mb-3">방문 예정 시간 선택</h5>
+
+                      <div class="mb-2 text-muted">
+                        선택 구간:
+                        {% if ap == '오전' %}
+                          오전 09:00 ~ 12:00 (20분 간격)
+                        {% elif ap == '오후' %}
+                          오후 13:00 ~ 17:00 (20분 간격)
+                        {% else %}
+                          (오전/오후 정보 없음)
+                        {% endif %}
+                      </div>
+
+                      <label for="visit_time" class="form-label fw-semibold">방문예정시간</label>
+                      <select class="form-select" id="visit_time" name="visit_time" required>
+                        {% if ap == '오전' %}
+                          {% for h in range(9, 12) %}
+                            {% for m in [0,20,40] %}
+                              {% set m2 = "%02d"|format(m) %}
+                              <option value="{{ "%02d"|format(h) }}:{{ m2 }}">{{ "%02d"|format(h) }}:{{ m2 }}</option>
+                            {% endfor %}
+                          {% endfor %}
+                          <option value="12:00">12:00</option>
+                        {% elif ap == '오후' %}
+                          {% for h in range(13, 17) %}
+                            {% for m in [0,20,40] %}
+                              {% set m2 = "%02d"|format(m) %}
+                              <option value="{{ "%02d"|format(h) }}:{{ m2 }}">{{ "%02d"|format(h) }}:{{ m2 }}</option>
+                            {% endfor %}
+                          {% endfor %}
+                          <option value="17:00">17:00</option>
+                        {% else %}
+                          <option value="" selected disabled>오전/오후를 확인할 수 없습니다</option>
+                        {% endif %}
+                      </select>
+                      <div class="form-text mt-2">20분 단위로 선택됩니다.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 회원 선택 -->
+                <div class="col-12 col-lg-6">
+                  <div class="card h-100 shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4">
+                      <h5 class="fw-bolder mb-3">방문 회원 선택 (복수 선택)</h5>
+
+                      <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                        <span class="fw-semibold">보기:</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="member view toggle">
+                          <input type="radio" class="btn-check" name="memberView" id="viewAll" autocomplete="off">
+                          <label class="btn btn-outline-primary" for="viewAll">전체회원보기</label>
+
+                          <input type="radio" class="btn-check" name="memberView" id="viewExec" autocomplete="off" checked>
+                          <label class="btn btn-outline-primary" for="viewExec">임원보기</label>
+                        </div>
+                      </div>
+
+                      <div class="d-flex justify-content-between align-items-center">
+                        <label for="member_ids" class="form-label fw-semibold mb-0">회원 목록</label>
+                        <small id="memberCount" class="text-muted">선택 0명</small>
+                      </div>
+
+                      <select class="form-select" id="member_ids" name="member_ids" multiple size="12" required>
+                        {% for m in cmembers %}
+                          <option value="{{ m[0] }}" data-position="{{ m[3] }}">{{ m[3] }} / {{ m[1] }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <div class="form-text mt-2">Ctrl(Windows) / Cmd(Mac) 로 여러 명을 선택할 수 있습니다.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-3 align-items-end mt-4">
+                                <div class="col-12 col-lg-9">
+                                    <label for="reservMemo" class="form-label fw-semibold mb-1">방문메모</label>
+                                    <textarea id="reservMemo" class="form-control" rows="2" maxlength="200" placeholder="예) 검색안되는 방문자 기록등"></textarea>
+                                    <div class="form-text">최대 200자</div>
+                                </div>
+                                <div class="col-12 col-lg-3 d-flex justify-content-lg-end">
+                                    <button id="btnSubmit" class="btn btn-primary rounded-pill w-100 w-lg-auto" type="button">신청</button>
+                                </div>
+                            </div>
+
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- 예약 내역 -->
+    <div class="card shadow border-0 rounded-4 mb-5">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="fw-bolder mb-0">방문 예약 내역</h5>
+          <small class="text-muted">최근/현재 예약</small>
+        </div>
+
+        {% if reservs %}
+          {% if reservs is sequence and reservs is not string %}
+            {% set reserv_list = reservs %}
+          {% else %}
+            {% set reserv_list = [reservs] %}
+          {% endif %}
+
+          <div class="list-group list-group-flush">
+            {% for r in reserv_list %}
+              {% set reservNo = r['reservNo'] if r is mapping else r.reservNo %}
+              {% set reservFrom = r['reservFrom'] if r is mapping else r.reservFrom %}
+              {% set visitorCount = r['visitorCount'] if r is mapping else r.visitorCount %}
+
+              {# reservFrom을 datetime으로 가정 #}
+              {% set r_mm = reservFrom.strftime('%m') %}
+              {% set r_dd = reservFrom.strftime('%d') %}
+              {% set r_hh = reservFrom.strftime('%H') %}
+              {% set r_mi = reservFrom.strftime('%M') %}
+              {% set r_ap = '1' if (r_hh|int) <= 12 else '2' %}
+              {% set r_dateno = r_mm ~ r_dd ~ r_ap %}
+              {% set r_time = r_hh ~ ':' ~ r_mi %}
+
+              <div class="list-group-item px-0"
+                   data-dateno="{{ r_dateno }}"
+                   data-time="{{ r_time }}"
+                   data-reservno="{{ reservNo }}">
+                <div class="d-flex justify-content-between align-items-center gap-3">
+                  <div>
+                    <div class="fw-semibold">
+                      예약번호: <span class="text-primary">{{ reservNo }}</span>
+                    </div>
+                    <div class="text-muted small">
+                      일자: {{ reservFrom }}
+                      <span class="mx-2">|</span>
+                      방문자수: {{ visitorCount }}
+                    </div>
+                  </div>
+                  <button type="button" class="btn btn-outline-danger btn-sm"
+                          data-action="cancel" data-reservno="{{ reservNo }}">
+                    취소
+                  </button>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted">예약 내역이 없습니다.</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
 </main>
-<!-- Footer-->
+
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+
 <script>
-    const clubNo = "{{ clubno }}";
-    const dateno = "{{ dateno }}"; // 예: "02271" 같은 형태(월일+오전오후코드)
+  const clubNo = "{{ clubno }}";
+  const dateno = "{{ dateno }}"; // "MMDD{1|2}"
 
-    function updateMemberCount() {
-        const select = document.getElementById('member_ids');
-        const count = Array.from(select.selectedOptions).length;
-        document.getElementById('memberCount').textContent = `선택 ${count}명`;
-        return count;
+  // ---------- Members ----------
+  function updateMemberCount() {
+    const select = document.getElementById('member_ids');
+    const count = Array.from(select.selectedOptions).length;
+    document.getElementById('memberCount').textContent = `선택 ${count}명`;
+    return count;
+  }
+
+  function applyMemberView(mode) {
+    const select = document.getElementById('member_ids');
+    const hidePositions = new Set(['회원', '사무장', '이사']);
+    for (const opt of select.options) {
+      const pos = (opt.dataset.position || '').trim();
+      const shouldHide = (mode === 'exec') && hidePositions.has(pos);
+      opt.hidden = shouldHide;
+      if (shouldHide && opt.selected) opt.selected = false;
     }
-
-    function applyMemberView(mode) {
-        const select = document.getElementById('member_ids');
-        const hidePositions = new Set(['회원', '사무장', '이사']);
-        for (const opt of select.options) {
-            const pos = (opt.dataset.position || '').trim();
-            const shouldHide = (mode === 'exec') && hidePositions.has(pos);
-            opt.hidden = shouldHide;
-            if (shouldHide && opt.selected) opt.selected = false;
-        }
-        updateMemberCount();
-    }
-
-    document.getElementById('member_ids').addEventListener('change', updateMemberCount);
-    document.getElementById('viewAll').addEventListener('change', function () {
-        if (this.checked) applyMemberView('all');
-    });
-    document.getElementById('viewExec').addEventListener('change', function () {
-        if (this.checked) applyMemberView('exec');
-    });
-    applyMemberView('exec');
     updateMemberCount();
-    document.getElementById('btnSubmit').addEventListener('click', async function () {
-        const visitTime = document.getElementById('visit_time').value; // "09:00"
-        const memberNos = Array.from(document.getElementById('member_ids').selectedOptions)
-            .map(o => Number(o.value))
-            .filter(Number.isFinite);
-        if (!visitTime) return alert('방문예정시간을 선택해주세요.');
-        if (memberNos.length === 0) return alert('방문 회원을 1명 이상 선택해주세요.');
-        const res = await fetch(`/reg_reserv/${encodeURIComponent(clubNo)}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                dateno,                // 날짜(월/일) 정보
-                visitTime,             // 시간(HH:MM)
-                visitorCount: memberNos.length,
-                memberNos
-            })
-        });
-        if (!res.ok) return alert('신청 실패: ' + await res.text());
-        const data = await res.json(); // { reservNo: ... }
-        alert(`신청 완료! 예약번호: ${data.reservNo}`);
-        location.reload();
-    });
+  }
 
-    async function cancelReservation(reservNo) {
-        if (!confirm(`예약번호 ${reservNo} 를 취소하시겠습니까?`)) return;
+  // ---------- Reservations from DOM ----------
+  function getExistingReservations() {
+    const items = document.querySelectorAll('.list-group-item[data-dateno][data-time][data-reservno]');
+    return Array.from(items).map(el => ({
+      dateno: (el.dataset.dateno || '').trim(),
+      time: (el.dataset.time || '').trim(),      // "09:00"
+      reservNo: Number(el.dataset.reservno)
+    })).filter(x => x.dateno && x.time && Number.isFinite(x.reservNo));
+  }
 
-        const res = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, {
-            method: 'POST'
-        });
+  function makeKey(d, t) { return `${d}__${t}`; }
 
-        if (!res.ok) return alert('취소 실패: ' + await res.text());
+  function hasSameTimeReservation(selectedTime) {
+    const reservs = getExistingReservations();
+    return reservs.find(r => r.dateno === dateno && r.time === selectedTime) || null;
+  }
 
-        const data = await res.json();
-        if (!data.canceled) return alert('취소 처리 실패');
+  function disableReservedTimesForDay() {
+    const reservs = getExistingReservations();
+    const reservedSet = new Set(reservs.map(r => makeKey(r.dateno, r.time)));
 
-        // 목록에서 없애기: 가장 간단/확실
-        location.reload();
+    const sel = document.getElementById('visit_time');
+    for (const opt of sel.options) {
+      const t = (opt.value || '').trim();
+      if (!t) continue;
+      const reserved = reservedSet.has(makeKey(dateno, t));
+      opt.disabled = reserved;
+      if (reserved && opt.selected) opt.selected = false;
     }
-</script>
+  }
 
+  // ---------- API ----------
+  async function cancelReservation(reservNo) {
+    if (!confirm(`예약번호 ${reservNo} 를 취소하시겠습니까?`)) return;
+
+    const res = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, { method: 'POST' });
+    if (!res.ok) return alert('취소 실패: ' + await res.text());
+
+    const data = await res.json();
+    if (!data.canceled) return alert('취소 처리 실패');
+
+    location.reload();
+  }
+
+  async function submitReservation() {
+    const btn = document.getElementById('btnSubmit');
+    const reservMemo = (document.getElementById('reservMemo').value || '').trim();
+    if (btn.dataset.busy === '1') return; // 더블클릭 방지
+
+    const visitTime = document.getElementById('visit_time').value;
+    const memberNos = Array.from(document.getElementById('member_ids').selectedOptions)
+      .map(o => Number(o.value))
+      .filter(Number.isFinite);
+
+    if (!visitTime) return alert('방문예정시간을 선택해주세요.');
+    if (memberNos.length === 0) return alert('방문 회원을 1명 이상 선택해주세요.');
+
+    const hit = hasSameTimeReservation(visitTime);
+    if (hit) {
+      return alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+    }
+
+    try {
+      btn.dataset.busy = '1';
+      btn.disabled = true;
+
+      const res = await fetch(`/reg_reserv/${encodeURIComponent(clubNo)}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ dateno, visitTime, visitorCount: memberNos.length, memberNos, reservMemo })
+      });
+
+      if (!res.ok) return alert('신청 실패: ' + await res.text());
+
+      const data = await res.json();
+      alert(`신청 완료! 예약번호: ${data.reservNo}`);
+      location.reload();
+    } finally {
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+    }
+  }
+
+  // ---------- Wire up ----------
+  document.getElementById('member_ids').addEventListener('change', updateMemberCount);
+  document.getElementById('viewAll').addEventListener('change', function() { if (this.checked) applyMemberView('all'); });
+  document.getElementById('viewExec').addEventListener('change', function() { if (this.checked) applyMemberView('exec'); });
+  document.getElementById('btnSubmit').addEventListener('click', submitReservation);
+
+  document.getElementById('visit_time').addEventListener('change', function() {
+    const hit = hasSameTimeReservation(this.value);
+    if (hit) {
+      alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+      this.value = '';
+    }
+  });
+
+  // 취소 버튼은 이벤트 위임으로 처리(버튼이 여러 개라서 깔끔)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action="cancel"][data-reservno]');
+    if (!btn) return;
+    const reservNo = Number(btn.dataset.reservno);
+    if (!Number.isFinite(reservNo)) return;
+    cancelReservation(reservNo);
+  });
+
+  // 초기화
+  applyMemberView('exec');
+  updateMemberCount();
+  disableReservedTimesForDay();
+</script>
 </body>
 </html>
