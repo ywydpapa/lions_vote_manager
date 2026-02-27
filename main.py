@@ -299,7 +299,7 @@ async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         """)
         await db.execute(query, {
             "now": datetime.now(),
-            "attr": "XXXUPXXXUP",
+            "attr": "XXXCAXXXNC",
             "reservno": reservno,
         })
         await db.commit()
