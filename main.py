@@ -497,31 +497,24 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
 @app.post("/api/eventphotoupload/{eventNo}")
 async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
     if photo.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=415,
-            detail=f"Unsupported content type: {photo.content_type}",
-        )
+        raise HTTPException(status_code=415, detail=f"Unsupported content type: {photo.content_type}")
     ext = EXT_BY_CONTENT_TYPE.get(photo.content_type, "")
-    idx = next_negative_index(eventNo, PHOTO_DIR)
-    filename = f"{eventNo}{idx}{ext}"  # 예: 123-1.jpg, 123-2.jpg ...
-    save_path = PHOTO_DIR / filename
-    while save_path.exists():
-        idx -= 1
-        filename = f"{eventNo}{idx}{ext}"
+    if not ext:
+        raise HTTPException(status_code=415, detail="Unsupported content type (no extension mapping)")
+    idx = 1
+    while True:
+        filename = f"{eventNo}-{idx}{ext}"   # <- 하이픈을 항상 명시
         save_path = PHOTO_DIR / filename
+        if not save_path.exists():
+            break
+        idx += 1
     try:
         with save_path.open("wb") as buffer:
             shutil.copyfileobj(photo.file, buffer)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
     url_path = f"/static/img/event_photos/{filename}"
-    return {
-        "eventNo": eventNo,
-        "filename": filename,
-        "contentType": photo.content_type,
-        "savedPath": str(save_path),
-        "url": url_path,
-    }
+    return {"eventNo": eventNo, "filename": filename, "contentType": photo.content_type, "savedPath": str(save_path), "url": url_path}
 
 
 @app.post("/insert_newcircle")
