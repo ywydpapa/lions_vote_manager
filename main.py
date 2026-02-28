@@ -28,6 +28,8 @@ from sqlalchemy.orm import DeclarativeBase
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
+from fastapi.encoders import jsonable_encoder
+
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
@@ -68,20 +70,16 @@ EXT_BY_CONTENT_TYPE = {
 class SseHub:
     def __init__(self):
         self.queues: set[asyncio.Queue] = set()
-
     def connect(self) -> asyncio.Queue:
         q = asyncio.Queue()
         self.queues.add(q)
         return q
-
     def disconnect(self, q: asyncio.Queue):
         self.queues.discard(q)
-
     async def broadcast(self, event: str, data: dict):
         msg = {"event": event, "data": data}
         for q in list(self.queues):
             await q.put(msg)
-
 hub = SseHub()
 
 
@@ -268,8 +266,7 @@ async def sse_schedule(request: Request):
                 if await request.is_disconnected():
                     break
                 msg = await q.get()
-                payload = json.dumps(msg["data"], ensure_ascii=False)
-
+                payload = json.dumps(jsonable_encoder(msg["data"]), ensure_ascii=False)
                 # SSE 포맷
                 yield f"event: {msg['event']}\n"
                 yield f"data: {payload}\n\n"
