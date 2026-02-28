@@ -133,10 +133,10 @@ async def get_db():
         yield session
 
 
-async def get_reservations(candino:int,db: AsyncSession):
+async def get_reservations(db: AsyncSession):
     try:
-        query = text("SELECT * FROM voteReserv where attrib not like :attpatt and candiNo = :candino")
-        result = await db.execute(query, {"attpatt": "%XXX%", "candino": candino})
+        query = text("select a.*, b.circleName, c.clubName from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsaddr.lionsClub c on a.clubNo = c.clubNo where a.attrib not like :attpatt")
+        result = await db.execute(query, {"attpatt": "%XXX%"})
         reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
         return reserv_list
     except:
@@ -340,50 +340,53 @@ async def success(request: Request):
 @app.get("/view_visitors", response_class=HTMLResponse)
 async def view_visitors(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("view/template_candi.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/candi_view", response_class=HTMLResponse)
 async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/candi_view.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/aide_view", response_class=HTMLResponse)
 async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/aide_view.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/history_view", response_class=HTMLResponse)
 async def view_history(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/history_view.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/vision_view", response_class=HTMLResponse)
 async def view_vision(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/vision_view.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/schedule_today", response_class=HTMLResponse)
 async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/sched_today.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/schedule_week", response_class=HTMLResponse)
 async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino,db)
+    reservs = await get_reservations(db)
     return templates.TemplateResponse("templete/sched_week.html", {"request": request, "reservations": reservs})
+
+
+
 
 
 @app.post("/api/eventphotoupload/{eventNo}")
@@ -517,6 +520,18 @@ async def get_circles(db: AsyncSession = Depends(get_db)):
         ORDER BY circleName
     """))).all()
     return [{"id": r[0], "name": r[1]} for r in rows]
+
+
+@app.get("/api/get_reserv")
+async def get_reserv(db: AsyncSession = Depends(get_db)):
+    try:
+        rows = await get_reservations(db)
+        result = [{"reservNo": row[0], "reservFrom": row[4], "visitCnt": row[7], "reservMemo": row[8], "visitorName": (row[12] or row[13])} for row in rows]
+    except Exception as e:
+        print(e)
+        result = []
+    finally:
+        return {"reservs": result}
 
 
 if __name__ == "__main__":
