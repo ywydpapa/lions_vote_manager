@@ -135,7 +135,7 @@ async def get_db():
 
 async def get_reservations(db: AsyncSession):
     try:
-        query = text("select a.*, b.circleName, c.clubName from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsaddr.lionsClub c on a.clubNo = c.clubNo where a.attrib not like :attpatt")
+        query = text("select a.*, b.circleName, c.clubName from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsaddr.lionsClub c on a.clubNo = c.clubNo where a.attrib not like :attpatt order by a.reservFrom")
         result = await db.execute(query, {"attpatt": "%XXX%"})
         reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
         return reserv_list
