@@ -25,6 +25,9 @@ from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import DeclarativeBase
+from fastapi.responses import StreamingResponse
+import asyncio
+import json
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
@@ -60,6 +63,27 @@ EXT_BY_CONTENT_TYPE = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+
+
+class SseHub:
+    def __init__(self):
+        self.queues: set[asyncio.Queue] = set()
+
+    def connect(self) -> asyncio.Queue:
+        q = asyncio.Queue()
+        self.queues.add(q)
+        return q
+
+    def disconnect(self, q: asyncio.Queue):
+        self.queues.discard(q)
+
+    async def broadcast(self, event: str, data: dict):
+        msg = {"event": event, "data": data}
+        for q in list(self.queues):
+            await q.put(msg)
+
+hub = SseHub()
+
 
 class Base(DeclarativeBase):
     pass
@@ -233,6 +257,26 @@ async def get_circlelist(db: AsyncSession):
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(CIRCLELIST)")
 
+@app.get("/sse/schedule")
+async def sse_schedule(request: Request):
+    q = hub.connect()
+    async def gen():
+        try:
+            # 최초 연결 확인용(옵션)
+            yield "event: connected\ndata: {}\n\n"
+            while True:
+                if await request.is_disconnected():
+                    break
+                msg = await q.get()
+                payload = json.dumps(msg["data"], ensure_ascii=False)
+
+                # SSE 포맷
+                yield f"event: {msg['event']}\n"
+                yield f"data: {payload}\n\n"
+        finally:
+            hub.disconnect(q)
+    return StreamingResponse(gen(), media_type="text/event-stream")
+
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -384,17 +428,42 @@ async def view_vision(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/viewer/schedule_today", response_class=HTMLResponse)
 async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
-    candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("templete/sched_today.html", {"request": request, "reservations": reservs})
+    rows = await get_apireserv(db)
+    result = []
+    for row in rows:
+        dt = row[4]
+        reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
+        result.append({
+            "reservNo": row[0],
+            "reservFrom": reserv_from,   # "2026-03-10T09:00"
+            "visitCnt": row[7],
+            "reservMemo": row[8],
+            "visitorName": (row[12] or row[13]) or "",
+        })
+    return templates.TemplateResponse(
+        "templete/sched_today.html",
+        {"request": request, "reservs": result},
+    )
 
 
 @app.get("/viewer/schedule_week", response_class=HTMLResponse)
 async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
-    candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("templete/sched_week.html", {"request": request, "reservations": reservs})
-
+    rows = await get_apireserv(db)
+    result = []
+    for row in rows:
+        dt = row[4]  # datetime일 가능성
+        reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
+        result.append({
+            "reservNo": row[0],
+            "reservFrom": reserv_from,   # "2026-03-10T09:00"
+            "visitCnt": row[7],
+            "reservMemo": row[8],
+            "visitorName": (row[12] or row[13]) or "",
+        })
+    return templates.TemplateResponse(
+        "templete/sched_week.html",
+        {"request": request, "reservs": result},
+    )
 
 
 
@@ -459,10 +528,8 @@ async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depen
         raise HTTPException(status_code=400, detail="visitorCount와 선택 인원 수가 다릅니다.")
     if payload.visitorCount <= 0:
         raise HTTPException(status_code=400, detail="방문 회원을 1명 이상 선택하세요.")
-
     try:
         reserv_from_dt = dateno_time_to_datetime(payload.dateno, payload.visitTime)
-
         vr = VoteReserv(
             clubNo=clubNo,
             circleNo=None,
@@ -472,12 +539,11 @@ async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depen
         )
         db.add(vr)
         await db.flush()  # reservNo 생성
-
         db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
-
         await db.commit()
+        reserv_dict = {"reservNo": vr.reservNo, "reservFrom": vr.reservFrom, "visitCnt": vr.visitorCount}
+        await hub.broadcast("reserv_created", reserv_dict)
         return RegReservOut(reservNo=vr.reservNo)
-
     except ValueError as ve:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(ve))
@@ -493,10 +559,8 @@ async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Dep
         raise HTTPException(status_code=400, detail="visitorCount와 선택 인원 수가 다릅니다.")
     if payload.visitorCount <= 0:
         raise HTTPException(status_code=400, detail="방문 회원을 1명 이상 선택하세요.")
-
     try:
         reserv_from_dt = dateno_time_to_datetime(payload.dateno, payload.visitTime)
-
         vr = VoteReserv(
             circleNo=circleNo,
             clubNo=None,
@@ -506,12 +570,11 @@ async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Dep
         )
         db.add(vr)
         await db.flush()  # reservNo 생성
-
         db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
-
         await db.commit()
+        reserv_dict = {"reservNo": vr.reservNo, "reservFrom": vr.reservFrom, "visitCnt": vr.visitorCount}
+        await hub.broadcast("reserv_created", reserv_dict)
         return RegReservOut(reservNo=vr.reservNo)
-
     except ValueError as ve:
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(ve))
@@ -519,7 +582,6 @@ async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Dep
         print(e)
         await db.rollback()
         raise HTTPException(status_code=500, detail="DB 저장 중 오류가 발생했습니다.")
-
 
 @app.get("/circles")
 async def get_circles(db: AsyncSession = Depends(get_db)):

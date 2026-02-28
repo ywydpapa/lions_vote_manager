@@ -14,69 +14,39 @@
         </div>
         <div class="row gx-5 justify-content-center">
             <div class="col-lg-11 col-xl-9 col-xxl-8">
-                <div class="schedule-wrap">
-                    <div class="d-flex align-items-end justify-content-between mb-3">
-                        <h2 class="h4 m-0 fw-bolder">3월 10일</h2>
-                        <div class="text-muted small">10:00 ~ 17:00 (10분 단위)</div>
-                    </div>
-                    <div class="card shadow-sm">
-                        <div class="card-body p-0">
-                            <div class="schedule-grid">
-                                <!-- 10:00 ~ 17:00 (10분 단위) -->
-                                <div class="slot"><span class="time">10:00</span></div>
-                                <div class="slot"><span class="time">10:10</span></div>
-                                <div class="slot"><span class="time">10:20</span></div>
-                                <div class="slot"><span class="time">10:30</span></div>
-                                <div class="slot"><span class="time">10:40</span></div>
-                                <div class="slot"><span class="time">10:50</span></div>
+                <div id="scheduleRoot"></div>
+                <style>
+                    .day-card {
+                        margin-bottom: 16px;
+                    }
 
-                                <div class="slot"><span class="time">11:00</span></div>
-                                <div class="slot"><span class="time">11:10</span></div>
-                                <div class="slot"><span class="time">11:20</span></div>
-                                <div class="slot"><span class="time">11:30</span></div>
-                                <div class="slot"><span class="time">11:40</span></div>
-                                <div class="slot"><span class="time">11:50</span></div>
+                    .schedule-grid {
+                        display: grid;
+                        grid-template-columns: 1fr;
+                    }
 
-                                <div class="slot"><span class="time">12:00</span></div>
-                                <div class="slot"><span class="time">12:10</span></div>
-                                <div class="slot"><span class="time">12:20</span></div>
-                                <div class="slot"><span class="time">12:30</span></div>
-                                <div class="slot"><span class="time">12:40</span></div>
-                                <div class="slot"><span class="time">12:50</span></div>
+                    .slot {
+                        border-top: 1px solid #eef0f3;
+                        padding: 10px 14px;
+                        background: #fff;
+                        min-height: 44px;
+                    }
 
-                                <div class="slot"><span class="time">13:00</span></div>
-                                <div class="slot"><span class="time">13:10</span></div>
-                                <div class="slot"><span class="time">13:20</span></div>
-                                <div class="slot"><span class="time">13:30</span></div>
-                                <div class="slot"><span class="time">13:40</span></div>
-                                <div class="slot"><span class="time">13:50</span></div>
+                    .slot:nth-child(2n) {
+                        background: #fafbfc;
+                    }
 
-                                <div class="slot"><span class="time">14:00</span></div>
-                                <div class="slot"><span class="time">14:10</span></div>
-                                <div class="slot"><span class="time">14:20</span></div>
-                                <div class="slot"><span class="time">14:30</span></div>
-                                <div class="slot"><span class="time">14:40</span></div>
-                                <div class="slot"><span class="time">14:50</span></div>
+                    .slot:first-child {
+                        border-top: 0;
+                    }
 
-                                <div class="slot"><span class="time">15:00</span></div>
-                                <div class="slot"><span class="time">15:10</span></div>
-                                <div class="slot"><span class="time">15:20</span></div>
-                                <div class="slot"><span class="time">15:30</span></div>
-                                <div class="slot"><span class="time">15:40</span></div>
-                                <div class="slot"><span class="time">15:50</span></div>
+                    .time {
+                        font-weight: 700;
+                        color: #495057;
+                        font-variant-numeric: tabular-nums;
+                    }
+                </style>
 
-                                <div class="slot"><span class="time">16:00</span></div>
-                                <div class="slot"><span class="time">16:10</span></div>
-                                <div class="slot"><span class="time">16:20</span></div>
-                                <div class="slot"><span class="time">16:30</span></div>
-                                <div class="slot"><span class="time">16:40</span></div>
-                                <div class="slot"><span class="time">16:50</span></div>
-
-                                <div class="slot"><span class="time">17:00</span></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <style>
                     /* 컨테이너 폭(가로 전체)로 꽉 차게 */
                     .schedule-wrap {
@@ -119,5 +89,110 @@
 <!-- Footer-->
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+
+
+<script>
+  const payload = { reservs: {{ reservs | tojson }} };
+
+  const START_HOUR = 9;
+  const END_HOUR = 18;
+  const STEP_MIN = 20;
+
+  const pad2 = (n) => String(n).padStart(2, '0');
+  const ymd = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const hm = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const koDayTitle = (d) => `${d.getMonth()+1}월 ${d.getDate()}일`;
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+      .replaceAll('"','&quot;').replaceAll("'","&#039;");
+  }
+
+  function floorToStep(date, stepMin) {
+    const d = new Date(date);
+    const m = d.getMinutes();
+    d.setMinutes(m - (m % stepMin), 0, 0);
+    return d;
+  }
+
+  // === (1) 파싱 ===
+  const all = (payload.reservs ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+
+  // === (2) 오늘 날짜키 ===
+  const todayKey = ymd(new Date());
+
+  // === (3) 오늘 것만 필터 ===
+  const reservs = all.filter(r => ymd(r._dt) === todayKey);
+
+  // === 이하 로직은 동일 ===
+  const groups = new Map();
+  for (const r of reservs) {
+    const key = ymd(r._dt);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  const days = Array.from(groups.keys()).sort();
+  const root = document.getElementById('scheduleRoot');
+
+  if (days.length === 0) {
+    root.innerHTML = `<div class="text-muted p-4">오늘 예약이 없습니다.</div>`;
+  } else {
+    root.innerHTML = days.map(dayKey => {
+      const dayDate = new Date(dayKey + 'T00:00:00');
+      const list = groups.get(dayKey);
+
+      const slotMap = new Map();
+      for (const r of list) {
+        const floored = floorToStep(r._dt, STEP_MIN);
+        const slotKey = `${ymd(floored)} ${hm(floored)}`;
+        if (!slotMap.has(slotKey)) slotMap.set(slotKey, []);
+        slotMap.get(slotKey).push(r);
+      }
+
+      const start = new Date(dayKey + `T${pad2(START_HOUR)}:00:00`);
+      const end   = new Date(dayKey + `T${pad2(END_HOUR)}:00:00`);
+
+      const slots = [];
+      for (let t = new Date(start); t < end; t = new Date(t.getTime() + STEP_MIN * 60000)) {
+        const key = `${ymd(t)} ${hm(t)}`;
+        const items = slotMap.get(key) ?? [];
+
+        const lines = items.map(r =>
+          `<div class="small">
+             <span class="fw-semibold">${escapeHtml(r.visitorName)}</span>
+             <span class="text-muted">(${r.visitCnt}명)</span>
+           </div>`
+        ).join('');
+
+        slots.push(`
+          <div class="slot">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="time">${hm(t)}</div>
+              <div class="text-end" style="min-width:70%">
+                ${lines || `<div class="text-muted small">-</div>`}
+              </div>
+            </div>
+          </div>
+        `);
+      }
+
+      return `
+        <div class="card shadow-sm day-card mb-3">
+          <div class="card-header bg-white fw-bolder">오늘 (${koDayTitle(dayDate)})</div>
+          <div class="card-body p-0">
+            <div class="schedule-grid">${slots.join('')}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  const es = new EventSource("/sse/schedule");
+  es.addEventListener("reserv_created", (e) => {
+    location.reload();
+  });
+</script>
+
 </body>
 </html>
