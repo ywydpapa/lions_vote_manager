@@ -533,7 +533,6 @@ async def get_reserv(db: AsyncSession = Depends(get_db)):
     finally:
         return {"reservs": result}
 
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
