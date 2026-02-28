@@ -200,6 +200,21 @@ async def get_circle_reserv(circleno: int, db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
 
 
+async def get_reserv_dtl(reservno: int, db: AsyncSession):
+    query = text("""select a.reservNo, a.reservFrom, a.visitorCount, b.circleName, c.clubName, a.reservMemo from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsClub c on a.clubNo = c.clubNo where reservNo = :reservno""")
+    result = await db.execute(query, {"reservno": reservno})
+    row = result.fetchone()
+    result = {"reservNo": row[0], "reservFrom": row[1], "visitCnt": row[2], "reservMemo": row[5], "visitorName": (row[3] or row[4])}
+    return result
+
+
+async def get_visitors(reservno: int, db: AsyncSession):
+    query = text("""select a.memberNo,b.memberName,d.clubName, c.rankTitlekor, a.rightYN, a.visitMemo from visitMembers a left join lionsMember b on a.memberNo = b.memberNo left join lionsRank c on c.rankNo = b.rankNo left join lionsClub d on d.clubNo = b.clubNo where reservNo = :reservno""")
+    result = await db.execute(query, {"reservno": reservno})
+    visitors = result.fetchall()
+    return visitors
+
+
 async def get_clubmembers(clubno:int,db: AsyncSession):
     try:
         query = text("SELECT a.memberNo, a.memberName, a.rankNo, b.rankTitlekor FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo where a.clubNo = :clubno")
@@ -399,8 +414,9 @@ async def view_visitors(request: Request, db: AsyncSession = Depends(get_db)):
 @app.get("/view_reservdtl/{reservno}", response_class=HTMLResponse)
 async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reservations": reservs})
+    reserv_dtl = await get_reserv_dtl(reservno, db)
+    visitors = await get_visitors(reservno, db)
+    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors})
 
 
 @app.get("/viewer/candi_view", response_class=HTMLResponse)
@@ -469,8 +485,6 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
         "templete/sched_week.html",
         {"request": request, "reservs": result},
     )
-
-
 
 
 @app.post("/api/eventphotoupload/{eventNo}")
