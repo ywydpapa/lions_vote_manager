@@ -260,7 +260,6 @@ async def sse_schedule(request: Request):
     q = hub.connect()
     async def gen():
         try:
-            # 최초 연결 확인용(옵션)
             yield "event: connected\ndata: {}\n\n"
             while True:
                 if await request.is_disconnected():
@@ -356,6 +355,8 @@ async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db))
             "reservno": reservno,
         })
         await db.commit()
+        reserv_dict = {"reservNo": reservno, "reservFrom":'' , "visitCnt": ''}
+        await hub.broadcast("reserv_created", reserv_dict)
         return JSONResponse({"canceled": True})
     except Exception as e:
         return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
@@ -393,6 +394,13 @@ async def view_visitors(request: Request, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
     reservs = await get_reservations(candino, db)
     return templates.TemplateResponse("view/template_candi.html", {"request": request, "reservations": reservs})
+
+
+@app.get("/view_reservdtl/{reservno}", response_class=HTMLResponse)
+async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    reservs = await get_reservations(candino, db)
+    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reservations": reservs})
 
 
 @app.get("/viewer/candi_view", response_class=HTMLResponse)

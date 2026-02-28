@@ -46,9 +46,8 @@
                         color: #495057;
                         font-variant-numeric: tabular-nums;
                     }
-                </style>
+                    .slot a:hover { text-decoration: underline !important; }
 
-                <style>
                     /* 컨테이너 폭(가로 전체)로 꽉 차게 */
                     .schedule-wrap {
                         width: 100%;
@@ -103,6 +102,12 @@
   const hm = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   const koDayTitle = (d) => `${d.getMonth()+1}월 ${d.getDate()}일`;
 
+    function reservDtlUrl(reservNo) {
+    const n = Number(reservNo);
+    if (!Number.isFinite(n)) return '#';
+    return `/view_reservdtl/${n}`;
+  }
+
   function escapeHtml(s) {
     return String(s ?? '')
       .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
@@ -135,6 +140,7 @@
     root.innerHTML = days.map(dayKey => {
       const dayDate = new Date(dayKey + 'T00:00:00');
       const list = groups.get(dayKey);
+      const count = list.length;
 
       // 슬롯키(YYYY-MM-DD HH:mm) -> 예약들
       const slotMap = new Map();
@@ -153,12 +159,14 @@
         const key = `${ymd(t)} ${hm(t)}`;
         const items = slotMap.get(key) ?? [];
 
-        const lines = items.map(r =>
-          `<div class="small">
-             <span class="fw-semibold">${escapeHtml(r.visitorName)}</span>
-             <span class="text-muted">(${r.visitCnt}명)</span>
-           </div>`
-        ).join('');
+          const lines = items.map(r => `
+          <a class="d-block small text-decoration-none py-1"
+             href="${reservDtlUrl(r.reservNo)}">
+            <span class="fw-semibold text-body">${escapeHtml(r.visitorName)}</span>
+            <span class="text-muted">(${r.visitCnt}명)</span>
+          </a>
+        `).join('');
+
 
         slots.push(`
           <div class="slot">
@@ -175,18 +183,18 @@
       return `
         <div class="card shadow-sm day-card mb-3">
           <div class="card-header bg-white p-0">
-            <button
-              class="btn btn-link w-100 text-start fw-bolder text-decoration-none px-3 py-2 day-toggle"
+                        <button
+              class="btn btn-link w-100 text-start fw-bolder text-decoration-none px-3 py-2 day-toggle d-flex justify-content-between align-items-center"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#${collapseId}"
               aria-expanded="false"
               aria-controls="${collapseId}"
             >
-              ${koDayTitle(dayDate)}
+              <span>${koDayTitle(dayDate)}</span>
+              <span class="badge bg-secondary">${count}건</span>
             </button>
           </div>
-
           <div id="${collapseId}" class="collapse">
             <div class="card-body p-0">
               <div class="schedule-grid">${slots.join('')}</div>

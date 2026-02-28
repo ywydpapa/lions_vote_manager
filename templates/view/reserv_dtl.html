@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">예약 상세 정보</span></h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-11 col-xl-9 col-xxl-8">
+                <div class="cards-wrap">
+
+                </div>
+            </div>
+            <style>
+                .cards-wrap {
+                    padding-top: 10vh;
+                    padding-bottom: 10vh;
+                    display: flex;
+                    justify-content: center;
+                }
+
+                .cards-grid {
+                    width: 100%;
+                    gap: clamp(1rem, 5vh, 10vh); /* 카드 사이 간격 */
+                }
+
+                .card-link {
+                    text-decoration: none;
+                    border: 0;
+                    border-radius: 1rem;
+                    background: #fff;
+                    box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
+                    min-height: clamp(140px, 22vh, 240px);
+                }
+            </style>
+        </div>
+    </div>
+</main>
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+</body>
+</html>
