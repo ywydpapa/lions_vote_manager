@@ -1,3 +1,6 @@
+from pathlib import Path
+from fastapi import APIRouter, Request
+from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File, Body
 from fastapi.responses import JSONResponse
 from datetime import datetime
@@ -416,7 +419,11 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     candino = int(os.getenv("candiNo"))
     reserv_dtl = await get_reserv_dtl(reservno, db)
     visitors = await get_visitors(reservno, db)
-    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors})
+    photo_dir = Path("static/img/event_photos")
+    files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
+    # 템플릿에서 바로 쓸 수 있게 URL로 변환
+    event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
+    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos})
 
 
 @app.get("/viewer/candi_view", response_class=HTMLResponse)
