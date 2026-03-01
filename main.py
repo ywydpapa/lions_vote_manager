@@ -341,7 +341,7 @@ async def favicon():
 async def login_form(request: Request):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/noname", status_code=303)
-    return templates.TemplateResponse("login/login.html", {"request": request})
+    return RedirectResponse(url="/success", status_code=303)
 
 
 @app.get("/login", response_class=HTMLResponse)
