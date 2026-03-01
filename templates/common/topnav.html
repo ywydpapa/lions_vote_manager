@@ -6,11 +6,11 @@
                 class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 small fw-bolder">
-                <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="/reservation">Reservation</a></li>
-                <li class="nav-item"><a class="nav-link" href="/history">Histories</a></li>
-                <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
-                {% if userNO != none %}<li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>{% endif %}
+                <li class="nav-item"><a class="nav-link" href="/">홈화면</a></li>
+                <li class="nav-item"><a class="nav-link" href="/reservation">방문예약</a></li>
+                <li class="nav-item"><a class="nav-link" href="/history">후보프로필</a></li>
+                <li class="nav-item"><a class="nav-link" href="/contact">문의사항</a></li>
+                {% if session.get("vote_user_No") %}<li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>{% endif %}
             </ul>
         </div>
     </div>

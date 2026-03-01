@@ -1,7 +1,7 @@
 from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
-from fastapi import UploadFile, File, Body
+from fastapi import UploadFile, File, Body, Query
 from fastapi.responses import JSONResponse
 from datetime import datetime
 import shutil
@@ -32,6 +32,8 @@ from fastapi.responses import StreamingResponse
 import asyncio
 import json
 from fastapi.encoders import jsonable_encoder
+from PIL import Image, ImageFont, ImageDraw
+import io
 
 
 dotenv.load_dotenv()
@@ -55,10 +57,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="templates", context_processors=[lambda request: {"session": request.session},],)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/thumbnails", StaticFiles(directory="static/img/members/"), name="thumbnails")
-THUMBNAIL_DIR = "./static/img/members"
+MEMBERPHOTO_DIR = "./static/img/members"
 BASE_DIR = Path(__file__).resolve().parent
 # 업로드 저장 경로(원하는 위치로 변경 가능)
 PHOTO_DIR = Path("./static/img/event_photos")
@@ -120,6 +122,44 @@ class VisitMembers(Base):
     visitNo: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     reservNo: Mapped[int] = mapped_column(ForeignKey("voteReserv.reservNo"), nullable=False)
     memberNo: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+async def resize_image_if_needed(contents: bytes, max_bytes: int = 314572) -> bytes:
+    if len(contents) <= max_bytes:
+        return contents
+    image = Image.open(io.BytesIO(contents))
+    format = image.format if image.format else 'JPEG'
+    quality = 85  # JPEG의 경우
+    for trial in range(10):
+        buffer = io.BytesIO()
+        save_kwargs = {'format': format}
+        if format.upper() in ['JPEG', 'JPG']:
+            save_kwargs['quality'] = quality
+            save_kwargs['optimize'] = True
+        image.save(buffer, **save_kwargs)
+        data = buffer.getvalue()
+        if len(data) <= max_bytes:
+            return data
+        if format.upper() in ['JPEG', 'JPG'] and quality > 30:
+            quality -= 10
+        else:
+            w, h = image.size
+            image = image.resize((int(w * 0.9), int(h * 0.9)), Image.LANCZOS)
+    return data
+
+
+async def save_memberPhoto(image_data: bytes, memberno: int, size=(200, 300)):
+    # 디렉토리가 없으면 생성
+    os.makedirs(MEMBERPHOTO_DIR, exist_ok=True)
+    # 원본 이미지를 Pillow로 열기
+    image = Image.open(io.BytesIO(image_data))
+    # 썸네일 생성
+    image.thumbnail(size)
+    # 저장 경로
+    thumbnail_path = os.path.join(MEMBERPHOTO_DIR, f"mphoto_{memberno}.png")
+    # 썸네일 저장
+    image.save(thumbnail_path, format="PNG")
+    return thumbnail_path
 
 
 def dateno_time_to_datetime(dateno: str, visit_time: str) -> datetime:
@@ -299,31 +339,57 @@ async def favicon():
 
 @app.get("/", response_class=HTMLResponse)
 async def login_form(request: Request):
-    if request.session.get("vote_user_No"):
-        return RedirectResponse(url="/success", status_code=303)
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/noname", status_code=303)
     return templates.TemplateResponse("login/login.html", {"request": request})
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_get(request: Request, next: str = Query(default="/success")):
+    return templates.TemplateResponse("login/login.html", {"request": request, "next": next})
 
 
 @app.post("/login")
 async def login_post(
-        request: Request,
-        username: str = Form(...),
-        password: str = Form(...),
-        db: AsyncSession = Depends(get_db)
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...),
+    next: str = Form(default="/success"),
+    db: AsyncSession = Depends(get_db),
 ):
-    query = text(
-        "SELECT userNo, userName, userRole FROM voteUser WHERE userId = :username AND userPasswd = password(:password)")
+    query = text("""
+        SELECT userNo, userName, userRole
+        FROM voteUser
+        WHERE userId = :username AND userPasswd = password(:password)
+    """)
     result = await db.execute(query, {"username": username, "password": password})
     user = result.fetchone()
-    query2 = text("UPDATE voteUser SET loginStamp = :now , logoutStamp = NULL WHERE userNo = :userNo")
+
+    if user is None:
+        # 로그인 실패 시에도 next를 다시 넘겨줘야 화면에서 유지됨
+        return templates.TemplateResponse(
+            "login/login.html",
+            {"request": request, "error": "Invalid credentials", "next": next},
+            status_code=401,
+        )
+
+    query2 = text("""
+        UPDATE voteUser
+        SET loginStamp = :now, logoutStamp = NULL
+        WHERE userNo = :userNo
+    """)
     await db.execute(query2, {"now": datetime.now(), "userNo": user[0]})
     await db.commit()
-    if user is None:
-        return templates.TemplateResponse("login/login.html", {"request": request, "error": "Invalid credentials"})
+
     request.session["vote_user_No"] = user[0]
     request.session["vote_user_Name"] = user[1]
     request.session["vote_user_Role"] = user[2]
-    return RedirectResponse(url="/success", status_code=303)
+
+    # next가 외부 URL이면 오픈리다이렉트 위험 -> 내부 경로만 허용
+    if not next.startswith("/"):
+        next = "/success"
+
+    return RedirectResponse(url=next, status_code=303)
 
 
 @app.get("/logout")
@@ -403,19 +469,30 @@ async def history(request: Request):
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
     return templates.TemplateResponse(
-        "index/index.html", {"request": request, "user_No": request.session.get("user_No")}
+        "index/index.html", {"request": request, "session": dict(request.session)}
+    )
+
+
+@app.get("/noname", response_class=HTMLResponse)
+async def success(request: Request):
+    return templates.TemplateResponse(
+        "index/anoym.html", {"request": request, "user_No": request.session.get("user_No")}
     )
 
 
 @app.get("/view_visitors", response_class=HTMLResponse)
 async def view_visitors(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     candino = int(os.getenv("candiNo"))
     reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("view/template_candi.html", {"request": request, "reservations": reservs})
+    return templates.TemplateResponse("view/template_candi.html", {"request": request, "session": dict(request.session), "reservations": reservs})
 
 
 @app.get("/view_reservdtl/{reservno}", response_class=HTMLResponse)
 async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     candino = int(os.getenv("candiNo"))
     reserv_dtl = await get_reserv_dtl(reservno, db)
     visitors = await get_visitors(reservno, db)
@@ -426,8 +503,17 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos})
 
 
+@app.get("/view_reservsimple/{reservno}", response_class=HTMLResponse)
+async def view_visitorssimple(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    reserv_dtl = await get_reserv_dtl(reservno, db)
+    visitors = await get_visitors(reservno, db)
+    return templates.TemplateResponse("view/reserv_simple.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors})
+
+
 @app.get("/viewer/candi_view", response_class=HTMLResponse)
 async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     candino = int(os.getenv("candiNo"))
     reservs = await get_reservations(candino, db)
     return templates.TemplateResponse("templete/candi_view.html", {"request": request, "reservations": reservs})
@@ -435,6 +521,8 @@ async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/viewer/aide_view", response_class=HTMLResponse)
 async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     candino = int(os.getenv("candiNo"))
     reservs = await get_reservations(candino, db)
     return templates.TemplateResponse("templete/aide_view.html", {"request": request, "reservations": reservs})
@@ -456,6 +544,8 @@ async def view_vision(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/viewer/schedule_today", response_class=HTMLResponse)
 async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     rows = await get_apireserv(db)
     result = []
     for row in rows:
@@ -476,6 +566,8 @@ async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
 
 @app.get("/viewer/schedule_week", response_class=HTMLResponse)
 async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
     rows = await get_apireserv(db)
     result = []
     for row in rows:
