@@ -244,10 +244,18 @@ async def get_circle_reserv(circleno: int, db: AsyncSession):
 
 
 async def get_reserv_dtl(reservno: int, db: AsyncSession):
-    query = text("""select a.reservNo, a.reservFrom, a.visitorCount, b.circleName, c.clubName, a.reservMemo from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsClub c on a.clubNo = c.clubNo where reservNo = :reservno""")
+    query = text("""select a.reservNo, a.reservFrom, a.visitorCount, b.circleName, c.clubName, a.reservMemo, a.clubNo, a.circleNo from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsClub c on a.clubNo = c.clubNo where reservNo = :reservno""")
     result = await db.execute(query, {"reservno": reservno})
     row = result.fetchone()
-    result = {"reservNo": row[0], "reservFrom": row[1], "visitCnt": row[2], "reservMemo": row[5], "visitorName": (row[3] or row[4])}
+    result = {"reservNo": row[0], "reservFrom": row[1], "visitCnt": row[2], "reservMemo": row[5], "visitorName": (row[3] or row[4]), "clubNo": row[6], "circleNo": row[7]}
+    return result
+
+
+async def get_club_dtl(clubno: int, db: AsyncSession):
+    query = text("""select * from lionsClub where clubNo = :clubno""")
+    result = await db.execute(query, {"clubno": clubno})
+    row = result.fetchone()
+    result = {"clubNo": row[0], "clubName": row[1], "estDate": row[2], "regionNo": row[3]}
     return result
 
 
@@ -503,6 +511,44 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos})
 
 
+@app.get("/view_reservdtl_candi/{reservno}", response_class=HTMLResponse)
+async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    candino = int(os.getenv("candiNo"))
+    reserv_dtl = await get_reserv_dtl(reservno, db)
+    circleno = reserv_dtl["circleNo"]
+    clubno = reserv_dtl["clubNo"]
+    if clubno :
+        clubdtl = await get_club_dtl(clubno, db)
+    if circleno :
+        clubdtl = []
+    visitors = await get_visitors(reservno, db)
+    photo_dir = Path("static/img/event_photos")
+    files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
+    event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
+    return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl})
+
+
+@app.get("/view_reservdtl_aide/{reservno}", response_class=HTMLResponse)
+async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    candino = int(os.getenv("candiNo"))
+    reserv_dtl = await get_reserv_dtl(reservno, db)
+    circleno = reserv_dtl["circleNo"]
+    clubno = reserv_dtl["clubNo"]
+    if clubno :
+        clubdtl = await get_club_dtl(clubno, db)
+    if circleno :
+        clubdtl = []
+    visitors = await get_visitors(reservno, db)
+    photo_dir = Path("static/img/event_photos")
+    files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
+    event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
+    return templates.TemplateResponse("view/reserv_dtl_aide.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl})
+
+
 @app.get("/view_reservsimple/{reservno}", response_class=HTMLResponse)
 async def view_visitorssimple(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
     reserv_dtl = await get_reserv_dtl(reservno, db)
@@ -514,18 +560,44 @@ async def view_visitorssimple(request: Request,reservno:int ,db: AsyncSession = 
 async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("templete/candi_view.html", {"request": request, "reservations": reservs})
+    rows = await get_apireserv(db)
+    result = []
+    for row in rows:
+        dt = row[4]
+        reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
+        result.append({
+            "reservNo": row[0],
+            "reservFrom": reserv_from,  # "2026-03-10T09:00"
+            "visitCnt": row[7],
+            "reservMemo": row[8],
+            "visitorName": (row[12] or row[13]) or "",
+        })
+    return templates.TemplateResponse(
+        "templete/candi_view.html",
+        {"request": request, "reservs": result},
+    )
 
 
 @app.get("/viewer/aide_view", response_class=HTMLResponse)
 async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    candino = int(os.getenv("candiNo"))
-    reservs = await get_reservations(candino, db)
-    return templates.TemplateResponse("templete/aide_view.html", {"request": request, "reservations": reservs})
+    rows = await get_apireserv(db)
+    result = []
+    for row in rows:
+        dt = row[4]
+        reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
+        result.append({
+            "reservNo": row[0],
+            "reservFrom": reserv_from,  # "2026-03-10T09:00"
+            "visitCnt": row[7],
+            "reservMemo": row[8],
+            "visitorName": (row[12] or row[13]) or "",
+        })
+    return templates.TemplateResponse(
+        "templete/aide_view.html",
+        {"request": request, "reservs": result},
+    )
 
 
 @app.get("/viewer/history_view", response_class=HTMLResponse)
