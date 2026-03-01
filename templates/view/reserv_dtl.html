@@ -241,9 +241,17 @@
                 {% if event_photos and event_photos|length > 0 %}
                 <div class="photos-grid">
                     {% for url in event_photos %}
-                    <a class="photo-thumb" href="{{ url }}" target="_blank" rel="noopener">
+                    <button
+                            type="button"
+                            class="photo-thumb"
+                            data-photo="{{ url }}"
+                            data-reservno="{{ reserv.reservNo }}"
+                            onclick="openScribe(this)"
+                            style="padding:0; cursor:pointer;"
+                            aria-label="방명록 인쇄용으로 열기"
+                    >
                         <img src="{{ url }}" alt="event photo" loading="lazy">
-                    </a>
+                    </button>
                     {% endfor %}
                 </div>
                 {% else %}
@@ -255,5 +263,14 @@
 </main>
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+<script>
+    function openScribe(el) {
+        const photo = el.getAttribute('data-photo');
+        const reservno = el.getAttribute('data-reservno');
+        const url = '/scribe01?reservno=' + encodeURIComponent(reservno)
+            + '&photo=' + encodeURIComponent(photo);
+        window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
+    }
+</script>
 </body>
 </html>

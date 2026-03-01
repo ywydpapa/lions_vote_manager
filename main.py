@@ -716,6 +716,22 @@ async def get_reserv(db: AsyncSession = Depends(get_db)):
     finally:
         return {"reservs": result}
 
+
+@app.get("/scribe01", response_class=HTMLResponse)
+async def scribe01(
+    request: Request,
+    reservno: int = Query(...),
+    photo: str = Query(default=""),
+    db: AsyncSession = Depends(get_db),
+):
+    if not photo.startswith("/static/"):
+        photo = "/static/img/event_photos/default.jpg"
+    reserv = await get_reserv_dtl(reservno, db)
+    return templates.TemplateResponse(
+        "templete/scribe01.html",
+        {"request": request, "photo_url": photo, "reserv": reserv},
+    )
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
