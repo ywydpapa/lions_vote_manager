@@ -68,9 +68,9 @@
                                                     <div class="mb-2 text-muted">
                                                         선택 구간:
                                                         {% if ap == '오전' %}
-                                                            오전 09:00 ~ 12:00 (20분 간격)
+                                                            오전 09:00 ~ 12:00 (30분 간격)
                                                         {% elif ap == '오후' %}
-                                                            오후 13:00 ~ 17:00 (20분 간격)
+                                                            오후 13:00 ~ 17:00 (30분 간격)
                                                         {% else %}
                                                             (오전/오후 정보 없음)
                                                         {% endif %}
@@ -81,7 +81,7 @@
                                                             required>
                                                         {% if ap == '오전' %}
                                                             {% for h in range(9, 12) %}
-                                                                {% for m in [0,20,40] %}
+                                                                {% for m in [0,30] %}
                                                                     {% set mm = "%02d"|format(m) %}
                                                                     <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
                                                                 {% endfor %}
@@ -89,7 +89,7 @@
                                                             <option value="12:00">12:00</option>
                                                         {% elif ap == '오후' %}
                                                             {% for h in range(13, 17) %}
-                                                                {% for m in [0,20,40] %}
+                                                                {% for m in [0,30] %}
                                                                     {% set mm = "%02d"|format(m) %}
                                                                     <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
                                                                 {% endfor %}
@@ -101,7 +101,7 @@
                                                         {% endif %}
                                                     </select>
                                                     <div class="form-text mt-2">
-                                                        20분 단위로 선택됩니다.
+                                                        30분 단위로 선택됩니다.
                                                     </div>
                                                 </div>
                                             </div>
