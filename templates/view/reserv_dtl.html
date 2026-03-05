@@ -285,13 +285,11 @@
                     </button>
                     {% endfor %}
                 </div>
-
                 <!-- 추가: 선택된 사진과 문구 입력창이 나타날 영역 -->
                 <div id="selected-photos-container" class="mt-4"></div>
-
                 <div class="text-end mt-3">
                     <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
-                        선택한 사진으로 방명록 열기 (0/2)
+                        선택한 사진으로 방문기념 액자생성 (0/2)
                     </button>
                 </div>
                 {% else %}
@@ -310,6 +308,9 @@
     const maxSelect = 2;
     const reservNo = "{{ reserv.reservNo }}";
 
+    // 추가: 기본 출력 문구 설정
+    const defaultPhrase = '지구 제2부총재 후보 전희충 선거사무소 방문기념';
+
     function togglePhotoSelection(el) {
         const photoUrl = el.getAttribute('data-photo');
 
@@ -322,7 +323,8 @@
                 return;
             }
             el.classList.add('selected');
-            selectedPhotos.push({ url: photoUrl, phrase: '' });
+            // 수정됨: 사진을 선택할 때 빈 문자열('') 대신 기본 문구(defaultPhrase)를 넣습니다.
+            selectedPhotos.push({ url: photoUrl, phrase: defaultPhrase });
         }
 
         renderSelectedPhotos();
@@ -350,7 +352,7 @@
         const btn = document.getElementById('printBtn');
         if (btn) {
             btn.disabled = selectedPhotos.length === 0;
-            btn.innerText = `선택한 사진으로 방명록 열기 (${selectedPhotos.length}/${maxSelect})`;
+            btn.innerText = `선택한 사진으로 방문기념 액자생성 (${selectedPhotos.length}/${maxSelect})`;
         }
     }
 
@@ -364,15 +366,14 @@
             alert('사진을 선택해주세요.');
             return;
         }
-
         // 다중 파라미터 방식으로 전송 (?photo=url1&phrase=문구1&photo=url2&phrase=문구2)
         let url = `/scribe01?reservno=${encodeURIComponent(reservNo)}`;
         selectedPhotos.forEach(p => {
             url += `&photo=${encodeURIComponent(p.url)}&phrase=${encodeURIComponent(p.phrase)}`;
         });
-
         window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
     }
 </script>
+
 </body>
 </html>
