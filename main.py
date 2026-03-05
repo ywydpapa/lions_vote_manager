@@ -628,6 +628,7 @@ async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
+            "attrib": row[11],
         })
     return templates.TemplateResponse(
         "templete/candi_view.html",
@@ -650,6 +651,7 @@ async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
+            "attrib": row[11],
         })
     return templates.TemplateResponse(
         "templete/aide_view.html",
@@ -708,6 +710,7 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
+            "attrib": row[11],
         })
     return templates.TemplateResponse(
         "templete/sched_week.html",

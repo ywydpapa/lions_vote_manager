@@ -90,9 +90,8 @@
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
 
-
 <script>
-    const payload = { reservs: {{ reservs | tojson }} };
+  const payload = { reservs: {{ reservs | tojson }} };
   const START_HOUR = 9;
   const END_HOUR = 18;
   const STEP_MIN = 30;
@@ -102,7 +101,7 @@
   const hm = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
   const koDayTitle = (d) => `${d.getMonth()+1}월 ${d.getDate()}일`;
 
-    function reservDtlUrl(reservNo) {
+  function reservDtlUrl(reservNo) {
     const n = Number(reservNo);
     if (!Number.isFinite(n)) return '#';
     return `/view_reservdtl/${n}`;
@@ -135,7 +134,7 @@
   const root = document.getElementById('scheduleRoot');
 
   if (days.length === 0) {
-    root.innerHTML = `<div class="text-muted p-4">예약이 없습니다.</div>`;
+    root.innerHTML = `<div class="text-muted p-4 text-center">예약이 없습니다.</div>`;
   } else {
     root.innerHTML = days.map(dayKey => {
       const dayDate = new Date(dayKey + 'T00:00:00');
@@ -159,31 +158,53 @@
         const key = `${ymd(t)} ${hm(t)}`;
         const items = slotMap.get(key) ?? [];
 
-          const lines = items.map(r => `
-          <a class="d-block small text-decoration-none py-1"
-             href="${reservDtlUrl(r.reservNo)}">
-            <span class="fw-semibold text-body">${escapeHtml(r.visitorName)}</span>
-            <span class="text-muted">(${r.visitCnt}명)</span>
-          </a>
-        `).join('');
+        let contentHtml = '';
 
+        if (items.length === 0) {
+          // 예약이 없을 때
+          contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
+        } else {
+          // 완료된 예약과 예정된 예약 분리
+          const doneItems = items.filter(r => r.attrib === '1DONE1DONE');
+          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE');
+
+          // 예약 목록을 HTML로 변환하는 헬퍼 함수
+          const renderLines = (arr, isDone) => arr.map(r => `
+            <a class="d-block small text-decoration-none py-1 text-${isDone ? 'start' : 'end'}"
+               href="${reservDtlUrl(r.reservNo)}">
+              <span class="fw-semibold ${isDone ? 'text-success' : 'text-body'}">${escapeHtml(r.visitorName)}</span>
+              <span class="text-muted">(${r.visitCnt}명)</span>
+            </a>
+          `).join('');
+
+          // 레이아웃: 왼쪽(완료), 오른쪽(예정)
+          contentHtml = `
+            <div class="w-50 px-2 border-end" style="border-color: #eef0f3 !important;">
+              ${renderLines(doneItems, true)}
+            </div>
+            <div class="w-50 px-2">
+              ${renderLines(pendingItems, false)}
+            </div>
+          `;
+        }
 
         slots.push(`
           <div class="slot">
-            <div class="d-flex justify-content-between align-items-start">
-              <div class="time">${hm(t)}</div>
-              <div class="text-end" style="min-width:70%">
-                ${lines || `<div class="text-muted small">-</div>`}
+            <div class="d-flex w-100 align-items-start">
+              <div class="time" style="width: 60px; flex-shrink: 0;">${hm(t)}</div>
+              <div class="flex-grow-1 d-flex justify-content-end">
+                ${contentHtml}
               </div>
             </div>
           </div>
         `);
       }
-            const collapseId = `day_${dayKey.replaceAll('-', '')}`; // 예: day_20260310
+
+      const collapseId = `day_${dayKey.replaceAll('-', '')}`;
       return `
         <div class="card shadow-sm day-card mb-3">
           <div class="card-header bg-white p-0">
-                        <button
+            <button
               class="btn btn-link w-100 text-start fw-bolder text-decoration-none px-3 py-2 day-toggle d-flex justify-content-between align-items-center"
               type="button"
               data-bs-toggle="collapse"
@@ -210,6 +231,7 @@
     location.reload();
   });
 </script>
+
 
 </body>
 </html>
