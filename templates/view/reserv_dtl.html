@@ -309,7 +309,7 @@
     const reservNo = "{{ reserv.reservNo }}";
 
     // 추가: 기본 출력 문구 설정
-    const defaultPhrase = '지구 제2부총재 후보 전희충 선거사무소 방문기념';
+    const defaultPhrase = '{{ reserv.visitorName }} - 지구 제2부총재 후보 전희충 선거사무소 방문기념';
 
     function togglePhotoSelection(el) {
         const photoUrl = el.getAttribute('data-photo');
