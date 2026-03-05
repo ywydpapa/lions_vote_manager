@@ -321,6 +321,28 @@ async def get_circlelist(db: AsyncSession):
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(CIRCLELIST)")
 
+
+async def get_contactlist(db: AsyncSession):
+    try:
+        query = text("select * from voteContact where attrib = :attpatt")
+        result = await db.execute(query, {"attpatt": "1000010000"})
+        contact_list = result.fetchall()
+        return contact_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(CONTACTLIST)")
+
+
+async def get_contactdtl(contactno:int,db: AsyncSession):
+    try:
+        query = text("select * from voteContact where contactNo = :contn")
+        result = await db.execute(query, {"contn": contactno})
+        contact_dtl = result.fetchone()
+        return contact_dtl
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(CONTACTDETAIL)")
+
 @app.get("/sse/schedule")
 async def sse_schedule(request: Request):
     q = hub.connect()
@@ -345,7 +367,7 @@ async def favicon():
     return {"detail": "Favicon is served at /static/favicon.ico"}
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.api_route("/", response_class=HTMLResponse, methods=["GET", "POST"])
 async def login_form(request: Request):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/noname", status_code=303)
@@ -802,6 +824,48 @@ async def scribe01(
     return templates.TemplateResponse(
         "templete/scribe01.html",
         {"request": request, "photo_url": photo, "reserv": reserv},
+    )
+
+
+@app.get("/contact", response_class=HTMLResponse)
+async def contact(request: Request):
+    return templates.TemplateResponse(
+        "manage/contact.html", {"request": request}
+    )
+
+
+@app.api_route("/insert_contact/", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    doctitle = form_data.get("dtitle")
+    docconts = form_data.get("dcontent")
+    dwriter1 = form_data.get("dwriter1")
+    dwriter2 = form_data.get("dwriter2")
+    query = text(
+        f"INSERT INTO voteContact (contactTitle, contactContent, writerRank, writerName) values (:doctitle,:docconts,:dwriter1,:dwriter2) ")
+    await db.execute(query, {"doctitle": doctitle, "docconts": docconts,
+                             "dwriter1": dwriter1, "dwriter2": dwriter2})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
+
+
+@app.get("/contact_list", response_class=HTMLResponse)
+async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    contacts = await get_contactlist(db)
+    return templates.TemplateResponse(
+        "manage/contact_list.html", {"request": request, "contacts": contacts}
+    )
+
+
+@app.get("/contact_detail/{contactno}", response_class=HTMLResponse)
+async def contact_dtl(request: Request, contactno:int, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    contact = await get_contactdtl(contactno, db)
+    return templates.TemplateResponse(
+        "manage/contact_detail.html", {"request": request, "contact": contact}
     )
 
 if __name__ == "__main__":
