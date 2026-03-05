@@ -286,7 +286,9 @@
                     {% endfor %}
                 </div>
 
-                <!-- 추가: 선택 완료 후 방명록을 여는 버튼 -->
+                <!-- 추가: 선택된 사진과 문구 입력창이 나타날 영역 -->
+                <div id="selected-photos-container" class="mt-4"></div>
+
                 <div class="text-end mt-3">
                     <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
                         선택한 사진으로 방명록 열기 (0/2)
@@ -303,30 +305,48 @@
 {% include '/common/adscript.html' %}
 
 <script>
-    // 선택된 사진 URL을 저장할 배열
+    // 객체 배열로 변경: { url: 사진주소, phrase: 출력문구 }
     let selectedPhotos = [];
     const maxSelect = 2;
     const reservNo = "{{ reserv.reservNo }}";
 
-    // 사진 클릭 시 선택/해제 토글 함수
     function togglePhotoSelection(el) {
         const photoUrl = el.getAttribute('data-photo');
 
         if (el.classList.contains('selected')) {
-            // 이미 선택된 경우 -> 선택 해제
             el.classList.remove('selected');
-            selectedPhotos = selectedPhotos.filter(url => url !== photoUrl);
+            selectedPhotos = selectedPhotos.filter(p => p.url !== photoUrl);
         } else {
-            // 선택되지 않은 경우 -> 선택 추가
             if (selectedPhotos.length >= maxSelect) {
                 alert('최대 2장까지만 선택할 수 있습니다.');
                 return;
             }
             el.classList.add('selected');
-            selectedPhotos.push(photoUrl);
+            selectedPhotos.push({ url: photoUrl, phrase: '' });
         }
 
-        // 버튼 상태 및 텍스트 업데이트
+        renderSelectedPhotos();
+    }
+
+    // 선택된 사진 목록과 문구 입력창을 화면에 그리는 함수
+    function renderSelectedPhotos() {
+        const container = document.getElementById('selected-photos-container');
+        container.innerHTML = '';
+
+        selectedPhotos.forEach((photo, index) => {
+            const div = document.createElement('div');
+            div.className = 'd-flex align-items-center mb-3 p-3 bg-white rounded shadow-sm border';
+            div.innerHTML = `
+                <img src="${photo.url}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 6px;" class="me-3">
+                <div class="flex-grow-1">
+                    <label class="form-label small fw-bold text-muted mb-1">사진 ${index + 1} 출력 문구</label>
+                    <input type="text" class="form-control" placeholder="사진 하단에 출력될 문구를 입력하세요"
+                           value="${photo.phrase}" oninput="updatePhrase(${index}, this.value)">
+                </div>
+            `;
+            container.appendChild(div);
+        });
+
         const btn = document.getElementById('printBtn');
         if (btn) {
             btn.disabled = selectedPhotos.length === 0;
@@ -334,26 +354,22 @@
         }
     }
 
-    // 선택 완료 후 새 창 열기 함수
+    // 입력창에 글자를 칠 때마다 배열 업데이트
+    function updatePhrase(index, value) {
+        selectedPhotos[index].phrase = value;
+    }
+
     function openScribe() {
         if (selectedPhotos.length === 0) {
             alert('사진을 선택해주세요.');
             return;
         }
 
-        // 백엔드에서 받는 방식에 맞춰 파라미터 전달 방식을 선택하세요.
-
-        // [방식 1] 쉼표(,)로 URL을 이어서 한 번에 보내는 방식 (예: &photo=url1,url2)
-        const photoParam = encodeURIComponent(selectedPhotos.join(','));
-        const url = `/scribe01?reservno=${encodeURIComponent(reservNo)}&photo=${photoParam}`;
-
-        /*
-        // [방식 2] 파라미터를 여러 개 보내는 방식이 필요하다면 아래 코드를 사용하세요. (예: &photo=url1&photo=url2)
+        // 다중 파라미터 방식으로 전송 (?photo=url1&phrase=문구1&photo=url2&phrase=문구2)
         let url = `/scribe01?reservno=${encodeURIComponent(reservNo)}`;
-        selectedPhotos.forEach(photo => {
-            url += `&photo=${encodeURIComponent(photo)}`;
+        selectedPhotos.forEach(p => {
+            url += `&photo=${encodeURIComponent(p.url)}&phrase=${encodeURIComponent(p.phrase)}`;
         });
-        */
 
         window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
     }
