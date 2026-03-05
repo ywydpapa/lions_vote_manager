@@ -49,13 +49,13 @@
 
         /* ---- Header photo ---- */
         .photo {
-            flex: 1;
+            flex: 0 0 50%; /* 변경됨: 1장일 때도 무조건 A4 용지의 절반(50%)만 차지하도록 고정 */
             overflow: hidden;
             border: none;
             border-radius: 0;
             background: #f3f4f6;
             display: flex;
-            position: relative; /* 추가: 문구 위치의 기준점 */
+            position: relative;
         }
 
         .photo img {
@@ -68,10 +68,10 @@
         /* ---- 추가: 사진 하단 문구 스타일 ---- */
         .phrase-overlay {
             position: absolute;
-            bottom: 12mm; /* 사진 하단에서의 여백 */
+            bottom: 12mm;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.35); /* 글자가 잘 보이도록 반투명 흰색 배경 */
+            background: rgba(255, 255, 255, 0.35);
             padding: 4mm 10mm;
             border-radius: 8px;
             font-size: 16pt;
@@ -79,7 +79,7 @@
             color: #111827;
             text-align: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            white-space: nowrap; /* 줄바꿈 방지 */
+            white-space: nowrap;
             z-index: 10;
         }
 
