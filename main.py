@@ -1,3 +1,4 @@
+from typing import Optional
 from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
@@ -268,13 +269,25 @@ async def get_visitors(reservno: int, db: AsyncSession):
 
 async def get_clubmembers(clubno:int,db: AsyncSession):
     try:
-        query = text("SELECT a.memberNo, a.memberName, a.rankNo, b.rankTitlekor FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo where a.clubNo = :clubno")
+        query = text("SELECT a.memberNo, a.memberName, a.rankNo, b.rankTitlekor, a.clubNo FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo where a.clubNo = :clubno")
         result = await db.execute(query, {"clubno": clubno})
         member_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
         return member_list
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(CLUBMEMBER_LIST)")
+
+
+async def get_memberdtl(memberno:int,db: AsyncSession):
+    try:
+        query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo FROM lionsMember a where a.memberNo = :memberno")
+        result = await db.execute(query, {"memberno": memberno})
+        member_dtl = result.fetchone()  # 클럽 데이터를 모두 가져오기
+        print(member_dtl)
+        return member_dtl
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(MEMBER_DETAIL)")
 
 
 async def get_allmembers(db: AsyncSession):
@@ -309,6 +322,17 @@ async def get_clublist(db: AsyncSession):
         return club_list
     except:
         raise HTTPException(status_code=500, detail="Database query failed(CLUBLIST)")
+
+
+async def get_ranklist(db: AsyncSession):
+    try:
+        query = text("SELECT * FROM lionsRank WHERE attrib = :attpatt AND rankDiv IN ('DIST', 'CLUB') ORDER BY orderNo DESC")
+        result = await db.execute(query, {"attpatt": "1000010000"})
+        rank_list = result.fetchall()
+        return rank_list
+    except:
+        raise HTTPException(status_code=500, detail="Database query failed(RANKLIST)")
+
 
 
 async def get_circlelist(db: AsyncSession):
@@ -871,6 +895,15 @@ async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
 
+@app.api_route("/done_contact/{contactno}", methods=["POST"])
+async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends(get_db)):
+    query = text(
+        f"UPDATE voteContact set attrib = :upd , modDate = :now where contactNo = :contactno ")
+    await db.execute(query, {"upd": '1DONE1DONE', "now": datetime.now(), "contactno": contactno})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/contact_list"})
+
+
 @app.get("/contact_list", response_class=HTMLResponse)
 async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -889,6 +922,120 @@ async def contact_dtl(request: Request, contactno:int, db: AsyncSession = Depend
     return templates.TemplateResponse(
         "manage/contact_detail.html", {"request": request, "contact": contact}
     )
+
+
+@app.get("/manage_mst", response_class=HTMLResponse)
+async def managemst(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("manage/manage_mster.html", {"request": request, "session": dict(request.session)})
+
+
+@app.get("/manage_cmembers", response_class=HTMLResponse)
+async def managecmembers(request: Request, clubno: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    clubs = await get_clublist(db)
+    return templates.TemplateResponse("manage/manage_clubmembers.html", {
+        "request": request,
+        "session": dict(request.session),
+        "clubs": clubs,
+        "clubno": clubno
+    })
+
+
+@app.get("/new_member", response_class=HTMLResponse)
+async def newmember(request: Request, club_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    clubs = await get_clublist(db)
+    ranks = await get_ranklist(db)
+    return templates.TemplateResponse("manage/new_member.html", {
+        "request": request,
+        "session": dict(request.session),
+        "clubs": clubs,
+        "ranks": ranks,
+        "club_id": club_id
+    })
+
+
+@app.get("/edit_member/{memberno}", response_class=HTMLResponse)
+async def newmember(request: Request, memberno: Optional[int] = None, club_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    clubs = await get_clublist(db)
+    ranks = await get_ranklist(db)
+    member = await get_memberdtl(memberno, db)
+    return templates.TemplateResponse("manage/edit_member.html", {
+        "request": request,
+        "session": dict(request.session),
+        "clubs": clubs,
+        "ranks": ranks,
+        "memberdtl": member,
+        "club_id": club_id
+    })
+
+
+@app.api_route("/member_insert/", methods=["POST"])
+async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    membername = form_data.get("membername")
+    clubno = form_data.get("memberclub")
+    rankno = form_data.get("memberrank")
+    query = text(
+        f"INSERT INTO lionsMember (memberName, clubNo, rankNo) values (:mname,:mclub,:mrank) ")
+    await db.execute(query, {"mname": membername, "mclub": clubno,
+                             "mrank": rankno})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": f"/manage_cmembers?clubno={clubno}"})
+
+
+@app.api_route("/member_update/{memberno}", methods=["POST"])
+async def insertcontact(request: Request, memberno: int, db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    membername = form_data.get("membername")
+    clubno = form_data.get("memberclub")
+    rankno = form_data.get("memberrank")
+    query = text(
+        f"UPDATE lionsMember SET memberName = :mname, clubNo = :mclub, rankNo = :mrank where memberNo = :memberno ")
+    await db.execute(query, {"mname": membername, "mclub": clubno, "mrank": rankno, "memberno": memberno})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": f"/manage_cmembers?clubno={clubno}"})
+
+
+@app.get("/api/clubmembers/{clubno}")
+async def api_get_clubmembers(clubno: int, db: AsyncSession = Depends(get_db)):
+    members = await get_clubmembers(clubno, db)
+    result = []
+    for m in members:
+        result.append({
+            "memberNo": m[0],
+            "memberName": m[1],
+            "rankNo": m[2],
+            "rankTitlekor": m[3] if m[3] else "-",
+            "clubNo": m[4]
+        })
+    return JSONResponse(content=result)
+
+
+@app.post("/uploadmphoto/{memberno}")
+async def upload_logoimage(request: Request, memberno: int, file: UploadFile = File(...),
+                           db: AsyncSession = Depends(get_db)):
+    try:
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File type not supported.")
+        # 파일 읽기
+        contents = await file.read()
+        # 이미지 사이즈 조절
+        contents = await resize_image_if_needed(contents, max_bytes=102400)
+        # 이미지 저장
+        await save_memberPhoto(contents, memberno)
+        # 리다이렉트
+        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
+    except Exception as e:
+        print(f"Error: {e}")
+        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include '/common/header.html' %}
+    </head>
+    <body class="d-flex flex-column h-100 bg-light">
+        <main class="flex-shrink-0">
+            <!-- Navigation-->
+            {% include '/common/topnav.html' %}
+            <!-- Page Content-->
+            <div class="container px-5 my-5">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">클럽별 등록회원 목록</span></h1>
+                </div>
+                <div class="row gx-5 justify-content-center">
+                    <div class="col-lg-11 col-xl-9 col-xxl-10">
+                        <div class="d-flex justify-content-end align-items-center mb-3 gap-2">
+                            <a href="/new_member" id="newMemberBtn" class="btn btn-primary shadow-sm fw-bold">
+                                + 새 회원 등록
+                            </a>
+                            <select class="form-select w-auto shadow-sm border-0 selectpicker" data-live-search="true" id="clubSelect" name="clubSelect" aria-label="클럽 선택">
+                                <option value="">클럽을 선택하세요</option>
+                                {% for club in clubs %}
+                                {% if club[0]|int != 0 %}
+                                <!-- clubno와 일치하면 selected 속성 추가 -->
+                                <option value="{{ club[0] }}" {% if clubno and club[0]|string == clubno|string %}selected{% endif %}>{{ club[1] }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <!-- 데이터 테이블 -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover text-center align-middle bg-white shadow-sm" id="memberTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" style="width: 10%;">순번</th>
+                                        <th scope="col" style="width: 10%;">회원번호</th>
+                                        <th scope="col" style="width: 40%;">직책</th>
+                                        <th scope="col" style="width: 40%;">성명</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <!-- colspan 4로 수정 -->
+                                        <td colspan="4" class="text-muted py-4">클럽을 선택해주세요.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Footer-->
+        {% include '/common/footer.html' %}
+        {% include '/common/adscript.html' %}
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+
+        <script>
+            $(document).ready(function () {
+                $('.selectpicker').selectpicker({
+                    style: 'btn-inverse',
+                    size: 20
+                });
+
+                // 클럽 선택 변경 이벤트
+                $('#clubSelect').on('change', async function () {
+                    const clubNo = $(this).val();
+                    const tbody = $('#memberTable tbody');
+                    const newBtn = $('#newMemberBtn');
+                    if (clubNo) {
+                        newBtn.attr('href', `/new_member?club_id=${clubNo}`);
+                    } else {
+                        newBtn.attr('href', '/new_member');
+                    }
+                    if (!clubNo) {
+                        tbody.html('<tr><td colspan="4" class="text-muted py-4">클럽을 선택해주세요.</td></tr>');
+                        return;
+                    }
+
+                    tbody.html('<tr><td colspan="4" class="py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">데이터를 불러오는 중...</div></td></tr>');
+
+                    try {
+                        // 백엔드 API 호출
+                        const response = await fetch(`/api/clubmembers/${clubNo}`);
+                        if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+                        const members = await response.json();
+                        tbody.empty(); // 기존 내용 지우기
+                        if (members.length === 0) {
+                            tbody.html('<tr><td colspan="4" class="text-muted py-4">해당 클럽에 등록된 회원이 없습니다.</td></tr>');
+                            return;
+                        }
+                        members.forEach((member, index) => {
+                            const tr = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${member.memberNo}</td>
+                                    <td>${member.rankTitlekor}</td>
+                                    <td><a href="/edit_member/${member.memberNo}?club_id=${member.clubNo}">${member.memberName}</a></td>
+                                </tr>
+                            `;
+                            tbody.append(tr);
+                        });
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        // 에러 발생 시 (colspan 4로 수정)
+                        tbody.html('<tr><td colspan="4" class="text-danger py-4">데이터를 불러오는 중 오류가 발생했습니다.</td></tr>');
+                    }
+                });
+
+                // --- 추가된 부분 ---
+                // 페이지 로드 시 선택된 클럽이 있다면 자동으로 change 이벤트 발생시켜 데이터 로드
+                if ($('#clubSelect').val()) {
+                    $('#clubSelect').trigger('change');
+                }
+            });
+        </script>
+    </body>
+</html>
