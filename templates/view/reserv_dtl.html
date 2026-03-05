@@ -22,17 +22,15 @@
             box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
             overflow: hidden;
             aspect-ratio: 4 / 3;
-            position: relative; /* 추가: 체크마크 위치 기준 */
-            transition: all 0.2s ease-in-out; /* 추가: 선택 애니메이션 */
+            position: relative;
+            transition: all 0.2s ease-in-out;
         }
 
-        /* 추가: 선택된 사진 스타일 */
         .photo-thumb.selected {
             border: 4px solid #0d6efd;
             transform: scale(0.95);
         }
 
-        /* 추가: 선택된 사진 중앙 체크마크 */
         .photo-thumb.selected::after {
             content: '✓';
             position: absolute;
@@ -182,14 +180,19 @@
     {% include '/common/topnav.html' %}
 
     <div class="container px-5 my-5 page-wrap">
-        <div class="text-center mb-4">
-            <h1 class="display-5 fw-bolder mb-0">
-                <span class="text-gradient d-inline">예약 상세 정보</span>
-            </h1>
-        </div>
-
         <div class="row gx-5 justify-content-center">
             <div class="col-lg-11 col-xl-9 col-xxl-8">
+
+                <!-- 수정된 부분: 타이틀 및 목록으로 가기 버튼 -->
+                <div class="position-relative text-center mb-4">
+                    <h1 class="display-5 fw-bolder mb-0">
+                        <span class="text-gradient d-inline">예약 상세 정보</span>
+                    </h1>
+                    <!-- 우측 중앙에 버튼 절대 배치 -->
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary fw-bold position-absolute top-50 end-0 translate-middle-y">
+                        목록으로 가기
+                    </a>
+                </div>
 
                 <!-- 1) 예약 요약 카드 (테이블형) -->
                 <div class="card summary-card mb-4">
