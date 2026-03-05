@@ -22,6 +22,34 @@
             box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
             overflow: hidden;
             aspect-ratio: 4 / 3;
+            position: relative; /* 추가: 체크마크 위치 기준 */
+            transition: all 0.2s ease-in-out; /* 추가: 선택 애니메이션 */
+        }
+
+        /* 추가: 선택된 사진 스타일 */
+        .photo-thumb.selected {
+            border: 4px solid #0d6efd;
+            transform: scale(0.95);
+        }
+
+        /* 추가: 선택된 사진 중앙 체크마크 */
+        .photo-thumb.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #0d6efd;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .photo-thumb img {
@@ -175,7 +203,6 @@
                             <tr>
                                 <th>예약일시</th>
                                 <td>
-                                    {# datetime이면 아래처럼 포맷 #}
                                     {% if reserv.reservFrom %}
                                     {{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}
                                     {% else %}
@@ -233,11 +260,16 @@
                     </div>
                     {% endfor %}
                 </div>
+
                 <!-- 3) 행사 사진 -->
                 <div class="d-flex justify-content-between align-items-end mt-4 mb-2">
-                    <div class="fw-bolder">행사 사진</div>
+                    <div class="fw-bolder">
+                        행사 사진
+                        <span class="text-primary fw-normal fs-6 ms-2">(최대 2장 선택 가능)</span>
+                    </div>
                     <div class="text-muted small">총 {{ event_photos|length }}장</div>
                 </div>
+
                 {% if event_photos and event_photos|length > 0 %}
                 <div class="photos-grid">
                     {% for url in event_photos %}
@@ -245,14 +277,20 @@
                             type="button"
                             class="photo-thumb"
                             data-photo="{{ url }}"
-                            data-reservno="{{ reserv.reservNo }}"
-                            onclick="openScribe(this)"
+                            onclick="togglePhotoSelection(this)"
                             style="padding:0; cursor:pointer;"
-                            aria-label="방명록 인쇄용으로 열기"
+                            aria-label="방명록 사진 선택"
                     >
                         <img src="{{ url }}" alt="event photo" loading="lazy">
                     </button>
                     {% endfor %}
+                </div>
+
+                <!-- 추가: 선택 완료 후 방명록을 여는 버튼 -->
+                <div class="text-end mt-3">
+                    <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
+                        선택한 사진으로 방명록 열기 (0/2)
+                    </button>
                 </div>
                 {% else %}
                 <div class="text-muted small">등록된 행사 사진이 없습니다.</div>
@@ -263,12 +301,60 @@
 </main>
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+
 <script>
-    function openScribe(el) {
-        const photo = el.getAttribute('data-photo');
-        const reservno = el.getAttribute('data-reservno');
-        const url = '/scribe01?reservno=' + encodeURIComponent(reservno)
-            + '&photo=' + encodeURIComponent(photo);
+    // 선택된 사진 URL을 저장할 배열
+    let selectedPhotos = [];
+    const maxSelect = 2;
+    const reservNo = "{{ reserv.reservNo }}";
+
+    // 사진 클릭 시 선택/해제 토글 함수
+    function togglePhotoSelection(el) {
+        const photoUrl = el.getAttribute('data-photo');
+
+        if (el.classList.contains('selected')) {
+            // 이미 선택된 경우 -> 선택 해제
+            el.classList.remove('selected');
+            selectedPhotos = selectedPhotos.filter(url => url !== photoUrl);
+        } else {
+            // 선택되지 않은 경우 -> 선택 추가
+            if (selectedPhotos.length >= maxSelect) {
+                alert('최대 2장까지만 선택할 수 있습니다.');
+                return;
+            }
+            el.classList.add('selected');
+            selectedPhotos.push(photoUrl);
+        }
+
+        // 버튼 상태 및 텍스트 업데이트
+        const btn = document.getElementById('printBtn');
+        if (btn) {
+            btn.disabled = selectedPhotos.length === 0;
+            btn.innerText = `선택한 사진으로 방명록 열기 (${selectedPhotos.length}/${maxSelect})`;
+        }
+    }
+
+    // 선택 완료 후 새 창 열기 함수
+    function openScribe() {
+        if (selectedPhotos.length === 0) {
+            alert('사진을 선택해주세요.');
+            return;
+        }
+
+        // 백엔드에서 받는 방식에 맞춰 파라미터 전달 방식을 선택하세요.
+
+        // [방식 1] 쉼표(,)로 URL을 이어서 한 번에 보내는 방식 (예: &photo=url1,url2)
+        const photoParam = encodeURIComponent(selectedPhotos.join(','));
+        const url = `/scribe01?reservno=${encodeURIComponent(reservNo)}&photo=${photoParam}`;
+
+        /*
+        // [방식 2] 파라미터를 여러 개 보내는 방식이 필요하다면 아래 코드를 사용하세요. (예: &photo=url1&photo=url2)
+        let url = `/scribe01?reservno=${encodeURIComponent(reservNo)}`;
+        selectedPhotos.forEach(photo => {
+            url += `&photo=${encodeURIComponent(photo)}`;
+        });
+        */
+
         window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
     }
 </script>

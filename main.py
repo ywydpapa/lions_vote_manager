@@ -813,17 +813,30 @@ async def get_reserv(db: AsyncSession = Depends(get_db)):
 
 @app.get("/scribe01", response_class=HTMLResponse)
 async def scribe01(
-    request: Request,
-    reservno: int = Query(...),
-    photo: str = Query(default=""),
-    db: AsyncSession = Depends(get_db),
+        request: Request,
+        reservno: int = Query(...),
+        photo: str = Query(default=""),  # 프런트에서 "url1,url2" 형태로 전달됨
+        db: AsyncSession = Depends(get_db),
 ):
-    if not photo.startswith("/static/"):
-        photo = "/static/img/event_photos/default.jpg"
+    # 1. 쉼표로 구분된 사진 URL들을 리스트로 분리
+    raw_photos = [p.strip() for p in photo.split(",")] if photo else []
+
+    # 2. 유효성 검사 (/static/ 으로 시작하는지 확인)
+    valid_photos = []
+    for p in raw_photos:
+        if p.startswith("/static/"):
+            valid_photos.append(p)
+    valid_photos = valid_photos[:2]
+    if not valid_photos:
+        valid_photos = ["/static/img/event_photos/default.jpg"]
     reserv = await get_reserv_dtl(reservno, db)
     return templates.TemplateResponse(
         "templete/scribe01.html",
-        {"request": request, "photo_url": photo, "reserv": reserv},
+        {
+            "request": request,
+            "photo_urls": valid_photos,
+            "reserv": reserv
+        },
     )
 
 
