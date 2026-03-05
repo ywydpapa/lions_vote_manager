@@ -290,6 +290,17 @@ async def get_memberdtl(memberno:int,db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(MEMBER_DETAIL)")
 
 
+async def get_clubdtl(clubno:int,db: AsyncSession):
+    try:
+        query = text("SELECT * FROM lionsClub where clubNo = :clubno")
+        result = await db.execute(query, {"clubno": clubno})
+        clubdtl = result.fetchone()  # 클럽 데이터를 모두 가져오기
+        return clubdtl
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(CLUB_DETAIL)")
+
+
 async def get_allmembers(db: AsyncSession):
     try:
         query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo, b.rankTitlekor, c.clubName FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo  left join lionsClub c on a.clubNo = c.clubNo where a.clubNo != :cno order by c.clubNo")
@@ -904,6 +915,15 @@ async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/contact_list"})
 
 
+@app.api_route("/done_reserv/{reservno}", methods=["POST"])
+async def donereserv(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    query = text(
+        f"UPDATE voteReserv set attrib = :upd , modDate = :now where reservNo = :reservno ")
+    await db.execute(query, {"upd": '1DONE1DONE', "now": datetime.now(), "reservno": reservno})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다."})
+
+
 @app.get("/contact_list", response_class=HTMLResponse)
 async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -912,6 +932,25 @@ async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse(
         "manage/contact_list.html", {"request": request, "contacts": contacts}
     )
+
+
+@app.post("/uploadmphoto/{memberno}")
+async def upload_logoimage(request: Request, memberno: int, file: UploadFile = File(...),
+                           db: AsyncSession = Depends(get_db)):
+    try:
+        if not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File type not supported.")
+        # 파일 읽기
+        contents = await file.read()
+        # 이미지 사이즈 조절
+        contents = await resize_image_if_needed(contents, max_bytes=102400)
+        # 이미지 저장
+        await save_memberPhoto(contents, memberno)
+        # 리다이렉트
+        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
+    except Exception as e:
+        print(f"Error: {e}")
+        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
 
 
 @app.get("/contact_detail/{contactno}", response_class=HTMLResponse)
@@ -944,6 +983,18 @@ async def managecmembers(request: Request, clubno: Optional[int] = None, db: Asy
     })
 
 
+@app.get("/manage_clubs", response_class=HTMLResponse)
+async def manageclubs(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    clubs = await get_clublist(db)
+    return templates.TemplateResponse("manage/manage_clubs.html", {
+        "request": request,
+        "session": dict(request.session),
+        "clubs": clubs,
+    })
+
+
 @app.get("/new_member", response_class=HTMLResponse)
 async def newmember(request: Request, club_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -973,6 +1024,17 @@ async def newmember(request: Request, memberno: Optional[int] = None, club_id: O
         "ranks": ranks,
         "memberdtl": member,
         "club_id": club_id
+    })
+
+
+@app.get("/edit_club/{clubno}", response_class=HTMLResponse)
+async def newmember(request: Request, clubno: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    clubdtl = await get_clubdtl(clubno, db)
+    return templates.TemplateResponse("manage/edit_club.html", {
+        "request": request,
+        "session": dict(request.session), "clubdtl": clubdtl
     })
 
 
@@ -1016,25 +1078,6 @@ async def api_get_clubmembers(clubno: int, db: AsyncSession = Depends(get_db)):
             "clubNo": m[4]
         })
     return JSONResponse(content=result)
-
-
-@app.post("/uploadmphoto/{memberno}")
-async def upload_logoimage(request: Request, memberno: int, file: UploadFile = File(...),
-                           db: AsyncSession = Depends(get_db)):
-    try:
-        if not file.content_type.startswith('image/'):
-            raise HTTPException(status_code=400, detail="File type not supported.")
-        # 파일 읽기
-        contents = await file.read()
-        # 이미지 사이즈 조절
-        contents = await resize_image_if_needed(contents, max_bytes=102400)
-        # 이미지 저장
-        await save_memberPhoto(contents, memberno)
-        # 리다이렉트
-        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
-    except Exception as e:
-        print(f"Error: {e}")
-        return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
 
 
 if __name__ == "__main__":

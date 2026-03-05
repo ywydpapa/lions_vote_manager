@@ -40,10 +40,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <!-- colspan 4로 수정 -->
-                                        <td colspan="4" class="text-muted py-4">클럽을 선택해주세요.</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -55,69 +51,95 @@
         <!-- Footer-->
         {% include '/common/footer.html' %}
         {% include '/common/adscript.html' %}
+        {% include '/common/adscripttable.html' %}
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
 
         <script>
-            $(document).ready(function () {
-                $('.selectpicker').selectpicker({
-                    style: 'btn-inverse',
-                    size: 20
-                });
+    $(document).ready(function () {
+        // 1. DataTables 초기화 (tbody가 비어있으므로 에러가 발생하지 않습니다)
+        const table = $('#memberTable').DataTable({
+            "pageLength": 20,
+            "language": {
+                "emptyTable": "클럽을 선택해주세요." // 기본 빈 테이블 메시지
+            }
+        });
 
-                // 클럽 선택 변경 이벤트
-                $('#clubSelect').on('change', async function () {
-                    const clubNo = $(this).val();
-                    const tbody = $('#memberTable tbody');
-                    const newBtn = $('#newMemberBtn');
-                    if (clubNo) {
-                        newBtn.attr('href', `/new_member?club_id=${clubNo}`);
-                    } else {
-                        newBtn.attr('href', '/new_member');
-                    }
-                    if (!clubNo) {
-                        tbody.html('<tr><td colspan="4" class="text-muted py-4">클럽을 선택해주세요.</td></tr>');
-                        return;
-                    }
+        $('.selectpicker').selectpicker({
+            style: 'btn-inverse',
+            size: 20
+        });
 
-                    tbody.html('<tr><td colspan="4" class="py-4"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">데이터를 불러오는 중...</div></td></tr>');
+        // 클럽 선택 변경 이벤트
+        $('#clubSelect').on('change', async function () {
+            const clubNo = $(this).val();
+            const newBtn = $('#newMemberBtn');
 
-                    try {
-                        // 백엔드 API 호출
-                        const response = await fetch(`/api/clubmembers/${clubNo}`);
-                        if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
-                        const members = await response.json();
-                        tbody.empty(); // 기존 내용 지우기
-                        if (members.length === 0) {
-                            tbody.html('<tr><td colspan="4" class="text-muted py-4">해당 클럽에 등록된 회원이 없습니다.</td></tr>');
-                            return;
-                        }
-                        members.forEach((member, index) => {
-                            const tr = `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${member.memberNo}</td>
-                                    <td>${member.rankTitlekor}</td>
-                                    <td><a href="/edit_member/${member.memberNo}?club_id=${member.clubNo}">${member.memberName}</a></td>
-                                </tr>
-                            `;
-                            tbody.append(tr);
-                        });
+            // 새 회원 등록 버튼 링크 업데이트
+            if (clubNo) {
+                newBtn.attr('href', `/new_member?club_id=${clubNo}`);
+            } else {
+                newBtn.attr('href', '/new_member');
+            }
 
-                    } catch (error) {
-                        console.error('Error:', error);
-                        // 에러 발생 시 (colspan 4로 수정)
-                        tbody.html('<tr><td colspan="4" class="text-danger py-4">데이터를 불러오는 중 오류가 발생했습니다.</td></tr>');
-                    }
-                });
+            // 클럽 선택이 해제되었을 때
+            if (!clubNo) {
+                table.clear();
+                // 빈 메시지 변경 후 다시 그리기
+                table.settings()[0].oLanguage.sEmptyTable = "클럽을 선택해주세요.";
+                table.draw();
+                return;
+            }
 
-                // --- 추가된 부분 ---
-                // 페이지 로드 시 선택된 클럽이 있다면 자동으로 change 이벤트 발생시켜 데이터 로드
-                if ($('#clubSelect').val()) {
-                    $('#clubSelect').trigger('change');
+            // 로딩 스피너 표시
+            table.clear();
+            table.settings()[0].oLanguage.sEmptyTable = '<div class="spinner-border text-primary" role="status"></div><div class="mt-2">데이터를 불러오는 중...</div>';
+            table.draw();
+
+            try {
+                // 백엔드 API 호출
+                const response = await fetch(`/api/clubmembers/${clubNo}`);
+                if (!response.ok) throw new Error('데이터를 불러오는데 실패했습니다.');
+
+                const members = await response.json();
+
+                table.clear(); // 데이터 넣기 전 초기화
+
+                if (members.length === 0) {
+                    table.settings()[0].oLanguage.sEmptyTable = "해당 클럽에 등록된 회원이 없습니다.";
+                    table.draw();
+                    return;
                 }
-            });
-        </script>
+
+                // DataTables API를 사용하여 데이터 추가
+                members.forEach((member, index) => {
+                    table.row.add([
+                        index + 1,
+                        member.memberNo,
+                        member.rankTitlekor,
+                        `<a href="/edit_member/${member.memberNo}?club_id=${member.clubNo}">${member.memberName}</a>`
+                    ]);
+                });
+
+                // 데이터 추가 완료 후 테이블 다시 그리기
+                table.draw();
+
+            } catch (error) {
+                console.error('Error:', error);
+                table.clear();
+                table.settings()[0].oLanguage.sEmptyTable = '<span class="text-danger">데이터를 불러오는 중 오류가 발생했습니다.</span>';
+                table.draw();
+            }
+        });
+
+        // 페이지 로드 시 선택된 클럽이 있다면 자동으로 change 이벤트 발생시켜 데이터 로드
+        if ($('#clubSelect').val()) {
+            $('#clubSelect').trigger('change');
+        }
+    });
+</script>
+
+
     </body>
 </html>
