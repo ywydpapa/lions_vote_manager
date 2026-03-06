@@ -232,7 +232,10 @@
                                 <!-- 수정된 부분: 방문처 텍스트와 방문확인 버튼을 양쪽 정렬로 배치 -->
                                 <td class="d-flex justify-content-between align-items-center">
                                     <span>{{ reserv.visitorName }}</span>
+                                    <!-- 완료된 예약(1DONE1DONE)이 아닐 때만 방문확인 버튼 표시 -->
+                                    {% if reserv.attrib != '1DONE1DONE' %}
                                     <button type="button" class="btn btn-sm btn-success fw-bold" onclick="confirmArrival()">방문확인</button>
+                                    {% endif %}
                                 </td>
                             </tr>
                             </tbody>
@@ -381,9 +384,12 @@
                     <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
                         선택한 사진으로 방문기념 액자생성 (0/2)
                     </button>
+                    <!-- 완료된 예약이 아닐 때만 방문완료처리 버튼 표시 (선택사항) -->
+                    {% if reserv.attrib != '1DONE1DONE' %}
                     <button type="button" class="btn btn-success px-4 py-2 fw-bold" onclick="completeVisit()">
                         방문완료처리
                     </button>
+                    {% endif %}
                 </div>
                 {% else %}
                 <div class="text-muted small">등록된 행사 사진이 없습니다.</div>
