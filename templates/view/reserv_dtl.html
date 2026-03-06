@@ -183,12 +183,11 @@
         <div class="row gx-5 justify-content-center">
             <div class="col-lg-11 col-xl-9 col-xxl-8">
 
-                <!-- 수정된 부분: 타이틀 및 목록으로 가기 버튼 -->
+                <!-- 타이틀 및 목록으로 가기 버튼 -->
                 <div class="position-relative text-center mb-4">
                     <h1 class="display-5 fw-bolder mb-0">
                         <span class="text-gradient d-inline">예약 상세 정보</span>
                     </h1>
-                    <!-- 우측 중앙에 버튼 절대 배치 -->
                     <a href="javascript:history.back()"
                        class="btn btn-outline-secondary fw-bold position-absolute top-50 end-0 translate-middle-y">
                         목록으로 가기
@@ -230,7 +229,11 @@
                             </tr>
                             <tr>
                                 <th>방문처</th>
-                                <td>{{ reserv.visitorName }}</td>
+                                <!-- 수정된 부분: 방문처 텍스트와 방문확인 버튼을 양쪽 정렬로 배치 -->
+                                <td class="d-flex justify-content-between align-items-center">
+                                    <span>{{ reserv.visitorName }}</span>
+                                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="confirmArrival()">방문확인</button>
+                                </td>
                             </tr>
                             </tbody>
                         </table>
@@ -372,7 +375,7 @@
                     </button>
                     {% endfor %}
                 </div>
-                <!-- 추가: 선택된 사진과 문구 입력창이 나타날 영역 -->
+                <!-- 선택된 사진과 문구 입력창이 나타날 영역 -->
                 <div id="selected-photos-container" class="mt-4"></div>
                 <div class="text-end mt-3">
                     <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
@@ -419,7 +422,7 @@
     const maxSelect = 2;
     const reservNo = "{{ reserv.reservNo }}";
 
-    // 추가: 기본 출력 문구 설정
+    // 기본 출력 문구 설정
     const defaultPhrase = '지구 제2부총재 후보 전희충 선거사무소 방문기념';
 
     function togglePhotoSelection(el) {
@@ -434,7 +437,6 @@
                 return;
             }
             el.classList.add('selected');
-            // 수정됨: 사진을 선택할 때 빈 문자열('') 대신 기본 문구(defaultPhrase)를 넣습니다.
             selectedPhotos.push({url: photoUrl, phrase: defaultPhrase});
         }
 
@@ -477,7 +479,6 @@
             alert('사진을 선택해주세요.');
             return;
         }
-        // 다중 파라미터 방식으로 전송 (?photo=url1&phrase=문구1&photo=url2&phrase=문구2)
         let url = `/scribe01?reservno=${encodeURIComponent(reservNo)}`;
         selectedPhotos.forEach(p => {
             url += `&photo=${encodeURIComponent(p.url)}&phrase=${encodeURIComponent(p.phrase)}`;
@@ -492,7 +493,6 @@
         }
 
         try {
-            // 백엔드 API 호출 (reservNo는 상단에 선언된 변수 사용)
             const response = await fetch(`/done_reserv/${reservNo}`, {
                 method: 'POST',
                 headers: {
@@ -502,8 +502,40 @@
 
             if (response.ok) {
                 const result = await response.json();
-                alert(result.message); // "성공적으로 저장되었습니다." 알림창
-                window.history.back(); // 이전 페이지(목록)로 돌아가기
+                alert(result.message);
+                window.history.back();
+            } else {
+                alert("서버 오류가 발생했습니다. 다시 시도해주세요.");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            alert("알 수 없는 오류가 발생했습니다.");
+        }
+    }
+
+    // 추가된 방문확인 API 호출 함수
+    async function confirmArrival() {
+        if (!confirm("방문자가 도착했습니까?")) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/reserv_arrv/${reservNo}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.arrived) {
+                    alert("방문 확인이 완료되었습니다.");
+                    // 필요에 따라 페이지 새로고침을 통해 상태를 업데이트할 수 있습니다.
+                    location.reload();
+                } else {
+                    alert("처리 중 오류가 발생했습니다.");
+                }
             } else {
                 alert("서버 오류가 발생했습니다. 다시 시도해주세요.");
             }
@@ -517,45 +549,37 @@
         const changeCheck = document.getElementById('changeReservCheck');
         const modifyDiv = document.getElementById('modifymemberSelect');
 
-        // 체크박스가 화면에 렌더링 된 경우에만 이벤트 리스너 등록 (Jinja 조건문 대응)
         if (changeCheck && modifyDiv) {
             changeCheck.addEventListener('change', function () {
                 if (this.checked) {
-                    modifyDiv.style.display = 'block'; // 체크되면 보이기
-                    // 보일 때 기본적으로 임원보기 상태 적용 (HTML에 checked 되어있으므로)
+                    modifyDiv.style.display = 'block';
                     applyMemberView('exec');
                 } else {
-                    modifyDiv.style.display = 'none';  // 체크 해제되면 숨기기
+                    modifyDiv.style.display = 'none';
                 }
             });
         }
 
-        // --- 새로 추가되는 날짜 및 시간 동적 변경 로직 ---
         const dateSelect = document.getElementById('visit_date');
         const timeSelect = document.getElementById('visit_time');
         const timeRangeText = document.getElementById('time_range_text');
 
         if (dateSelect && timeSelect) {
-            // 1. 3월 11일 ~ 3월 20일 날짜/오전오후 옵션 생성
             for (let day = 11; day <= 20; day++) {
-                // 오전 옵션 추가
                 let optAm = document.createElement('option');
                 optAm.value = `03-${day.toString().padStart(2, '0')}-AM`;
                 optAm.text = `3월 ${day}일 오전`;
                 dateSelect.appendChild(optAm);
 
-                // 오후 옵션 추가
                 let optPm = document.createElement('option');
                 optPm.value = `03-${day.toString().padStart(2, '0')}-PM`;
                 optPm.text = `3월 ${day}일 오후`;
                 dateSelect.appendChild(optPm);
             }
 
-            // 2. 날짜(오전/오후) 선택 시 시간 옵션 변경 이벤트
             dateSelect.addEventListener('change', function () {
                 const selectedValue = this.value;
 
-                // 시간 셀렉트 박스 초기화 및 활성화
                 timeSelect.innerHTML = '<option value="" selected disabled>시간을 선택하세요</option>';
                 timeSelect.disabled = false;
 
@@ -581,7 +605,6 @@
             });
         }
 
-        // --- 회원 보기(전체/임원) 라디오 버튼 이벤트 연결 ---
         const viewAllBtn = document.getElementById('viewAll');
         const viewExecBtn = document.getElementById('viewExec');
         const memberSelect = document.getElementById('member_ids');
@@ -591,20 +614,16 @@
             viewExecBtn.addEventListener('change', () => applyMemberView('exec'));
         }
 
-        // --- 회원을 다중 선택/해제할 때마다 인원수 업데이트 이벤트 연결 ---
         if (memberSelect) {
             memberSelect.addEventListener('change', updateMemberCount);
         }
     });
 
-        // 기존 submitReservation, cancelReservation 함수를 지우고 아래 함수로 교체하세요.
-
-        async function modifyReservation() {
+    async function modifyReservation() {
         const btn = document.getElementById('btnSubmit');
-        if (btn.dataset.busy === '1') return; // 더블클릭 방지
+        if (btn.dataset.busy === '1') return;
 
-        // 1. 입력값 가져오기 및 검증
-        const visitDateStr = document.getElementById('visit_date').value; // 예: "03-11-AM"
+        const visitDateStr = document.getElementById('visit_date').value;
         const visitTime = document.getElementById('visit_time').value;
         const memberNos = Array.from(document.getElementById('member_ids').selectedOptions)
             .map(o => Number(o.value))
@@ -617,13 +636,11 @@
 
         if (!confirm('기존 예약을 취소하고 새로운 예약으로 변경하시겠습니까?')) return;
 
-        // 2. dateno 생성 (백엔드가 인식하는 "MMDD1" 또는 "MMDD2" 형태로 변환)
-        const month = visitDateStr.substring(0, 2);   // "03"
-        const day = visitDateStr.substring(3, 5);     // "11"
-        const ampm = visitDateStr.endsWith('-AM') ? '1' : '2'; // AM은 1, PM은 2
-        const dateno = `${month}${day}${ampm}`;       // 결과: "03111" 또는 "03112"
+        const month = visitDateStr.substring(0, 2);
+        const day = visitDateStr.substring(3, 5);
+        const ampm = visitDateStr.endsWith('-AM') ? '1' : '2';
+        const dateno = `${month}${day}${ampm}`;
 
-        // 3. 클럽 번호 가져오기 (예약 상세 객체에서 가져옴)
         const clubNo = "{{ reserv.clubNo }}";
         if (!clubNo) return alert('방문처(클럽) 식별 번호를 찾을 수 없습니다.');
 
@@ -632,11 +649,9 @@
             btn.disabled = true;
             btn.innerText = '처리 중...';
 
-            // 4. 기존 예약 취소 API 호출
             const cancelRes = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, { method: 'POST' });
             if (!cancelRes.ok) throw new Error('기존 예약 취소 실패: ' + await cancelRes.text());
 
-            // 5. 새 예약 등록 API 호출
             const regRes = await fetch(`/reg_reserv/${encodeURIComponent(clubNo)}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -654,7 +669,6 @@
 
             alert(`예약 변경이 완료되었습니다.\n새 예약번호: ${regData.reservNo}`);
 
-            // 완료 후 이전 페이지(목록)로 이동
             window.history.back();
 
         } catch (error) {
@@ -666,7 +680,6 @@
             btn.innerText = '변경 저장';
         }
     }
-
 
 </script>
 

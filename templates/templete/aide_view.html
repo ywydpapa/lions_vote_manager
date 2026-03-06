@@ -26,6 +26,13 @@
             font-weight: 700;
         }
 
+        /* 도착한 예약 초록색 표시 */
+        .status-arrive {
+            color: #198754 !important; /* Bootstrap text-success 색상 (가독성을 위해 수정) */
+            font-weight: 700;
+        }
+
+        /* 대기 중인 예약 검은색 표시 */
         .status-pending {
             color: #212529 !important;
             font-weight: 600;
@@ -170,12 +177,18 @@
         // 시간
         html += `<td class="fw-bold text-secondary font-monospace">${hm(t)}</td>`;
 
-        // 방문자 1, 2, 3
+        // 방문자 1, 2, 3 처리 로직
         for (let i = 0; i < 3; i++) {
           if (items[i]) {
             const r = items[i];
-            const isDone = r.attrib === '1DONE1DONE';
-            const textClass = isDone ? 'status-done' : 'status-pending';
+
+            // 상태에 따른 클래스 부여
+            let textClass = 'status-pending'; // 기본 대기(검은색)
+            if (r.attrib === '1DONE1DONE') {
+              textClass = 'status-done';      // 완료(붉은색)
+            } else if (r.attrib === '1111111111') {
+              textClass = 'status-arrive';    // 도착(초록색)
+            }
 
             html += `
               <td>
