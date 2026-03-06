@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        {% include '/common/header.html' %}
+    </head>
+    <body class="d-flex flex-column h-100 bg-light">
+        <main class="flex-shrink-0">
+            <!-- Navigation-->
+            {% include '/common/topnav.html' %}
+            <!-- Page Content-->
+            <div class="container px-5 my-5">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">시나리오 목록</span></h1>
+                </div>
+                <div class="row gx-5 justify-content-center">
+                    <div class="col-lg-11 col-xl-9 col-xxl-10"> <!-- 테이블 너비를 위해 col-xxl-10으로 살짝 넓혔습니다 -->
+
+                        <!-- 우측 상단 글쓰기 버튼 -->
+                        <div class="d-flex justify-content-end mb-3">
+                            <a href="/newnote?ntype=AIDE" class="btn btn-primary fw-bold">새 시나리오 작성</a>
+                        </div>
+
+                        <!-- 데이터 테이블 -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover text-center align-middle bg-white shadow-sm">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th scope="col" style="width: 10%;">번호</th>
+                                        <th scope="col" style="width: 20%;">제목</th>
+                                        <th scope="col" style="width: 55%;">내용</th>
+                                        <th scope="col" style="width: 15%;">작성일시</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 데이터가 있을 경우 -->
+                                    {% if notes %}
+                                        {% for contact in notes %}
+                                        <tr>
+                                            <!-- 고유 ID가 있다면 contact.id 등을 사용, 없다면 loop.index(순번) 사용 -->
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ contact.noteTitle }}</td>
+                                            <td>{{ contact.noteContents }}</td>
+                                            <td class="text-start px-4 " style="text-align: center">
+                                                <!-- 제목 클릭 시 상세 페이지로 이동하도록 링크 처리 (경로는 상황에 맞게 수정) -->
+                                                <a href="/note_detail/{{ contact.noteNo }}" class="text-decoration-none text-dark fw-bold">
+                                                    {{ contact.regDate }}
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    <!-- 데이터가 없을 경우 -->
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="py-5 text-muted">등록된 시나리오가 없습니다.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Footer-->
+        {% include '/common/footer.html' %}
+        {% include '/common/adscript.html' %}
+    </body>
+</html>

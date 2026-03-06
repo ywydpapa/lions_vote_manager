@@ -79,9 +79,10 @@
             }
         }
 
+        /* 왼쪽 영역이 절반으로 줄었으므로 lg 이상에서도 2열로 유지하는 것이 좋습니다 */
         @media (min-width: 992px) {
             .visitors-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
@@ -146,6 +147,18 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        /* HTML 뷰어 영역 스타일 */
+        .html-viewer {
+            flex-grow: 1;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
     </style>
 </head>
 
@@ -153,16 +166,23 @@
 <main class="flex-shrink-0">
     {% include '/common/topnav.html' %}
 
-    <div class="container px-5 my-5 page-wrap">
-        <div class="text-center mb-4">
+    <div class="container-fluid px-4 px-lg-5 my-5 page-wrap">
+        <div class="position-relative text-center mb-5">
             <h1 class="display-5 fw-bolder mb-0">
-                <span class="text-gradient d-inline">방문처 상세 정보</span>
+                <span class="text-gradient d-inline">방문처 상세 정보(후보자용)</span>
             </h1>
+            <a href="/viewer/candi_view"
+               class="btn btn-outline-secondary fw-bold position-absolute top-50 end-0 translate-middle-y">
+                목록으로 가기
+            </a>
         </div>
 
-        <div class="row gx-5 justify-content-center">
-            <div class="col-lg-11 col-xl-9 col-xxl-8">
-                <!-- 1) 예약 요약 카드 (테이블형) -->
+        <!-- 좌우 2단 분할 레이아웃 적용 -->
+        <div class="row gx-4 justify-content-center">
+
+            <!-- 왼쪽 영역: 기존 방문처 및 방문자 정보 -->
+            <div class="col-lg-6 mb-4">
+                <!-- 1) 예약 요약 카드 -->
                 <div class="card summary-card mb-4">
                     <div class="card-body px-4 py-3">
                         <table class="table summary-table align-middle">
@@ -197,6 +217,7 @@
                         {% endif %}
                     </div>
                 </div>
+
                 {% if clubdtl %}
                 <div class="card summary-card mb-4">
                     <div class="card-body px-4 py-3">
@@ -209,7 +230,6 @@
                             <tr>
                                 <th>창립일</th>
                                 <td>
-                                    {# datetime이면 아래처럼 포맷 #}
                                     {% if clubdtl.estDate %}
                                     {{ clubdtl.estDate.strftime('%Y-%m-%d') }}
                                     {% else %}
@@ -218,16 +238,17 @@
                                 </td>
                             </tr>
                             <tr>
-                                <th>소속지역</th>
-                                <td>{{ clubdtl.regionNo }} 지역</td>
+                                <th>소속지역 / 회원수</th>
+                                <td>{{ clubdtl.regionNo }} 지역 / {{ clubdtl.memberCount }} 명</td>
                             </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
                 {% endif %}
+
                 <!-- 2) 방문자 목록 -->
-                <div class="d-flex justify-content-between align-items-end mb-2">
+                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
                     <div class="fw-bolder">방문자 목록</div>
                     <div class="text-muted small">총 {{ visitors|length }}명</div>
                 </div>
@@ -259,19 +280,69 @@
                     </div>
                     {% endfor %}
                 </div>
+            </div>
+
+            <!-- 오른쪽 영역: 노트 셀렉트 박스 및 HTML 뷰어 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card summary-card h-100">
+                    <div class="card-body px-4 py-4 d-flex flex-column">
+                        <h5 class="fw-bolder mb-3">인사말</h5>
+                                                <!-- 셀렉트 박스 -->
+                        <select id="noteSelect" class="form-select mb-3" onchange="renderNote()">
+                            {% for note in notes %}
+                            <option value="{{ note.noteNo }}">{{ note.noteTitle }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="noteViewer" class="html-viewer">
+                            <div class="h-100 d-flex align-items-center justify-content-center text-muted">
+                                상단에서 문서를 선택하면 내용이 표시됩니다.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </main>
+
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+
 <script>
-    function openScribe(el) {
-        const photo = el.getAttribute('data-photo');
-        const reservno = el.getAttribute('data-reservno');
-        const url = '/scribe01?reservno=' + encodeURIComponent(reservno)
-            + '&photo=' + encodeURIComponent(photo);
-        window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
+    const notesData = {{ notes | tojson | safe | default('[]') }};
+
+    function renderNote() {
+        const select = document.getElementById('noteSelect');
+        const viewer = document.getElementById('noteViewer');
+        const selectedId = select.value;
+
+        if (!selectedId) {
+            viewer.innerHTML = `
+                <div class="h-100 d-flex align-items-center justify-content-center text-muted">
+                    등록된 인사말이 없습니다.
+                </div>`;
+            return;
+        }
+
+        // 선택된 noteNo와 일치하는 객체 찾기
+        const note = notesData.find(n => String(n.noteNo) === String(selectedId));
+
+        // noteContents가 존재하면 뷰어에 삽입
+        if (note && note.noteContents) {
+            viewer.innerHTML = note.noteContents;
+        } else {
+            viewer.innerHTML = `<div class="text-danger">문서 내용을 불러올 수 없습니다.</div>`;
+        }
     }
+
+    // DOM(HTML) 로딩이 완료되면 즉시 renderNote 함수를 실행하여 첫 번째 인사말 표시
+    window.addEventListener('DOMContentLoaded', () => {
+        if (notesData.length > 0) {
+            renderNote();
+        }
+    });
 </script>
+
 </body>
 </html>

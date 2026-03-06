@@ -1,93 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     {% include '/common/header.html' %}
+    <style>
+        .table-schedule th {
+            background-color: #f8f9fa;
+            font-weight: 700;
+            color: #495057;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table-schedule td {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .table-schedule a:hover {
+            text-decoration: underline !important;
+        }
+
+        /* 완료된 예약 붉은색 표시 */
+        .status-done {
+            color: #dc3545 !important; /* Bootstrap text-danger 색상 */
+            font-weight: 700;
+        }
+
+        .status-pending {
+            color: #212529 !important;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
 <main class="flex-shrink-0">
     <!-- Navigation-->
     {% include '/common/topnav.html' %}
+
     <!-- Page Content-->
     <div class="container px-5 my-5">
         <div class="text-center mb-5">
             <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">스케줄 목록</span></h1>
         </div>
         <div class="row gx-5 justify-content-center">
-            <div class="col-lg-11 col-xl-9 col-xxl-8">
+            <div class="col-lg-12 col-xl-11">
                 <div id="scheduleRoot"></div>
-                <style>
-                    .day-card {
-                        margin-bottom: 16px;
-                    }
-
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                    }
-
-                    .slot {
-                        border-top: 1px solid #eef0f3;
-                        padding: 10px 14px;
-                        background: #fff;
-                        min-height: 44px;
-                    }
-
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
-
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    .slot a:hover { text-decoration: underline !important; }
-
-                    .schedule-wrap {
-                        width: 100%;
-                    }
-
-                    /* 10분 슬롯을 세로로 쌓는 타임라인 */
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr; /* 가로 전체 */
-                    }
-
-                    .slot {
-                        position: relative;
-                        min-height: 44px; /* 한 슬롯 높이 */
-                        border-top: 1px solid #eef0f3; /* 구분선 */
-                        padding: 10px 14px;
-                        background: #fff;
-                    }
-
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    /* 가독성을 위한 홀수 줄 배경 */
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
-                </style>
             </div>
         </div>
     </div>
 </main>
+
 <!-- Footer-->
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
+
 <script>
   const payload = { reservs: {{ reservs | tojson }} };
 
@@ -103,7 +69,7 @@
   function reservDtlUrl(reservNo) {
     const n = Number(reservNo);
     if (!Number.isFinite(n)) return '#';
-    return `/view_reservdtl/${n}`;
+    return `/view_reservdtl_aide/${n}`;
   }
 
   function escapeHtml(s) {
@@ -148,11 +114,32 @@
   const root = document.getElementById('scheduleRoot');
 
   if (days.length === 0) {
-    root.innerHTML = `<div class="text-muted p-4 text-center">예약이 없습니다.</div>`;
+    root.innerHTML = `<div class="text-muted p-4 text-center bg-white rounded shadow-sm">예약이 없습니다.</div>`;
   } else {
-    root.innerHTML = days.map(dayKey => {
+    let html = `
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-schedule mb-0" style="min-width: 800px;">
+            <thead>
+              <tr>
+                <th style="width: 12%;">일자</th>
+                <th style="width: 10%;">시간</th>
+                <th style="width: 20%;">방문자 1</th>
+                <th style="width: 20%;">방문자 2</th>
+                <th style="width: 20%;">방문자 3</th>
+                <th style="width: 18%;">비고</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    for (const dayKey of days) {
       const dayDate = new Date(dayKey + 'T00:00:00');
       const list = groups.get(dayKey);
+
+      // 오늘 날짜인지 판별
+      const isToday = (dayKey === todayKey);
+      const dateStr = isToday ? `오늘<br><small class="text-muted">(${koDayTitle(dayDate)})</small>` : koDayTitle(dayDate);
 
       const slotMap = new Map();
       for (const r of list) {
@@ -165,66 +152,59 @@
       const start = new Date(dayKey + `T${pad2(START_HOUR)}:00:00`);
       const end   = new Date(dayKey + `T${pad2(END_HOUR)}:00:00`);
 
-      const slots = [];
+      const totalSlots = (end.getTime() - start.getTime()) / (STEP_MIN * 60000);
+      let isFirstRowOfDay = true;
+
       for (let t = new Date(start); t < end; t = new Date(t.getTime() + STEP_MIN * 60000)) {
         const key = `${ymd(t)} ${hm(t)}`;
         const items = slotMap.get(key) ?? [];
 
-        let contentHtml = '';
+        html += `<tr>`;
 
-        if (items.length === 0) {
-          // 예약이 없을 때
-          contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
-        } else {
-          // 완료된 예약과 예정된 예약 분리
-          const doneItems = items.filter(r => r.attrib === '1DONE1DONE');
-          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE');
-
-          // 예약 목록을 HTML로 변환하는 헬퍼 함수
-          const renderLines = (arr, isDone) => arr.map(r => `
-            <a class="d-block small text-decoration-none py-1 text-${isDone ? 'start' : 'end'}"
-               href="${reservDtlUrl(r.reservNo)}">
-              <span class="fw-semibold ${isDone ? 'text-success' : 'text-body'}">${escapeHtml(r.visitorName)}</span>
-              <span class="text-muted">(${r.visitCnt}명)</span>
-            </a>
-          `).join('');
-
-          // 레이아웃: 왼쪽(완료), 오른쪽(예정)
-          contentHtml = `
-            <div class="w-50 px-2 border-end" style="border-color: #eef0f3 !important;">
-              ${renderLines(doneItems, true)}
-            </div>
-            <div class="w-50 px-2">
-              ${renderLines(pendingItems, false)}
-            </div>
-          `;
+        // 일자 (하루의 첫 번째 줄에만 rowspan 적용)
+        if (isFirstRowOfDay) {
+          html += `<td rowspan="${totalSlots}" class="bg-light fw-bold">${dateStr}</td>`;
+          isFirstRowOfDay = false;
         }
 
-        slots.push(`
-          <div class="slot">
-            <div class="d-flex w-100 align-items-start">
-              <div class="time" style="width: 60px; flex-shrink: 0;">${hm(t)}</div>
-              <div class="flex-grow-1 d-flex justify-content-end">
-                ${contentHtml}
-              </div>
-            </div>
-          </div>
-        `);
+        // 시간
+        html += `<td class="fw-bold text-secondary font-monospace">${hm(t)}</td>`;
+
+        // 방문자 1, 2, 3
+        for (let i = 0; i < 3; i++) {
+          if (items[i]) {
+            const r = items[i];
+            const isDone = r.attrib === '1DONE1DONE';
+            const textClass = isDone ? 'status-done' : 'status-pending';
+
+            html += `
+              <td>
+                <a href="${reservDtlUrl(r.reservNo)}" class="text-decoration-none ${textClass} d-block">
+                  ${escapeHtml(r.visitorName)}
+                  <span class="text-muted small fw-normal ms-1">(${r.visitCnt}명)</span>
+                </a>
+              </td>
+            `;
+          } else {
+            html += `<td></td>`; // 빈 칸
+          }
+        }
+
+        // 비고 (동시간대 예약들의 메모를 콤마로 연결)
+        const memos = items.map(r => r.reservMemo).filter(m => m && m.trim() !== '').join(', ');
+        html += `<td class="text-muted small text-start">${escapeHtml(memos)}</td>`;
+
+        html += `</tr>`;
       }
+    }
 
-      // 오늘 날짜인지 판별하여 카드 헤더 텍스트 설정
-      const isToday = (dayKey === todayKey);
-      const headerTitle = isToday ? `오늘 (${koDayTitle(dayDate)})` : koDayTitle(dayDate);
-
-      return `
-        <div class="card shadow-sm day-card mb-3">
-          <div class="card-header bg-white fw-bolder">${headerTitle}</div>
-          <div class="card-body p-0">
-            <div class="schedule-grid">${slots.join('')}</div>
-          </div>
+    html += `
+            </tbody>
+          </table>
         </div>
-      `;
-    }).join('');
+      </div>
+    `;
+    root.innerHTML = html;
   }
 
   const es = new EventSource("/sse/schedule");
@@ -232,6 +212,5 @@
     location.reload();
   });
 </script>
-
 </body>
 </html>

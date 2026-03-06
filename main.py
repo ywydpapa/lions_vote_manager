@@ -245,10 +245,10 @@ async def get_circle_reserv(circleno: int, db: AsyncSession):
 
 
 async def get_reserv_dtl(reservno: int, db: AsyncSession):
-    query = text("""select a.reservNo, a.reservFrom, a.visitorCount, b.circleName, c.clubName, a.reservMemo, a.clubNo, a.circleNo from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsClub c on a.clubNo = c.clubNo where reservNo = :reservno""")
+    query = text("""select a.reservNo, a.reservFrom, a.visitorCount, b.circleName, c.clubName, a.reservMemo, a.clubNo, a.circleNo, a.attrib from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsClub c on a.clubNo = c.clubNo where reservNo = :reservno""")
     result = await db.execute(query, {"reservno": reservno})
     row = result.fetchone()
-    result = {"reservNo": row[0], "reservFrom": row[1], "visitCnt": row[2], "reservMemo": row[5], "visitorName": (row[3] or row[4]), "clubNo": row[6], "circleNo": row[7]}
+    result = {"reservNo": row[0], "reservFrom": row[1], "visitCnt": row[2], "reservMemo": row[5], "visitorName": (row[3] or row[4]), "clubNo": row[6], "circleNo": row[7], "attrib": row[8]}
     return result
 
 
@@ -256,7 +256,10 @@ async def get_club_dtl(clubno: int, db: AsyncSession):
     query = text("""select * from lionsClub where clubNo = :clubno""")
     result = await db.execute(query, {"clubno": clubno})
     row = result.fetchone()
-    result = {"clubNo": row[0], "clubName": row[1], "estDate": row[2], "regionNo": row[3]}
+    query2 = text("""select count(*) from lionsMember where clubNo = :clubno""")
+    result2 = await db.execute(query2, {"clubno": clubno})
+    row2 = result2.fetchone()
+    result = {"clubNo": row[0], "clubName": row[1], "estDate": row[2], "regionNo": row[3], "memberCount": row2[0]}
     return result
 
 
@@ -366,6 +369,26 @@ async def get_contactlist(db: AsyncSession):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(CONTACTLIST)")
+
+
+async def get_notelist(candtype: str, db: AsyncSession):
+    try:
+        query = text("select * from voteNote where attrib = :attpatt and noteType = :ntype")
+        result = await db.execute(query, {"attpatt": "1000010000", "ntype": candtype})
+        rows = result.mappings().all()
+        note_list = []
+        for row in rows:
+            row_dict = dict(row)
+            # datetime 객체를 JSON 직렬화가 가능한 문자열로 변환
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+            note_list.append(row_dict)
+
+        return note_list
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(NOTELIST)")
 
 
 async def get_contactdtl(contactno:int,db: AsyncSession):
@@ -558,14 +581,13 @@ async def view_visitors(request: Request, db: AsyncSession = Depends(get_db)):
 async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    candino = int(os.getenv("candiNo"))
     reserv_dtl = await get_reserv_dtl(reservno, db)
+    cmembers = await get_clubmembers(reserv_dtl["clubNo"], db)
     visitors = await get_visitors(reservno, db)
     photo_dir = Path("static/img/event_photos")
     files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
-    # 템플릿에서 바로 쓸 수 있게 URL로 변환
     event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
-    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos})
+    return templates.TemplateResponse("view/reserv_dtl.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "cmembers": cmembers})
 
 
 @app.get("/view_reservdtl_candi/{reservno}", response_class=HTMLResponse)
@@ -581,10 +603,11 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     if circleno :
         clubdtl = []
     visitors = await get_visitors(reservno, db)
+    notes = await get_notelist("CANDI", db)
     photo_dir = Path("static/img/event_photos")
     files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
     event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
-    return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl})
+    return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes})
 
 
 @app.get("/view_reservdtl_aide/{reservno}", response_class=HTMLResponse)
@@ -600,10 +623,11 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     if circleno :
         clubdtl = []
     visitors = await get_visitors(reservno, db)
+    notes = await get_notelist("AIDE", db)
     photo_dir = Path("static/img/event_photos")
     files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
     event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
-    return templates.TemplateResponse("view/reserv_dtl_aide.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl})
+    return templates.TemplateResponse("view/reserv_dtl_aide.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes})
 
 
 @app.get("/view_reservsimple/{reservno}", response_class=HTMLResponse)
@@ -909,6 +933,19 @@ async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
 
+@app.api_route("/insert_note/", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    doctitle = form_data.get("dtitle")
+    docconts = form_data.get("dcontent")
+    ntype = form_data.get("ntype")
+    query = text(
+        f"INSERT INTO voteNote (noteTitle, noteContents, noteType) values (:doctitle,:docconts,:ntype) ")
+    await db.execute(query, {"doctitle": doctitle, "docconts": docconts,"ntype":ntype})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
+
+
 @app.api_route("/done_contact/{contactno}", methods=["POST"])
 async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends(get_db)):
     query = text(
@@ -934,6 +971,35 @@ async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
     contacts = await get_contactlist(db)
     return templates.TemplateResponse(
         "manage/contact_list.html", {"request": request, "contacts": contacts}
+    )
+
+
+@app.get("/notelist_candi", response_class=HTMLResponse)
+async def candinote_list(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    notes = await get_notelist("CANDI",db)
+    return templates.TemplateResponse(
+        "manage/candinote_list.html", {"request": request, "contacts": notes}
+    )
+
+
+@app.get("/notelist_aide", response_class=HTMLResponse)
+async def aidenote_list(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    notes = await get_notelist("AIDE",db)
+    return templates.TemplateResponse(
+        "manage/aidenote_list.html", {"request": request, "notes": notes}
+    )
+
+
+@app.get("/newnote", response_class=HTMLResponse)
+async def newnote(request: Request,ntype: Optional[str] = None):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    ntype = ntype or request.query_params.get("ntype")
+    return templates.TemplateResponse("manage/newnote.html", {"request": request, "ntype": ntype}
     )
 
 
