@@ -651,6 +651,7 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     reserv_dtl = await get_reserv_dtl(reservno, db)
     circleno = reserv_dtl["circleNo"]
     clubno = reserv_dtl["clubNo"]
+    cmembers = await get_clubmembers(reserv_dtl["clubNo"], db)
     if clubno :
         clubdtl = await get_club_dtl(clubno, db)
     if circleno :
@@ -660,7 +661,7 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     photo_dir = Path("static/img/event_photos")
     files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
     event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
-    return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes})
+    return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes, "cmembers":cmembers})
 
 
 @app.get("/view_reservdtl_aide/{reservno}", response_class=HTMLResponse)
