@@ -59,6 +59,11 @@
                     margin-bottom: 2rem;
                 }
             }
+
+            /* 기사 뷰어 컨테이너 부드러운 전환 효과 */
+            #article-viewer-container {
+                transition: all 0.3s ease-in-out;
+            }
         </style>
     </head>
     <body class="d-flex flex-column h-100 bg-light">
@@ -71,10 +76,10 @@
                 <div class="container px-5">
                     <div class="text-center mb-4">
                         <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 발자취</span></h1>
+                        <P>이미지를 좌우로 스와이프하여 후보의 발자취를 확인해보세요.</P>
                     </div>
                     <!-- 상하 스와이프 컨테이너 -->
                     <div class="vertical-swipe-container">
-
                         <!-- 첫 번째 카드 (h01: 회장/자문회) -->
                         <div class="swipe-section">
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
@@ -170,7 +175,6 @@
                                         <div id="carouselH03" class="carousel slide h-100" data-bs-ride="carousel">
                                             <div class="carousel-indicators">
                                                 {% for img in h03_images %}
-                                                <!-- 수정됨: data-bs-target="#carouselH03" -->
                                                 <button type="button" data-bs-target="#carouselH03" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
@@ -181,7 +185,6 @@
                                                 </div>
                                                 {% endfor %}
                                             </div>
-                                            <!-- 수정됨: data-bs-target="#carouselH03" -->
                                             <button class="carousel-control-prev" type="button" data-bs-target="#carouselH03" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
@@ -211,7 +214,6 @@
                                         <div id="carouselH04" class="carousel slide h-100" data-bs-ride="carousel">
                                             <div class="carousel-indicators">
                                                 {% for img in h04_images %}
-                                                <!-- 수정됨: data-bs-target="#carouselH04" -->
                                                 <button type="button" data-bs-target="#carouselH04" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
@@ -222,7 +224,6 @@
                                                 </div>
                                                 {% endfor %}
                                             </div>
-                                            <!-- 수정됨: data-bs-target="#carouselH04" -->
                                             <button class="carousel-control-prev" type="button" data-bs-target="#carouselH04" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
@@ -237,8 +238,32 @@
                             </div>
                         </div>
                         <!-- End 네 번째 카드 -->
-
                     </div>
+
+                    <!-- 후보자 관련 기사 영역 -->
+                    <div class="text-center mb-4 mt-5">
+                        <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보자의 관련 기사</span></h1>
+                        <p class="text-muted mt-2">버튼을 클릭하시면 해당 기사의 원문을 확인하실 수 있습니다.</p>
+                    </div>
+
+                    <!-- 기사 링크 버튼 그룹 -->
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+                        <button class="btn btn-outline-primary article-btn px-4 rounded-pill" data-link="https://www.inewspeople.co.kr/news/articlePrint.html?idxno=33885">기사 1 보기</button>
+                        <button class="btn btn-outline-primary article-btn px-4 rounded-pill" data-link="https://www.igasnet.com/news/articlePrint.html?idxno=20684">기사 2 보기</button>
+                        <button class="btn btn-outline-primary article-btn px-4 rounded-pill" data-link="https://www.cnbnews.com/news/article_print.html?no=630239">기사 3 보기</button>
+                        <button class="btn btn-outline-primary article-btn px-4 rounded-pill" data-link="https://www.busan.com/print/index.php?code=2026021217280017118">기사 4 보기</button>
+                    </div>
+
+                    <!-- HTML 뷰어 (iframe) 영역 - 초기에는 숨김 처리 -->
+                    <div id="article-viewer-container" class="card shadow border-0 rounded-4 mb-5" style="display: none; height: 75vh; min-height: 600px;">
+                        <div class="card-body p-2 h-100 position-relative">
+                            <!-- 닫기 버튼 -->
+                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3 bg-white rounded-circle p-2 shadow-sm" aria-label="Close" id="close-viewer-btn" style="z-index: 10; opacity: 1;"></button>
+                            <!-- iframe (sandbox 속성 추가로 자동 인쇄창 차단) -->
+                            <iframe id="article-iframe" src="" sandbox="allow-scripts allow-same-origin" style="width: 100%; height: 100%; border: none; border-radius: 0.5rem; background-color: #fff;"></iframe>
+                        </div>
+                    </div>
+
                 </div>
             </section>
 
@@ -256,5 +281,42 @@
         <!-- Footer-->
         {% include '/common/footer.html' %}
         {% include '/common/adscript.html' %}
+
+        <!-- 기사 뷰어 동작 스크립트 -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const buttons = document.querySelectorAll('.article-btn');
+                const viewerContainer = document.getElementById('article-viewer-container');
+                const iframe = document.getElementById('article-iframe');
+                const closeBtn = document.getElementById('close-viewer-btn');
+
+                // 각 기사 버튼 클릭 이벤트
+                buttons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        // 모든 버튼의 활성화 상태 초기화
+                        buttons.forEach(btn => btn.classList.remove('active'));
+                        // 클릭된 버튼 활성화
+                        this.classList.add('active');
+
+                        // iframe src 업데이트 및 뷰어 표시
+                        const link = this.getAttribute('data-link');
+                        iframe.src = link;
+                        viewerContainer.style.display = 'block';
+
+                        // 뷰어가 렌더링된 후 부드럽게 스크롤 이동
+                        setTimeout(() => {
+                            viewerContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    });
+                });
+
+                // 닫기 버튼 클릭 이벤트
+                closeBtn.addEventListener('click', function() {
+                    viewerContainer.style.display = 'none';
+                    iframe.src = ''; // iframe 내용 초기화하여 불필요한 리소스 소모 방지
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                });
+            });
+        </script>
     </body>
 </html>
