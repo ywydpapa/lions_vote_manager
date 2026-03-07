@@ -1,32 +1,305 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     {% include '/common/header.html' %}
+    <style>
+        /* 후보자 프로필 맞춤형 CSS */
+        .candidate-container {
+            color: #333;
+            font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+            position: relative; /* 워터마크 기준점 설정 */
+            z-index: 1;
+        }
+
+        /* 배경 워터마크 설정 */
+        .candidate-container::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%; /* 워터마크 크기 조절 */
+            height: 60%;
+            background-image: url('/static/assets/watermark_back_nobagr_sm.png'); /* 워터마크 이미지 경로 */
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain;
+            opacity: 0.07; /* 투명도 설정 (0.0 ~ 1.0 사이, 숫자가 작을수록 연해짐) */
+            z-index: -1; /* 콘텐츠 뒤로 보내기 */
+            pointer-events: none; /* 마우스 클릭 방해 방지 */
+        }
+
+        /* 상단 프로필 영역 */
+        .profile-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3rem;
+            margin-bottom: 3.5rem;
+        }
+        .profile-image {
+            width: 240px;
+            height: 320px;
+            background-color: #f4f4f4;
+            border-radius: 12px;
+            position: relative;
+            box-shadow: 2px 2px 15px rgba(0,0,0,0.03);
+            overflow: hidden;
+        }
+        .profile-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 300px;
+        }
+        .info-title {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #5c2a8a;
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-title h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0;
+            color: #333;
+        }
+        .info-title::before {
+            content: "✠";
+            color: #c5a059;
+            margin-right: 0.6rem;
+            font-size: 1.3rem;
+        }
+        .info-item {
+            display: flex;
+            margin-bottom: 1.1rem;
+            font-size: 0.95rem;
+        }
+        .info-item strong {
+            width: 110px;
+            color: #5c2a8a;
+            font-weight: 600;
+        }
+        .info-item span {
+            color: #444;
+        }
+
+        /* 공통 섹션 타이틀 */
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 5px;
+            height: 1.15rem;
+            background-color: #5c2a8a;
+            margin-right: 0.6rem;
+            border-radius: 2px;
+        }
+
+        /* 소견서 영역 */
+        .statement-section {
+            margin-bottom: 3.5rem;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 2.5rem;
+        }
+        .statement-text p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem;
+            word-break: keep-all;
+        }
+        .statement-tagline {
+            background-color: rgba(248, 246, 250, 0.85); /* 워터마크가 살짝 비치도록 배경 투명도 조절 */
+            border-left: 5px solid #5c2a8a;
+            color: #5c2a8a;
+            font-weight: 700;
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* 경력 및 수상 현황 영역 */
+        .career-section {
+            border-top: 1px solid #f0f0f0;
+            padding-top: 2.5rem;
+            margin-bottom: 3rem;
+        }
+        .career-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .career-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .career-item {
+            background-color: rgba(250, 250, 250, 0.85); /* 워터마크가 살짝 비치도록 배경 투명도 조절 */
+            border-left: 4px solid #5c2a8a;
+            border-radius: 8px;
+            padding: 1.8rem;
+        }
+        .career-item h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #5c2a8a;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+        }
+        .career-item h3::before {
+            content: "✠";
+            color: #c5a059;
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+        .career-item ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .career-item li {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 0.7rem;
+            position: relative;
+            padding-left: 0.9rem;
+            line-height: 1.4;
+        }
+        .career-item li::before {
+            content: "-";
+            position: absolute;
+            left: 0;
+            color: #999;
+        }
+    </style>
 </head>
-<body class="d-flex flex-column h-100 bg-light">
+<body class="d-flex flex-column h-100 bg-white">
 <main class="flex-shrink-0">
     <!-- Navigation-->
     {% include '/common/topnav.html' %}
     <!-- Page Content-->
-    <div class="container px-5 my-5">
-        <div class="text-center mb-5">
-            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 비전</span></h1>
-        </div>
+    <div class="container px-5 my-5 candidate-container">
         <div class="row gx-5 justify-content-center">
-            <div class="col-lg-11 col-xl-9 col-xxl-8">
-                <div class="d-flex justify-content-center">
-                    <div class="w-100" style="max-width: 1100px;">
-                        <div class="ratio ratio-16x9 shadow rounded overflow-hidden bg-dark">
-                            <iframe
-                                    src="https://www.youtube.com/embed/QDSKCKfNbjc?si=Zas5Mf8GXP2-Sjqx"
-                                    title="YouTube video player"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowfullscreen>
-                            </iframe>
+            <div class="col-lg-11 col-xl-10 col-xxl-9">
+                <!-- Profile Section -->
+                <div class="profile-section">
+                    <div class="profile-image">
+                        <img src="/static/assets/hcjeon_catch.png" alt="전희충 라이온">
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-title">
+                            <h2>입후보자 소개</h2>
+                        </div>
+                        <div class="info-item">
+                            <strong>성명:</strong>
+                            <span>전 희 충 L</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>생년월일:</strong>
+                            <span>1962년 8월 1일</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>소속:</strong>
+                            <span>부산세종라이온스클럽</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>현직:</strong>
+                            <span>(주)대웅이티 대표이사 </span>
+                            <span> / 디더블유이티 대표</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>학력:</strong>
+                            <span>신라대학교 명예 경영학 박사 취득</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>현직책:</strong>
+                            <span>지역부총재(지역·기획부총재회 회장)</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Statement Section -->
+                <div class="statement-section">
+                    <div class="section-title">입후보 소견서</div>
+                    <div class="statement-text">
+                        <p>존경하는 라이온 지도자 여러분, 반갑습니다.</p>
+                        <p>2026-2027회기 제2부총재에 입후보한 부산세종라이온스클럽 전희충 라이온입니다.</p>
+                        <p>저 전희충 L은 우리 지구의 더 단단한 미래를 준비하기 위해 국제라이온스협회 355-A(부산)지구 2026-2027년도 제2부총재에 입후보하며 이 인사를 올립니다.</p>
+                        <p>어릴 적 지역사회에서 묵묵히 봉사하시던 라이온의 모습을 보며 깊은 존경을 품었습니다.</p>
+                        <p>그분들은 늘 앞에 서기보다 먼저 움직였고 말하기보다 먼저 실천했습니다.</p>
+                        <p>저에게 라이온은 단순한 봉사자가 아니라 지역사회의 신뢰를 떠받치는 책임의 이름이었습니다.</p>
+                        <p>저는 라이온스의 봉사가 즐거움과 보람 속에서 이어질 때 회원 모두가 자부심을 느끼는 조직이 된다고 믿습니다.</p>
+                        <p>“즐거운 봉사, 행복한 라이온!”</p>
+                        <p>이 슬로건처럼 회원 모두가 즐겁게 봉사하고 라이온으로서의 긍지를 느낄 수 있는 건강한 지구를 만들어 가겠습니다.</p>
+                    </div>
+                    <div class="statement-tagline">"즐거운 봉사, 행복한 라이온!"</div>
+                </div>
+
+                <!-- Career Section -->
+                <div class="career-section">
+                    <div class="section-title">경력 및 수상 현황</div>
+                    <div class="career-grid">
+                        <div class="career-item">
+                            <h3>클럽 경력</h3>
+                            <ul>
+                                <li>2016년 7월: 부산세종 라이온스클럽 입회</li>
+                                <li>2021~2022년: 클럽 제2부회장</li>
+                                <li>2022~2023년: 클럽 제1부회장</li>
+                                <li>2023~2024년: 세종클럽 회장</li>
+                                <li>2024~2025년: 직전회장</li>
+                                <li>2025~2026년(현): 전회장</li>
+                            </ul>
+                        </div>
+                        <div class="career-item">
+                            <h3>지구 및 국제 대회 경력</h3>
+                            <ul>
+                                <li>2024~2025년: 지대위원장(지대.명예위원장회 회장)</li>
+                                <li>2025~2026년(현): 지역부총재(지역.기획위원장회 회장)</li>
+                                <li>2023-2024 제106차 호주 세계대회 참가</li>
+                                <li>2024-2025 제107차 미국 올랜도 세계대회 참가</li>
+                                <li>2024-2025 제61차 태국파타야 동양 및 동남아 대회 참가</li>
+                                <li>2025-2026 제62차 일본삿포로 동양 및 동남아 대회 참가</li>
+                            </ul>
+                        </div>
+                        <div class="career-item">
+                            <h3>수상 및 표창</h3>
+                            <ul>
+                                <li>2024년 1월: 부산시하구청장 감사장</li>
+                                <li>2024년 5월: 부산광역시장 표창장</li>
+                                <li>2025년 2월: 국회의원 표창장</li>
+                                <li>2025년 11월: 중소 중견혁신대상</li>
+                                <li>2025년 12월: 부산강서구청장 감사장</li>
+                                <li>2026년 2월: 부산광역시장 표창장</li>
+                            </ul>
+                        </div>
+                        <div class="career-item">
+                            <h3>기금 봉사</h3>
+                            <ul>
+                                <li>LCIF 기금 기탁: US$64,200</li>
+                                <li>지구발전기금: 100,000,000원</li>
+                                <li>각종 지역사회 봉사금 기탁</li>
+                                <li>재난 구호 및 청소년 지원</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

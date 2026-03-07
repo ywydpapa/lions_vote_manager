@@ -585,7 +585,7 @@ async def success(request: Request):
 @app.get("/noname", response_class=HTMLResponse)
 async def success(request: Request):
     return templates.TemplateResponse(
-        "index/anoym.html", {"request": request, "user_No": request.session.get("user_No")}
+        "index/index.html", {"request": request, "user_No": request.session.get("user_No")}
     )
 
 
