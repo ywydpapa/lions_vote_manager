@@ -37,15 +37,17 @@
             gap: 3rem;
             margin-bottom: 3.5rem;
         }
+
         .profile-image {
             width: 240px;
             height: 320px;
             background-color: #f4f4f4;
             border-radius: 12px;
             position: relative;
-            box-shadow: 2px 2px 15px rgba(0,0,0,0.03);
+            box-shadow: 2px 2px 15px rgba(0, 0, 0, 0.03);
             overflow: hidden;
         }
+
         .profile-image img {
             width: 100%;
             height: 100%;
@@ -57,6 +59,7 @@
             flex: 1;
             min-width: 300px;
         }
+
         .info-title {
             display: flex;
             align-items: center;
@@ -64,29 +67,34 @@
             padding-bottom: 0.8rem;
             margin-bottom: 1.5rem;
         }
+
         .info-title h2 {
             font-size: 1.2rem;
             font-weight: 700;
             margin: 0;
             color: #333;
         }
+
         .info-title::before {
             content: "✠";
             color: #c5a059;
             margin-right: 0.6rem;
             font-size: 1.3rem;
         }
+
         .info-item {
             display: flex;
             margin-bottom: 1.1rem;
             font-size: 0.95rem;
         }
+
         .info-item strong {
             width: 110px;
             color: #5c2a8a;
             font-weight: 600;
             flex-shrink: 0; /* 라벨 너비 고정 */
         }
+
         .info-item span {
             color: #444;
         }
@@ -108,6 +116,7 @@
             display: flex;
             align-items: center;
         }
+
         .section-title::before {
             content: "";
             display: inline-block;
@@ -124,6 +133,7 @@
             border-top: 1px solid #f0f0f0;
             padding-top: 2.5rem;
         }
+
         .statement-text p {
             color: #555;
             line-height: 1.8;
@@ -131,6 +141,7 @@
             font-size: 0.95rem;
             word-break: keep-all;
         }
+
         .statement-tagline {
             background-color: rgba(248, 246, 250, 0.85); /* 워터마크가 살짝 비치도록 배경 투명도 조절 */
             border-left: 5px solid #5c2a8a;
@@ -149,22 +160,20 @@
             padding-top: 2.5rem;
             margin-bottom: 3rem;
         }
+
         .career-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr; /* 1fr 1fr 에서 1fr로 변경하여 1단으로 나열 */
             gap: 1.5rem;
         }
-        @media (max-width: 768px) {
-            .career-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+
         .career-item {
             background-color: rgba(250, 250, 250, 0.85); /* 워터마크가 살짝 비치도록 배경 투명도 조절 */
             border-left: 4px solid #5c2a8a;
             border-radius: 8px;
             padding: 1.8rem;
         }
+
         .career-item h3 {
             font-size: 1rem;
             font-weight: 700;
@@ -173,17 +182,20 @@
             display: flex;
             align-items: center;
         }
+
         .career-item h3::before {
             content: "✠";
             color: #c5a059;
             margin-right: 0.5rem;
             font-size: 1.1rem;
         }
+
         .career-item ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
+
         .career-item li {
             color: #555;
             font-size: 0.9rem;
@@ -192,6 +204,7 @@
             padding-left: 0.9rem;
             line-height: 1.4;
         }
+
         .career-item li::before {
             content: "-";
             position: absolute;
@@ -218,7 +231,7 @@
                             <h2>입후보자 소개</h2>
                         </div>
                         <div class="info-item">
-                            <strong>성  명:</strong>
+                            <strong>성 명:</strong>
                             <span>전 희 충 L</span>
                         </div>
                         <div class="info-item">
@@ -226,20 +239,20 @@
                             <span>1962년 8월 1일</span>
                         </div>
                         <div class="info-item">
-                            <strong>소  속:</strong>
+                            <strong>소 속:</strong>
                             <span>부산세종라이온스클럽</span>
                         </div>
                         <!-- 현직 두 줄 처리 -->
                         <div class="info-item">
-                            <strong>현  직:</strong>
+                            <strong>현 직:</strong>
                             <div class="multi-line">
                                 <span>(주)대웅이티 대표이사</span>
                                 <span>디더블유이티 대표</span>
                             </div>
                         </div>
                         <div class="info-item">
-                            <strong>학  력:</strong>
-                            <span>신라대학교 명예 경영학 박사 취득</span>
+                            <strong>학 력:</strong>
+                            <span>신라대학교 명예 경영학 박사</span>
                         </div>
                         <div class="info-item">
                             <strong>지구직책:</strong>
@@ -254,7 +267,8 @@
                     <div class="statement-text">
                         <p>존경하는 라이온 지도자 여러분, 반갑습니다.</p>
                         <p>2026-2027회기 제2부총재에 입후보한 부산세종라이온스클럽 전희충 라이온입니다.</p>
-                        <p>저 전희충 L은 우리 지구의 더 단단한 미래를 준비하기 위해 국제라이온스협회 355-A(부산)지구 2026-2027년도 제2부총재에 입후보하며 이 인사를 올립니다.</p>
+                        <p>저 전희충 L은 우리 지구의 더 단단한 미래를 준비하기 위해 국제라이온스협회 355-A(부산)지구 2026-2027년도 제2부총재에 입후보하며 이 인사를
+                            올립니다.</p>
                         <p>어릴 적 지역사회에서 묵묵히 봉사하시던 라이온의 모습을 보며 깊은 존경을 품었습니다.</p>
                         <p>그분들은 늘 앞에 서기보다 먼저 움직였고 말하기보다 먼저 실천했습니다.</p>
                         <p>저에게 라이온은 단순한 봉사자가 아니라 지역사회의 신뢰를 떠받치는 책임의 이름이었습니다.</p>
@@ -273,11 +287,14 @@
                             <h3>클럽 경력</h3>
                             <ul>
                                 <li>2016년 7월: 부산세종 라이온스클럽 입회</li>
+                                <li>2017~2019년: 클럽 이사</li>
+                                <li>2019~2020년: 클럽 감사</li>
+                                <li>2020~2021년: 클럽 상임이사</li>
                                 <li>2021~2022년: 클럽 제2부회장</li>
                                 <li>2022~2023년: 클럽 제1부회장</li>
-                                <li>2023~2024년: 세종클럽 회장</li>
-                                <li>2024~2025년: 직전회장</li>
-                                <li>2025~2026년(현): 전회장</li>
+                                <li>2023~2024년: 클럽 회장</li>
+                                <li>2024~2025년: 클럽 직전회장</li>
+                                <li>2025~2026년(현): 클럽 전회장</li>
                             </ul>
                         </div>
                         <div class="career-item">
@@ -286,31 +303,82 @@
                                 <li>2024~2025년: 지대위원장(지대.명예위원장회 회장)</li>
                                 <li>2025~2026년(현): 지역부총재(지역.기획위원장회 회장)</li>
                                 <li>2023-2024 제106차 호주 세계대회 참가</li>
+                                <li>2023-2024 제36주년 기념 300A-2 대만자매지구 공식방문 참가</li>
                                 <li>2024-2025 제107차 미국 올랜도 세계대회 참가</li>
+                                <li>2024-2025 제37주년 기념 300A-2 대만자매지구 공식방문 참가</li>
                                 <li>2024-2025 제61차 태국파타야 동양 및 동남아 대회 참가</li>
                                 <li>2025-2026 제62차 일본삿포로 동양 및 동남아 대회 참가</li>
+                                <li>2025-2026 제38주년 기념 300A-2 대만자매지구 공식방문 참가</li>
                             </ul>
                         </div>
                         <div class="career-item">
-                            <h3>수상 및 표창</h3>
+                            <h3>일반 수상 및 표창</h3>
                             <ul>
                                 <li>2024년 1월: 부산시하구청장 감사장</li>
                                 <li>2024년 5월: 부산광역시장 표창장</li>
-                                <li>2025년 2월: 국회의원 표창장</li>
-                                <li>2025년 11월: 중소 중견혁신대상</li>
+                                <li>2025년 2월: 국회의원 표창장 (국회의원 이성권)</li>
+                                <li>2025년 11월: 중소 중견혁신대상 (산업통상부 장관상)</li>
                                 <li>2025년 12월: 부산강서구청장 감사장</li>
                                 <li>2026년 2월: 부산광역시장 표창장</li>
                             </ul>
                         </div>
                         <div class="career-item">
-                            <h3>기금 봉사</h3>
+                            <h3>라이온스 수상경력</h3>
+                            <ul>
+                                <li>2019년~2020년: 특별공로상 (세종L.C 회장 이상판L)</li>
+                                <li>2022년~2023년: 유공라이온상 (총재 전기도L)</li>
+                                <li>2023년~2024년: 국제회장 지도력메달 (국제회장 페티 힐L)</li>
+                                <li>2023년~2024년: 국제회장 감사장 (국제회장 페티 힐L)</li>
+                                <li>2023년~2024년: 재단이사장 도움의 손길상 (국제재단이사장 브라이언 시한L)</li>
+                                <li>2023년~2024년: 재단이사장 감사장 (국제재단이사장 브라이언 시한L)</li>
+                                <li>2023년~2024년: MD355 의장 표창장 (MD355의장 김종희L)</li>
+                                <li>2023년~2024년: 무궁화금장대상 (총재 이형모L)</li>
+                                <li>2023년~2024년: 총재 표창패 (총재 이형모L)</li>
+                                <li>2024년~2025년: 국제회장 일등공로메달 (국제회장 파브리시오 올리베이라L)</li>
+                                <li>2024년~2025년: 국제회장 감사장 (국제회장 파브리시오 올리베이라L)</li>
+                                <li>2024년~2025년: 재단이사장 도움의 손길상 (국제재단이사장 패티 힐L)</li>
+                                <li>2024년~2025년: 재단이사장 감사장 (국제재단이사장 패티 힐L)</li>
+                                <li>2024년~2025년: MD355 특별봉사상 (MD355의장 윤정호L)</li>
+                                <li>2024년~2025년: MD355 의장 표창장 (MD355의장 윤정호L)</li>
+                                <li>2024년~2025년: 무궁화금장대상 (총재 조홍제L)</li>
+                                <li>2024년~2025년: 총재 공로패 (총재 조홍제L)</li>
+                                <li>2024년~2025년: 총재 감사패 (총재 조홍제L)</li>
+                                <li>2024년~2025년: 특별공로상 (세종L.C. 회장 라순원L)</li>
+                                <li>2025년~2026년: 국제회장 감사장 (국제회장 A.P 싱L)</li>
+                                <li>2025년~2026년: 재단이사장 도움의 손길상 (국제재단이사장 파브리시오 올리베이라L)</li>
+                                <li>2025년~2026년: 재단이사장 감사장 (국제재단이사장 파브리시오 올리베이라L)</li>
+                                <li>2025년~2026년: 동백은장대상 (총재 김용권L)</li>
+                                <li>2025년~2026년: 총재 공로패 (총재 김용권L)</li>
+                                <li>2025년~2026년: 총재 감사패 (총재 김용권L)</li>
+                                <li>2025년~2026년: 총재 표창패 (총재 김용권L)</li>
+                            </ul>
+                        </div>
+                        <div class="career-item">
+                            <h3>기금 봉사 및 봉사금</h3>
                             <ul>
                                 <li>LCIF 기금 기탁: US$64,200</li>
                                 <li>지구발전기금: 100,000,000원</li>
-                                <li>각종 지역사회 봉사금 기탁</li>
-                                <li>재난 구호 및 청소년 지원</li>
+                                <li>제40회 골프대회: 고급수건 1,000개</li>
+                                <li>제40회 체육대회: 공기청정기 1대, 치킨 160마리</li>
+                                <li>2025~2026 지구임원 및 클럽3역, 제1부회장 세미나: 휴대용 고급 선풍기 1,200개</li>
+                                <li>제41회 골프대회: 고급 골프 파우치 900개</li>
+                                <li>제41회 체육대회: 지구임원, 클럽회장, 클럽사무직원 고급잠바 952개, 귤 50박스, 피자 60판, 공기청정기 1대</li>
+                                <li>2024~2025 16개 지역 합동월례회: 지역별 경품</li>
+                                <li>2025~2026 16개 지역 합동월례회: 지역별 경품</li>
+                                <li>2025~2026 총재자문회 발전기금</li>
+                                <li>산청수해복구 모금액: 5,000,000원</li>
+                                <li>WE SERVE 다문화 가족 드림페스타 봉사금</li>
+                                <li>부산시 사하구청 다문화 가족 지원 봉사금</li>
+                                <li>부산시 사하구 취약계층 지원 봉사금</li>
+                                <li>부산시 중구 장애인복지관 봉사금</li>
+                                <li>부산시 강서구청 취약계층 지원 봉사금</li>
+                                <li>부산시 수영구청 취약계층 지원 봉사금</li>
+                                <li>부산시 강서구 장애인협회 지원 봉사금</li>
+                                <li>부산시 장애인총연합회 지원 봉사금</li>
+                                <li>부산시 강서구청 청소년 지원사업 후원금</li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
             </div>
