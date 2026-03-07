@@ -573,7 +573,39 @@ async def new_reservations(request: Request,dateno: str, db: AsyncSession = Depe
 
 @app.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
-    return templates.TemplateResponse("history/projects.html", {"request": request})
+    # 이미지가 저장된 실제 폴더 경로 (프로젝트 구조에 맞게 수정 필요)
+    hist_dir = "static/assets/hist"
+    def get_images(prefix):
+        if not os.path.exists(hist_dir):
+            return []
+        valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+        files = [f for f in os.listdir(hist_dir) if f.startswith(prefix) and f.lower().endswith(valid_exts)]
+        files.sort()
+        return [f"/static/assets/hist/{f}" for f in files]
+    h01_images = get_images("h01-")
+    h02_images = get_images("h02-")
+    h03_images = get_images("h03-")
+    h04_images = get_images("h04-")
+
+    # 만약 폴더에 사진이 없을 경우를 대비한 더미 이미지 (테스트용)
+    if not h01_images:
+        h01_images = ["https://dummyimage.com/800x500/343a40/6c757d"]
+    if not h02_images:
+        h02_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+    if not h03_images:
+        h03_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+    if not h04_images:
+        h04_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+
+    context = {
+        "request": request,
+        "h01_images": h01_images,
+        "h02_images": h02_images,
+        "h03_images": h03_images,
+        "h04_images": h04_images
+    }
+
+    return templates.TemplateResponse("history/projects.html", context)
 
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):

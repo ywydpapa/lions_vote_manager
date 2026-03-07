@@ -3,17 +3,40 @@
     <head>
         {% include '/common/header.html' %}
         <style>
+            /* 상하 스와이프(Scroll Snap) 컨테이너 설정 */
+            .vertical-swipe-container {
+                height: 85vh; /* 화면 높이의 85% 차지 */
+                overflow-y: auto;
+                scroll-snap-type: y mandatory; /* Y축 방향으로 강제 스냅 */
+                scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
+                -ms-overflow-style: none; /* IE 스크롤바 숨김 */
+            }
+            .vertical-swipe-container::-webkit-scrollbar {
+                display: none; /* 크롬, 사파리 스크롤바 숨김 */
+            }
+
+            /* 스와이프 되는 각 섹션(카드 영역) */
+            .swipe-section {
+                height: 40%;
+                scroll-snap-align: center; /* 스크롤 시 화면 중앙에 딱 맞게 멈춤 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem 0;
+            }
+
             /* 카드 내 이미지 슬라이더 맞춤 설정 */
             .carousel-inner, .carousel-item {
                 height: 100%;
-                min-height: 300px; /* 모바일 등에서 최소 높이 보장 */
+                min-height: 350px; /* 모바일 등에서 최소 높이 보장 */
             }
             .carousel-item img {
                 height: 100%;
                 width: 100%;
-                object-fit: cover; /* 이미지가 찌그러지지 않고 영역을 꽉 채우도록 설정 */
+                object-fit: cover; /* 이미지가 찌그러지지 않고 꽉 차게 */
             }
-            /* 좌측 텍스트 영역 수직 중앙 정렬 및 여백 */
+
+            /* 좌측 텍스트 영역 수직 중앙 정렬 */
             .text-section {
                 display: flex;
                 flex-direction: column;
@@ -23,6 +46,15 @@
             @media (max-width: 768px) {
                 .text-section {
                     padding: 2rem;
+                }
+                .vertical-swipe-container {
+                    height: auto; /* 모바일에서는 스크롤 스냅 해제하여 자연스럽게 볼 수 있게 함 */
+                    scroll-snap-type: none;
+                    overflow-y: visible;
+                }
+                .swipe-section {
+                    height: auto;
+                    margin-bottom: 2rem;
                 }
             }
         </style>
@@ -34,54 +66,52 @@
 
             <!-- Projects Section-->
             <section class="py-5">
-                <div class="container px-5 mb-5">
-                    <div class="text-center mb-5">
+                <div class="container px-5">
+                    <div class="text-center mb-4">
                         <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 발자취</span></h1>
+                        <p class="text-muted mt-2">위아래로 스와이프하여 활동 내역을 확인하세요.</p>
                     </div>
-                    <div class="row gx-5 justify-content-center">
-                        <div class="col-lg-11 col-xl-10 col-xxl-9">
 
-                            <!-- Project Card 1-->
-                            <div class="card overflow-hidden shadow rounded-4 border-0 mb-5">
+                    <!-- 상하 스와이프 컨테이너 -->
+                    <div class="vertical-swipe-container">
+
+                        <!-- 첫 번째 카드 (h01: 회장/자문회) -->
+                        <div class="swipe-section">
+                            <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
-                                    <!-- 좌측 텍스트 영역 (약 30~33%) -->
+                                    <!-- 좌측 텍스트 영역 -->
                                     <div class="col-md-4 text-section bg-white">
                                         <h2 class="fw-bolder mb-3">회장/자문회</h2>
                                         <p class="text-muted mb-0">
-                                            자문회 활동 내역입니다. 여기에 후보님의 상세한 활동 내용이나 설명을 여러 줄로 작성하실 수 있습니다.
+                                            자문회 활동 내역입니다. 클럽 회장 및 자문회로서 지역 사회를 위해 헌신한 다양한 활동들을 확인하실 수 있습니다.
                                         </p>
                                     </div>
 
-                                    <!-- 우측 이미지 슬라이더 영역 (약 67~70%) -->
+                                    <!-- 우측 이미지 슬라이더 영역 -->
                                     <div class="col-md-8">
-                                        <!-- 고유한 id(carouselProject1)를 지정해야 슬라이드가 정상 작동합니다 -->
-                                        <div id="carouselProject1" class="carousel slide h-100" data-bs-ride="carousel">
-                                            <!-- 슬라이드 하단 인디케이터 (점) -->
+                                        <div id="carouselH01" class="carousel slide h-100" data-bs-ride="carousel">
+                                            <!-- 하단 인디케이터 동적 생성 -->
                                             <div class="carousel-indicators">
-                                                <button type="button" data-bs-target="#carouselProject1" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                                                <button type="button" data-bs-target="#carouselProject1" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                                                <button type="button" data-bs-target="#carouselProject1" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                                                {% for img in h01_images %}
+                                                <button type="button" data-bs-target="#carouselH01" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                {% endfor %}
                                             </div>
 
-                                            <!-- 슬라이드 이미지들 -->
+                                            <!-- 슬라이드 이미지 동적 생성 -->
                                             <div class="carousel-inner">
-                                                <div class="carousel-item active">
-                                                    <img src="https://dummyimage.com/800x500/343a40/6c757d" alt="활동 사진 1" />
+                                                {% for img in h01_images %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ img }}" alt="회장/자문회 활동 사진 {{ loop.index }}" />
                                                 </div>
-                                                <div class="carousel-item">
-                                                    <img src="https://dummyimage.com/800x500/5c2a8a/ffffff" alt="활동 사진 2" />
-                                                </div>
-                                                <div class="carousel-item">
-                                                    <img src="https://dummyimage.com/800x500/c5a059/ffffff" alt="활동 사진 3" />
-                                                </div>
+                                                {% endfor %}
                                             </div>
 
                                             <!-- 좌우 이동 버튼 -->
-                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselProject1" data-bs-slide="prev">
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH01" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
                                             </button>
-                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselProject1" data-bs-slide="next">
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH01" data-bs-slide="next">
                                                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">다음</span>
                                             </button>
@@ -89,9 +119,147 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- End Project Card 1 -->
-
                         </div>
+                        <!-- End 첫 번째 카드 -->
+
+                        <!-- 두 번째 카드 (h02: 지대위원장) -->
+                        <div class="swipe-section">
+                            <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
+                                <div class="row g-0 h-100">
+                                    <!-- 좌측 텍스트 영역 -->
+                                    <div class="col-md-4 text-section bg-white">
+                                        <h2 class="fw-bolder mb-3">지대위원장</h2>
+                                        <p class="text-muted mb-0">
+                                            지대위원장 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
+                                        </p>
+                                    </div>
+
+                                    <!-- 우측 이미지 슬라이더 영역 -->
+                                    <div class="col-md-8">
+                                        <div id="carouselH02" class="carousel slide h-100" data-bs-ride="carousel">
+                                            <!-- 하단 인디케이터 동적 생성 -->
+                                            <div class="carousel-indicators">
+                                                {% for img in h02_images %}
+                                                <button type="button" data-bs-target="#carouselH02" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 슬라이드 이미지 동적 생성 -->
+                                            <div class="carousel-inner">
+                                                {% for img in h02_images %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ img }}" alt="지대위원장 활동 사진 {{ loop.index }}" />
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 좌우 이동 버튼 -->
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">이전</span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH02" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">다음</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End 두 번째 카드 -->
+                        <!-- End 세 번째 카드 -->
+                         <div class="swipe-section">
+                            <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
+                                <div class="row g-0 h-100">
+                                    <!-- 좌측 텍스트 영역 -->
+                                    <div class="col-md-4 text-section bg-white">
+                                        <h2 class="fw-bolder mb-3">지역.기획부총재</h2>
+                                        <p class="text-muted mb-0">
+                                            지대위원장 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
+                                        </p>
+                                    </div>
+
+                                    <!-- 우측 이미지 슬라이더 영역 -->
+                                    <div class="col-md-8">
+                                        <div id="carouselH03" class="carousel slide h-100" data-bs-ride="carousel">
+                                            <!-- 하단 인디케이터 동적 생성 -->
+                                            <div class="carousel-indicators">
+                                                {% for img in h03_images %}
+                                                <button type="button" data-bs-target="#carouselH02" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 슬라이드 이미지 동적 생성 -->
+                                            <div class="carousel-inner">
+                                                {% for img in h03_images %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ img }}" alt="지기획부총재 활동 사진 {{ loop.index }}" />
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 좌우 이동 버튼 -->
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH03" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">이전</span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH03" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">다음</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End 세 번째 카드 -->
+                        <!-- End 네 번째 카드 -->
+                         <div class="swipe-section">
+                            <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
+                                <div class="row g-0 h-100">
+                                    <!-- 좌측 텍스트 영역 -->
+                                    <div class="col-md-4 text-section bg-white">
+                                        <h2 class="fw-bolder mb-3">다문화페스티벌</h2>
+                                        <p class="text-muted mb-0">
+                                            다문화 페스티벌  활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
+                                        </p>
+                                    </div>
+
+                                    <!-- 우측 이미지 슬라이더 영역 -->
+                                    <div class="col-md-8">
+                                        <div id="carouselH04" class="carousel slide h-100" data-bs-ride="carousel">
+                                            <!-- 하단 인디케이터 동적 생성 -->
+                                            <div class="carousel-indicators">
+                                                {% for img in h04_images %}
+                                                <button type="button" data-bs-target="#carouselH04" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 슬라이드 이미지 동적 생성 -->
+                                            <div class="carousel-inner">
+                                                {% for img in h04_images %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ img }}" alt="지대위원장 활동 사진 {{ loop.index }}" />
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+
+                                            <!-- 좌우 이동 버튼 -->
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">이전</span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH02" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">다음</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </section>
