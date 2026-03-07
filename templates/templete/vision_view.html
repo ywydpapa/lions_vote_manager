@@ -84,8 +84,17 @@
             width: 110px;
             color: #5c2a8a;
             font-weight: 600;
+            flex-shrink: 0; /* 라벨 너비 고정 */
         }
         .info-item span {
+            color: #444;
+        }
+
+        /* 두 줄 이상 들어가는 텍스트를 위한 클래스 */
+        .multi-line {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem; /* 줄 간격 */
             color: #444;
         }
 
@@ -219,10 +228,13 @@
                             <strong>소속:</strong>
                             <span>부산세종라이온스클럽</span>
                         </div>
+                        <!-- 현직 두 줄 처리 -->
                         <div class="info-item">
                             <strong>현직:</strong>
-                            <span>(주)대웅이티 대표이사 </span>
-                            <span> / 디더블유이티 대표</span>
+                            <div class="multi-line">
+                                <span>(주)대웅이티 대표이사</span>
+                                <span>디더블유이티 대표</span>
+                            </div>
                         </div>
                         <div class="info-item">
                             <strong>학력:</strong>
