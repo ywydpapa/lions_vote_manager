@@ -32,7 +32,7 @@
         }
 
         .page-wrap {
-            padding-top: 6vh;
+            padding-top: 2vh; /* 6vh에서 2vh로 축소 */
             padding-bottom: 8vh;
         }
 
@@ -166,8 +166,10 @@
 <main class="flex-shrink-0">
     {% include '/common/topnav.html' %}
 
-    <div class="container-fluid px-4 px-lg-5 my-5 page-wrap">
-        <div class="position-relative text-center mb-5">
+    <!-- my-5를 mt-3 mb-5로 변경하여 상단 여백 축소 -->
+    <div class="container-fluid px-4 px-lg-5 mt-3 mb-5 page-wrap">
+        <!-- mb-5를 mb-4로 변경하여 타이틀 아래 여백 축소 -->
+        <div class="position-relative text-center mb-4">
             <h1 class="display-5 fw-bolder mb-0">
                 <span class="text-gradient d-inline">방문처 상세 정보(보좌관용)</span>
             </h1>
