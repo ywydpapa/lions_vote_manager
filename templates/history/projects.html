@@ -6,6 +6,7 @@
             /* 상하 스와이프(Scroll Snap) 컨테이너 설정 */
             .vertical-swipe-container {
                 height: 85vh; /* 화면 높이의 85% 차지 */
+                min-height: 500px; /* 가로 모드 등 화면이 낮을 때 최소 높이 보장 */
                 overflow-y: auto;
                 scroll-snap-type: y mandatory; /* Y축 방향으로 강제 스냅 */
                 scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
@@ -17,7 +18,8 @@
 
             /* 스와이프 되는 각 섹션(카드 영역) */
             .swipe-section {
-                height: 40%;
+                height: 100%; /* 40%에서 100%로 원복하여 화면에 꽉 차게 스냅되도록 설정 */
+                min-height: 450px; /* 카드 자체의 최소 높이 보장 */
                 scroll-snap-align: center; /* 스크롤 시 화면 중앙에 딱 맞게 멈춤 */
                 display: flex;
                 align-items: center;
@@ -90,14 +92,11 @@
                                     <!-- 우측 이미지 슬라이더 영역 -->
                                     <div class="col-md-8">
                                         <div id="carouselH01" class="carousel slide h-100" data-bs-ride="carousel">
-                                            <!-- 하단 인디케이터 동적 생성 -->
                                             <div class="carousel-indicators">
                                                 {% for img in h01_images %}
                                                 <button type="button" data-bs-target="#carouselH01" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 슬라이드 이미지 동적 생성 -->
                                             <div class="carousel-inner">
                                                 {% for img in h01_images %}
                                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
@@ -105,8 +104,6 @@
                                                 </div>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 좌우 이동 버튼 -->
                                             <button class="carousel-control-prev" type="button" data-bs-target="#carouselH01" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
@@ -126,25 +123,19 @@
                         <div class="swipe-section">
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
-                                    <!-- 좌측 텍스트 영역 -->
                                     <div class="col-md-4 text-section bg-white">
                                         <h2 class="fw-bolder mb-3">지대위원장</h2>
                                         <p class="text-muted mb-0">
                                             지대위원장 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
                                         </p>
                                     </div>
-
-                                    <!-- 우측 이미지 슬라이더 영역 -->
                                     <div class="col-md-8">
                                         <div id="carouselH02" class="carousel slide h-100" data-bs-ride="carousel">
-                                            <!-- 하단 인디케이터 동적 생성 -->
                                             <div class="carousel-indicators">
                                                 {% for img in h02_images %}
                                                 <button type="button" data-bs-target="#carouselH02" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 슬라이드 이미지 동적 생성 -->
                                             <div class="carousel-inner">
                                                 {% for img in h02_images %}
                                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
@@ -152,8 +143,6 @@
                                                 </div>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 좌우 이동 버튼 -->
                                             <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
@@ -168,38 +157,33 @@
                             </div>
                         </div>
                         <!-- End 두 번째 카드 -->
-                        <!-- End 세 번째 카드 -->
-                         <div class="swipe-section">
+
+                        <!-- 세 번째 카드 (h03: 지역.기획부총재) -->
+                        <div class="swipe-section">
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
-                                    <!-- 좌측 텍스트 영역 -->
                                     <div class="col-md-4 text-section bg-white">
                                         <h2 class="fw-bolder mb-3">지역.기획부총재</h2>
                                         <p class="text-muted mb-0">
-                                            지대위원장 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
+                                            지역.기획부총재 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
                                         </p>
                                     </div>
-
-                                    <!-- 우측 이미지 슬라이더 영역 -->
                                     <div class="col-md-8">
                                         <div id="carouselH03" class="carousel slide h-100" data-bs-ride="carousel">
-                                            <!-- 하단 인디케이터 동적 생성 -->
                                             <div class="carousel-indicators">
                                                 {% for img in h03_images %}
-                                                <button type="button" data-bs-target="#carouselH02" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                <!-- 수정됨: data-bs-target="#carouselH03" -->
+                                                <button type="button" data-bs-target="#carouselH03" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 슬라이드 이미지 동적 생성 -->
                                             <div class="carousel-inner">
                                                 {% for img in h03_images %}
                                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                                    <img src="{{ img }}" alt="지기획부총재 활동 사진 {{ loop.index }}" />
+                                                    <img src="{{ img }}" alt="지역.기획부총재 활동 사진 {{ loop.index }}" />
                                                 </div>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 좌우 이동 버튼 -->
+                                            <!-- 수정됨: data-bs-target="#carouselH03" -->
                                             <button class="carousel-control-prev" type="button" data-bs-target="#carouselH03" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
@@ -214,43 +198,38 @@
                             </div>
                         </div>
                         <!-- End 세 번째 카드 -->
-                        <!-- End 네 번째 카드 -->
-                         <div class="swipe-section">
+
+                        <!-- 네 번째 카드 (h04: 다문화페스티벌) -->
+                        <div class="swipe-section">
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
-                                    <!-- 좌측 텍스트 영역 -->
                                     <div class="col-md-4 text-section bg-white">
                                         <h2 class="fw-bolder mb-3">다문화페스티벌</h2>
                                         <p class="text-muted mb-0">
-                                            다문화 페스티벌  활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
+                                            다문화 페스티벌 활동 내역입니다. 각 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
                                         </p>
                                     </div>
-
-                                    <!-- 우측 이미지 슬라이더 영역 -->
                                     <div class="col-md-8">
                                         <div id="carouselH04" class="carousel slide h-100" data-bs-ride="carousel">
-                                            <!-- 하단 인디케이터 동적 생성 -->
                                             <div class="carousel-indicators">
                                                 {% for img in h04_images %}
+                                                <!-- 수정됨: data-bs-target="#carouselH04" -->
                                                 <button type="button" data-bs-target="#carouselH04" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 슬라이드 이미지 동적 생성 -->
                                             <div class="carousel-inner">
                                                 {% for img in h04_images %}
                                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                                    <img src="{{ img }}" alt="지대위원장 활동 사진 {{ loop.index }}" />
+                                                    <img src="{{ img }}" alt="다문화페스티벌 활동 사진 {{ loop.index }}" />
                                                 </div>
                                                 {% endfor %}
                                             </div>
-
-                                            <!-- 좌우 이동 버튼 -->
-                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02" data-bs-slide="prev">
+                                            <!-- 수정됨: data-bs-target="#carouselH04" -->
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH04" data-bs-slide="prev">
                                                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">이전</span>
                                             </button>
-                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH02" data-bs-slide="next">
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH04" data-bs-slide="next">
                                                 <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                                 <span class="visually-hidden">다음</span>
                                             </button>
@@ -259,6 +238,7 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- End 네 번째 카드 -->
 
                     </div>
                 </div>
