@@ -8,7 +8,7 @@
         /* ---- Print setup ---- */
         @page {
             size: A4;
-            margin: 0;
+            margin: 0; /* 브라우저 기본 여백은 0으로 유지 */
         }
 
         @media print {
@@ -35,7 +35,8 @@
             width: 210mm;
             height: 297mm;
             margin: 0 auto;
-            padding: 0;
+            /* 프린터 여백으로 인해 잘리는 것을 방지하기 위해 4방향 3mm 패딩 추가 */
+            padding: 3mm; 
             background: #fff;
         }
 
