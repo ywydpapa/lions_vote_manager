@@ -35,7 +35,7 @@
             width: 210mm;
             height: 297mm;
             margin: 0 auto;
-            padding: 3mm; /* 프린터 여백 방지 */
+            padding: 3mm; /* 프린터 여백 방지 (상하좌우 3mm) */
             background: #fff;
         }
 
@@ -44,12 +44,14 @@
             padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 6mm; /* 사진 사이의 총 간격 6mm 추가 */
         }
 
         /* ---- Header photo ---- */
         .photo {
-            flex: 0 0 50%;
+            /* 1장일 때도 절반 크기 유지.
+               두 장일 때 간격(6mm)을 고려하여 각각의 높이에서 3mm씩 빼줌 */
+            flex: 0 0 calc(50% - 3mm);
             overflow: hidden;
             border: none;
             border-radius: 0;
@@ -65,24 +67,24 @@
             display: block;
         }
 
-        /* ---- 사진 하단 문구 스타일 (수정됨) ---- */
+        /* ---- 사진 하단 문구 스타일 ---- */
         .phrase-overlay {
             position: absolute;
-            bottom: 10mm; /* 하단 여백 살짝 줄임 */
+            bottom: 10mm;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.35);
-            padding: 3mm 8mm; /* 박스 위아래 뚱뚱해지는 것 방지 */
+            padding: 3mm 8mm;
             border-radius: 8px;
-            font-size: 15pt; /* 한 줄에 안전하게 들어가도록 폰트 크기 미세 조정 */
+            font-size: 15pt;
             font-weight: 800;
             color: #111827;
             text-align: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 
-            /* 핵심 포인트: 자동 줄바꿈을 막고, 엔터(\n) 친 곳에서만 딱 1번 줄바꿈되도록 설정 */
+            /* 자동 줄바꿈 방지, 엔터(\n)에서만 줄바꿈 */
             white-space: pre;
-            line-height: 1.3; /* 두 줄 사이의 간격을 좁혀서 높이를 줄임 */
+            line-height: 1.3;
             z-index: 10;
         }
 
