@@ -609,8 +609,8 @@ async def history(request: Request):
         "h02_images": h02_images,
         "h03_images": h03_images,
         "h04_images": h04_images,
-        "h05_images": h04_images,
-        "h06_images": h04_images
+        "h05_images": h05_images,
+        "h06_images": h06_images
     }
 
     return templates.TemplateResponse("history/projects.html", context)
