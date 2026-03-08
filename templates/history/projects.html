@@ -5,22 +5,22 @@
         <style>
             /* 상하 스와이프(Scroll Snap) 컨테이너 설정 */
             .vertical-swipe-container {
-                height: 85vh; /* 화면 높이의 85% 차지 */
-                min-height: 500px; /* 가로 모드 등 화면이 낮을 때 최소 높이 보장 */
+                height: 85vh;
+                min-height: 500px;
                 overflow-y: auto;
-                scroll-snap-type: y mandatory; /* Y축 방향으로 강제 스냅 */
-                scrollbar-width: none; /* 파이어폭스 스크롤바 숨김 */
-                -ms-overflow-style: none; /* IE 스크롤바 숨김 */
+                scroll-snap-type: y mandatory;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
             }
             .vertical-swipe-container::-webkit-scrollbar {
-                display: none; /* 크롬, 사파리 스크롤바 숨김 */
+                display: none;
             }
 
             /* 스와이프 되는 각 섹션(카드 영역) */
             .swipe-section {
-                height: 100%; /* 40%에서 100%로 원복하여 화면에 꽉 차게 스냅되도록 설정 */
-                min-height: 450px; /* 카드 자체의 최소 높이 보장 */
-                scroll-snap-align: center; /* 스크롤 시 화면 중앙에 딱 맞게 멈춤 */
+                height: 100%;
+                min-height: 450px;
+                scroll-snap-align: center;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -30,12 +30,12 @@
             /* 카드 내 이미지 슬라이더 맞춤 설정 */
             .carousel-inner, .carousel-item {
                 height: 100%;
-                min-height: 350px; /* 모바일 등에서 최소 높이 보장 */
+                min-height: 350px;
             }
             .carousel-item img {
                 height: 100%;
                 width: 100%;
-                object-fit: cover; /* 이미지가 찌그러지지 않고 꽉 차게 */
+                object-fit: cover;
             }
 
             /* 좌측 텍스트 영역 수직 중앙 정렬 */
@@ -45,12 +45,37 @@
                 justify-content: center;
                 padding: 3rem;
             }
+
+            /* 기사 뷰어 컨테이너 부드러운 전환 효과 */
+            #article-viewer-container {
+                transition: all 0.3s ease-in-out;
+                overflow: hidden; /* iframe이 커졌을 때 컨테이너 밖으로 나가는 것 방지 */
+            }
+
+            /* --- 추가된 CSS: iframe 스케일링(축소) 처리 --- */
+            .iframe-wrapper {
+                width: 100%;
+                height: 100%;
+                position: relative;
+                overflow: auto; /* 내부 스크롤 허용 */
+                -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+            }
+
+            #article-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                border-radius: 0.5rem;
+                background-color: #fff;
+                transform-origin: 0 0; /* 축소 기준점을 좌상단으로 설정 */
+            }
+
             @media (max-width: 768px) {
                 .text-section {
                     padding: 2rem;
                 }
                 .vertical-swipe-container {
-                    height: auto; /* 모바일에서는 스크롤 스냅 해제하여 자연스럽게 볼 수 있게 함 */
+                    height: auto;
                     scroll-snap-type: none;
                     overflow-y: visible;
                 }
@@ -58,12 +83,15 @@
                     height: auto;
                     margin-bottom: 2rem;
                 }
-            }
 
-            /* 기사 뷰어 컨테이너 부드러운 전환 효과 */
-            #article-viewer-container {
-                transition: all 0.3s ease-in-out;
+                /* 모바일 화면에서 iframe 내부 콘텐츠를 축소해서 보여주기 위한 트릭 */
+                #article-iframe {
+                    width: 200%; /* 너비를 2배로 늘림 (가상의 데스크톱 해상도 확보) */
+                    height: 200%; /* 높이도 2배로 늘림 */
+                    transform: scale(0.5); /* 50%로 축소하여 원래 컨테이너 크기에 맞춤 */
+                }
             }
+            /* ------------------------------------------- */
         </style>
     </head>
     <body class="d-flex flex-column h-100 bg-light">
@@ -199,7 +227,7 @@
                         </div>
                         <!-- End 세번째 카드 -->
 
-                        <!-- 네 번째 카드 (h03: 지역.기획부총재) -->
+                        <!-- 네 번째 카드 (h04: 지역.기획부총재) -->
                         <div class="swipe-section">
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
@@ -312,7 +340,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- End 두 번째 카드 -->
+                        <!-- End 여섯 번째 카드 -->
                     </div>
 
                     <!-- 후보자 관련 기사 영역 -->
@@ -334,8 +362,12 @@
                         <div class="card-body p-2 h-100 position-relative">
                             <!-- 닫기 버튼 -->
                             <button type="button" class="btn-close position-absolute top-0 end-0 m-3 bg-white rounded-circle p-2 shadow-sm" aria-label="Close" id="close-viewer-btn" style="z-index: 10; opacity: 1;"></button>
-                            <!-- iframe (sandbox 속성 추가로 자동 인쇄창 차단) -->
-                            <iframe id="article-iframe" src="" sandbox="allow-scripts allow-same-origin" style="width: 100%; height: 100%; border: none; border-radius: 0.5rem; background-color: #fff;"></iframe>
+
+                            <!-- 수정된 부분: iframe을 감싸는 wrapper 추가 -->
+                            <div class="iframe-wrapper">
+                                <!-- iframe (sandbox 속성 유지) -->
+                                <iframe id="article-iframe" src="" sandbox="allow-scripts allow-same-origin"></iframe>
+                            </div>
                         </div>
                     </div>
 
