@@ -101,6 +101,74 @@
         .visitor-row {
             background-color: rgba(13, 110, 253, 0.03);
         }
+
+        /* --- 여기서부터 써클(카드형) 방문자 목록을 위한 CSS 추가 --- */
+        .visitors-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .visitors-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 992px) {
+            .visitors-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        .person-card {
+            border: 0;
+            border-radius: 1rem;
+            background: #fff;
+            box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
+            overflow: hidden;
+            display: flex;
+            gap: .9rem;
+            padding: .9rem;
+            align-items: center;
+            min-height: 110px;
+        }
+
+        .person-card .avatar {
+            width: 72px;
+            height: 72px;
+            flex: 0 0 auto;
+        }
+
+        .avatar .fallback {
+            font-weight: 800;
+            color: #868e96;
+        }
+
+        .person-text {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .person-name {
+            font-weight: 800;
+            margin: 0;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .person-sub {
+            margin: .25rem 0 0 0;
+            color: #6c757d;
+            font-weight: 600;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 
@@ -160,54 +228,58 @@
                     </div>
                 </div>
 
-                {% if clubdtl %}
-                <div class="card summary-card mb-4">
-                    <div class="card-body px-4 py-3">
-                        <table class="table summary-table align-middle">
-                            <tbody>
-                            <tr>
-                                <th>클럽정보</th>
-                                <td>{{ clubdtl.clubNo }}</td>
-                            </tr>
-                            <tr>
-                                <th>창립일</th>
-                                <td>
-                                    {% if clubdtl.estDate %}
-                                    {{ clubdtl.estDate.strftime('%Y-%m-%d') }}
-                                    {% else %}
-                                    -
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>소속지역 / 회원수</th>
-                                <td>{{ clubdtl.regionNo }} 지역 / {{ clubdtl.memberCount }} 명</td>
-                            </tr>
-                            </tbody>
-                        </table>
+                <!-- 조건 분기: 클럽일 경우 vs 써클일 경우 -->
+                <!-- 백엔드에서 reserv 딕셔너리에 clubNo와 circleNo를 담아 보내므로 reserv.clubNo로 체크합니다 -->
+                {% if reserv.clubNo %}
+                    <!-- 클럽 상세 정보 -->
+                    {% if clubdtl %}
+                    <div class="card summary-card mb-4">
+                        <div class="card-body px-4 py-3">
+                            <table class="table summary-table align-middle">
+                                <tbody>
+                                <tr>
+                                    <th>창립일</th>
+                                    <td>
+                                        {% if clubdtl.estDate %}
+                                        {{ clubdtl.estDate.strftime('%Y-%m-%d') }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>소속지역 / 회원수</th>
+                                    <td>{{ clubdtl.regionNo }} 지역 / {{ clubdtl.memberCount }} 명</td>
+                                </tr>
+                                <tr>
+                                    <th>추가정보</th>
+                                    <td style="white-space: pre-wrap;">{{ clubdtl.infoContent }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                {% endif %}
+                    {% endif %}
 
-                <!-- 2) 클럽 회원 및 방문자 목록 (그리드/테이블 형태) -->
-                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
-                    <div class="fw-bolder">클럽 회원 목록</div>
-                    <div class="text-muted small">총 {{ cmembers|length }}명</div>
-                </div>
+                    <!-- 클럽 회원 및 방문자 목록 (테이블 형태) -->
+                    <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                        <div class="fw-bolder">클럽 회원 목록</div>
+                        <div class="text-muted small">총 {{ cmembers|length }}명</div>
+                    </div>
 
-                <div class="card summary-card mb-4">
-                    <div class="card-body p-0">
-                        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
-                            <table class="table table-hover align-middle text-center mb-0">
-                                <thead class="table-light sticky-top" style="z-index: 2;">
+                    <div class="card summary-card mb-4">
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                                <table class="table table-hover align-middle text-center mb-0">
+                                    <thead class="table-light sticky-top" style="z-index: 2;">
                                     <tr>
                                         <th scope="col" style="width: 80px;">사진</th>
                                         <th scope="col">이름</th>
                                         <th scope="col">직책</th>
                                         <th scope="col">방문여부</th>
                                     </tr>
-                                </thead>
-                                <tbody>
+                                    </thead>
+                                    <tbody>
                                     {# 1. 방문자 먼저 출력 #}
                                     {% for m in cmembers %}
                                         {% set m_no = m[0] %}
@@ -225,7 +297,9 @@
                                         <tr class="visitor-row">
                                             <td class="py-2">
                                                 <div class="avatar mx-auto" style="width: 48px; height: 48px;">
-                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
+                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}"
+                                                         loading="lazy"
+                                                         onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
                                                 </div>
                                             </td>
                                             <td class="fw-bold">{{ m_name }}</td>
@@ -254,7 +328,9 @@
                                         <tr>
                                             <td class="py-2">
                                                 <div class="avatar mx-auto" style="width: 48px; height: 48px;">
-                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
+                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}"
+                                                         loading="lazy"
+                                                         onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
                                                 </div>
                                             </td>
                                             <td class="fw-bold">{{ m_name }}</td>
@@ -271,11 +347,46 @@
                                         <td colspan="4" class="text-muted py-5">등록된 회원 정보가 없습니다.</td>
                                     </tr>
                                     {% endif %}
-                                </tbody>
-                            </table>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                {% elif reserv.circleNo %}
+                    <!-- 써클일 경우 방문자 목록 (카드 형태) -->
+                    <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                        <div class="fw-bolder">방문자 목록</div>
+                        <div class="text-muted small">총 {{ visitors|length }}명</div>
+                    </div>
+
+                    <div class="visitors-grid mb-4">
+                        {% for v in visitors %}
+                        {% set memberNo = v[0] %}
+                        {% set name = v[1] %}
+                        {% set org = v[2] %}
+                        {% set title = v[3] %}
+
+                        <div class="person-card">
+                            <div class="avatar">
+                                <img
+                                        src="/static/img/members/mphoto_{{ memberNo }}.png"
+                                        alt="{{ name }}"
+                                        loading="lazy"
+                                        onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"
+                                >
+                            </div>
+                            <div class="person-text">
+                                <p class="person-name mb-0">{{ name }}</p>
+                                <p class="person-sub mb-0">
+                                    {{ org }}<br>
+                                    {{ title }}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
             </div>
 
             <!-- 오른쪽 영역: 노트 셀렉트 박스 및 HTML 뷰어 -->

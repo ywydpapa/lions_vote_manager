@@ -24,7 +24,8 @@
                                         <th scope="col" style="width: 10%;">클럽번호</th>
                                         <th scope="col" style="width: 40%;">클럽명</th>
                                         <th scope="col" style="width: 20%;">소속지역</th>
-                                        <th scope="col" style="width: 30%;">창립일자</th>
+                                        <th scope="col" style="width: 15%;">창립일자</th>
+                                        <th scope="col" style="width: 15%;">정보유무</th>
 
                                     </tr>
                                 </thead>
@@ -36,6 +37,7 @@
                                         <td><a href="/edit_club/{{ club[0] }}" class="fw-bold">{{ club[1] }}</a></td>
                                         <td>{{ club[3] or '-' }}</td>
                                         <td>{{ club[2] or '-' }}</td>
+                                        <td>{{ club[11] or '-' }}</td>
                                     </tr>
                                 {% endif %}
                                 {% endfor %}

@@ -85,14 +85,14 @@
                 </div>
                 <div class="row gx-5 justify-content-center">
                     <div class="col-lg-11 col-xl-9 col-xxl-8">
-                        <form method="POST" id="editor-form" action="/club_update/{{ clubdtl[0] }}">
+                        <form method="POST" id="editor-form" action="/club_infoadd/{{ clubdtl[0] }}">
                         <table class="table table-bordered text-center">
                             <thead>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td> 클럽명 </td>
-                                    <td><input class="form-control" id="clubname" name="clubname" type="text" required value="{{clubdtl[1]}}"></td>
+                                    <td>{{clubdtl[1]}}</td>
                                 </tr>
                                 <tr>
                                     <td> 창립일자 </td>
@@ -102,6 +102,12 @@
                                     <td> 소속지역 </td>
                                     <td>
                                         {{ clubdtl[3] }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td> 추가정보 </td>
+                                    <td>
+                                        <textarea class="form-control" id="clubaddinfo" name="clubaddinfo" rows="3" required></textarea>
                                     </td>
                                 </tr>
                                 <tr>

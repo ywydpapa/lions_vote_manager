@@ -253,13 +253,13 @@ async def get_reserv_dtl(reservno: int, db: AsyncSession):
 
 
 async def get_club_dtl(clubno: int, db: AsyncSession):
-    query = text("""select * from lionsClub where clubNo = :clubno""")
-    result = await db.execute(query, {"clubno": clubno})
+    query = text("""select a.*, b.infoContent from lionsClub a left join voteClubaddinfo b on a.clubNo = b.clubNo and b.attrib = :attr where a.clubNo = :clubno""")
+    result = await db.execute(query, {"clubno": clubno, "attr": "1000010000"})
     row = result.fetchone()
     query2 = text("""select count(*) from lionsMember where clubNo = :clubno""")
     result2 = await db.execute(query2, {"clubno": clubno})
     row2 = result2.fetchone()
-    result = {"clubNo": row[0], "clubName": row[1], "estDate": row[2], "regionNo": row[3], "memberCount": row2[0]}
+    result = {"clubNo": row[0], "clubName": row[1], "estDate": row[2], "regionNo": row[3], "memberCount": row2[0], "infoContent": row[11]}
     return result
 
 
@@ -330,7 +330,7 @@ async def get_distmembers(db: AsyncSession):
 
 async def get_clublist(db: AsyncSession):
     try:
-        query = text("select * from lionsClub where attrib not like :attpatt")
+        query = text("select a.*, b.infoNo from lionsClub a left join voteClubaddinfo b on a.clubNo = b.clubNo where a.attrib not like :attpatt")
         result = await db.execute(query, {"attpatt": "%XXX%"})
         club_list = result.fetchall()
         return club_list
@@ -1008,6 +1008,18 @@ async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
+@app.api_route("/club_infoadd/{clubno}", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+async def insertinfo(request: Request,clubno ,db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    info = form_data.get("clubaddinfo")
+    query = text(
+        f"UPDATE voteClubaddinfo set attrib = :att , modDate = :nowt where clubNo = :clubno ")
+    await db.execute(query, {"att": "XXXUPXXXUP", "nowt": datetime.now(),"clubno":clubno})
+    await db.commit()
+    ql = text(f"INSERT INTO voteClubaddinfo (clubNo, infoContent) values (:clubno,:infoc)")
+    await db.execute(ql, {"clubno": clubno, "infoc": info})
+    await db.commit()
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/manage_clubs"})
 
 @app.api_route("/insert_note/", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
 async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
