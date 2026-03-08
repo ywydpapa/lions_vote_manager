@@ -229,10 +229,8 @@
                             </tr>
                             <tr>
                                 <th>방문처</th>
-                                <!-- 수정된 부분: 방문처 텍스트와 방문확인 버튼을 양쪽 정렬로 배치 -->
                                 <td class="d-flex justify-content-between align-items-center">
                                     <span>{{ reserv.visitorName }}</span>
-                                    <!-- 완료된 예약(1DONE1DONE)이 아닐 때만 방문확인 버튼 표시 -->
                                     {% if reserv.attrib != '1DONE1DONE' %}
                                     <button type="button" class="btn btn-sm btn-success fw-bold" onclick="confirmArrival()">방문확인</button>
                                     {% endif %}
@@ -431,9 +429,9 @@
     // 백엔드에서 예약시간 가져오기
     const reservDateStr = "{% if reserv.reservFrom %}{{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}{% endif %}";
 
-    // 기본 출력 문구 설정 (방문시간 추가)
+    // 기본 출력 문구 설정 (줄바꿈 \n 을 이용해 두 줄로 설정)
     const defaultPhrase = reservDateStr
-        ? `지구 제2부총재 후보 전희충 선거사무소 방문기념 ${reservDateStr}`
+        ? `지구 제2부총재 후보 전희충 선거사무소 방문기념\n${reservDateStr}`
         : '지구 제2부총재 후보 전희충 선거사무소 방문기념';
 
     function togglePhotoSelection(el) {
@@ -462,12 +460,14 @@
         selectedPhotos.forEach((photo, index) => {
             const div = document.createElement('div');
             div.className = 'd-flex align-items-center mb-3 p-3 bg-white rounded shadow-sm border';
+
+            // input type="text" 대신 textarea를 사용하여 줄바꿈을 지원하도록 수정
             div.innerHTML = `
                 <img src="${photo.url}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 6px;" class="me-3">
                 <div class="flex-grow-1">
                     <label class="form-label small fw-bold text-muted mb-1">사진 ${index + 1} 출력 문구</label>
-                    <input type="text" class="form-control" placeholder="사진 하단에 출력될 문구를 입력하세요"
-                           value="${photo.phrase}" oninput="updatePhrase(${index}, this.value)">
+                    <textarea class="form-control" rows="2" placeholder="사진 하단에 출력될 문구를 입력하세요"
+                           oninput="updatePhrase(${index}, this.value)">${photo.phrase}</textarea>
                 </div>
             `;
             container.appendChild(div);
