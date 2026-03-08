@@ -428,8 +428,13 @@
     const maxSelect = 2;
     const reservNo = "{{ reserv.reservNo }}";
 
-    // 기본 출력 문구 설정
-    const defaultPhrase = '지구 제2부총재 후보 전희충 선거사무소 방문기념';
+    // 백엔드에서 예약시간 가져오기
+    const reservDateStr = "{% if reserv.reservFrom %}{{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}{% endif %}";
+
+    // 기본 출력 문구 설정 (방문시간 추가)
+    const defaultPhrase = reservDateStr
+        ? `지구 제2부총재 후보 전희충 선거사무소 방문기념 ${reservDateStr}`
+        : '지구 제2부총재 후보 전희충 선거사무소 방문기념';
 
     function togglePhotoSelection(el) {
         const photoUrl = el.getAttribute('data-photo');
