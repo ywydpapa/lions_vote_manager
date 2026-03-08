@@ -401,6 +401,17 @@ async def get_contactdtl(contactno:int,db: AsyncSession):
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(CONTACTDETAIL)")
 
+
+async def get_notedtl(noteno:int,db: AsyncSession):
+    try:
+        query = text("select * from voteNote where noteNo = :noten")
+        result = await db.execute(query, {"noten": noteno})
+        note_dtl = result.fetchone()
+        return note_dtl
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Database query failed(NOTEDETAIL)")
+
 @app.get("/sse/schedule")
 async def sse_schedule(request: Request):
     q = hub.connect()
@@ -588,6 +599,7 @@ async def history(request: Request):
     h04_images = get_images("h04-")
     h05_images = get_images("h05-")
     h06_images = get_images("h06-")
+    h07_images = get_images("h07-")
 
     # 만약 폴더에 사진이 없을 경우를 대비한 더미 이미지 (테스트용)
     if not h01_images:
@@ -602,6 +614,8 @@ async def history(request: Request):
         h05_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
     if not h06_images:
         h06_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+    if not h07_images:
+        h07_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
 
     context = {
         "request": request,
@@ -610,9 +624,9 @@ async def history(request: Request):
         "h03_images": h03_images,
         "h04_images": h04_images,
         "h05_images": h05_images,
-        "h06_images": h06_images
+        "h06_images": h06_images,
+        "h07_images": h07_images
     }
-
     return templates.TemplateResponse("history/projects.html", context)
 
 @app.get("/success", response_class=HTMLResponse)
@@ -1008,6 +1022,24 @@ async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
 
+@app.api_route("/update_note/{noteno}", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+async def insertnote(request: Request,noteno:int ,db: AsyncSession = Depends(get_db)):
+    form_data = await request.form()
+    doctitle = form_data.get("dtitle")
+    docconts = form_data.get("dcontent")
+    ntype = form_data.get("ntype")
+    rdir = ""
+    query = text(
+        f"UPDATE voteNote set noteTitle = :doctitle, noteContents = :docconts where noteNo = :noteno")
+    await db.execute(query, {"doctitle": doctitle, "docconts": docconts,"noteno":noteno})
+    await db.commit()
+    if ntype == 'CANDI':
+        rdir = "/notelist_candi"
+    else:
+        rdir = "/notelist_aide"
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": rdir})
+
+
 @app.api_route("/done_contact/{contactno}", methods=["POST"])
 async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends(get_db)):
     query = text(
@@ -1091,6 +1123,16 @@ async def contact_dtl(request: Request, contactno:int, db: AsyncSession = Depend
     contact = await get_contactdtl(contactno, db)
     return templates.TemplateResponse(
         "manage/contact_detail.html", {"request": request, "contact": contact}
+    )
+
+
+@app.get("/note_detail/{noteno}", response_class=HTMLResponse)
+async def note_dtl(request: Request, noteno:int, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    contact = await get_notedtl(noteno, db)
+    return templates.TemplateResponse(
+        "manage/note_detail.html", {"request": request, "notedtl": contact}
     )
 
 

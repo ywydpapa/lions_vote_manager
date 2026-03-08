@@ -270,9 +270,9 @@
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
                                     <div class="col-md-4 text-section bg-white">
-                                        <h2 class="fw-bolder mb-3">다문화페스티벌</h2>
+                                        <h2 class="fw-bolder mb-3">다문화 드림하이 페스티벌</h2>
                                         <p class="text-muted mb-0">
-                                            다문화 가족들의 성공적인 정착을 위한 활동 내역입니다. 이전부터 항상 관심을 가지고 지속적으로 추진해왔습니다.
+                                            다문화 가족들의 성공적인 정착을 위한 활동 내역입니다. 세종클럽에서 매년 사하구의 다문화 가정 정착을 위해 추진해 오고있습니다.
                                         </p>
                                     </div>
                                     <div class="col-md-8">
@@ -285,7 +285,7 @@
                                             <div class="carousel-inner">
                                                 {% for img in h05_images %}
                                                 <div class="carousel-item {% if loop.first %}active{% endif %}">
-                                                    <img src="{{ img }}" alt="다문화페스티벌 활동 사진 {{ loop.index }}" />
+                                                    <img src="{{ img }}" alt="다문화드림하이 활동 사진 {{ loop.index }}" />
                                                 </div>
                                                 {% endfor %}
                                             </div>
@@ -308,9 +308,9 @@
                             <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
                                 <div class="row g-0 h-100">
                                     <div class="col-md-4 text-section bg-white">
-                                        <h2 class="fw-bolder mb-3">세계,동남아 대회, 대만자매지구 방문 </h2>
+                                        <h2 class="fw-bolder mb-3">We Serve, 다문화가족 드림페스타</h2>
                                         <p class="text-muted mb-0">
-                                            세계대회, 동남아 대회, 대만자매지구 방문등 모든 지구행사에 참여한 열정적인 발자취 입니다.
+                                            355-A 부산지구 라이온스클럽 지역.기획부총재회에서 주관한 We Serve 다문화가족 드림 페스타를 개최하여 부산지역의 다문화 가족을 위한 정착봉사를 실현하고 있습니다.
                                         </p>
                                     </div>
                                     <div class="col-md-8">
@@ -341,6 +341,44 @@
                             </div>
                         </div>
                         <!-- End 여섯 번째 카드 -->
+                        <!-- 일곱 번째 카드 (h06: 각종 대회참가) -->
+                        <div class="swipe-section">
+                            <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1000px;">
+                                <div class="row g-0 h-100">
+                                    <div class="col-md-4 text-section bg-white">
+                                        <h2 class="fw-bolder mb-3">세계,동남아 대회, 대만자매지구 방문 </h2>
+                                        <p class="text-muted mb-0">
+                                            세계대회, 동남아 대회, 대만자매지구 방문등 모든 지구행사에 참여한 열정적인 발자취 입니다.
+                                        </p>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <div id="carouselH07" class="carousel slide h-100" data-bs-ride="carousel">
+                                            <div class="carousel-indicators">
+                                                {% for img in h07_images %}
+                                                <button type="button" data-bs-target="#carouselH07" data-bs-slide-to="{{ loop.index0 }}" class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% endif %}" aria-label="Slide {{ loop.index }}"></button>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="carousel-inner">
+                                                {% for img in h07_images %}
+                                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                                    <img src="{{ img }}" alt="대회참여 활동 사진 {{ loop.index }}" />
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            <button class="carousel-control-prev" type="button" data-bs-target="#carouselH07" data-bs-slide="prev">
+                                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">이전</span>
+                                            </button>
+                                            <button class="carousel-control-next" type="button" data-bs-target="#carouselH07" data-bs-slide="next">
+                                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                                <span class="visually-hidden">다음</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End 일곱 번째 카드 -->
                     </div>
 
                     <!-- 후보자 관련 기사 영역 -->

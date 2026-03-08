@@ -38,13 +38,10 @@
                                         <tr>
                                             <!-- 고유 ID가 있다면 contact.id 등을 사용, 없다면 loop.index(순번) 사용 -->
                                             <td>{{ loop.index }}</td>
-                                            <td>{{ contact.noteTitle }}</td>
+                                            <td><a href="/note_detail/{{ contact.noteNo }}" class="text-decoration-none text-dark fw-bold">{{ contact.noteTitle }}</a></td>
                                             <td>{{ contact.noteContents }}</td>
                                             <td class="text-start px-4 " style="text-align: center">
-                                                <!-- 제목 클릭 시 상세 페이지로 이동하도록 링크 처리 (경로는 상황에 맞게 수정) -->
-                                                <a href="/contact_detail/{{ contact.noteNo }}" class="text-decoration-none text-dark fw-bold">
                                                     {{ contact.regDate }}
-                                                </a>
                                             </td>
                                         </tr>
                                         {% endfor %}
