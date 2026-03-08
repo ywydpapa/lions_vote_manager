@@ -586,6 +586,8 @@ async def history(request: Request):
     h02_images = get_images("h02-")
     h03_images = get_images("h03-")
     h04_images = get_images("h04-")
+    h05_images = get_images("h05-")
+    h06_images = get_images("h06-")
 
     # 만약 폴더에 사진이 없을 경우를 대비한 더미 이미지 (테스트용)
     if not h01_images:
@@ -596,13 +598,19 @@ async def history(request: Request):
         h03_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
     if not h04_images:
         h04_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+    if not h05_images:
+        h05_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
+    if not h06_images:
+        h06_images = ["https://dummyimage.com/800x500/5c2a8a/ffffff"]
 
     context = {
         "request": request,
         "h01_images": h01_images,
         "h02_images": h02_images,
         "h03_images": h03_images,
-        "h04_images": h04_images
+        "h04_images": h04_images,
+        "h05_images": h04_images,
+        "h06_images": h04_images
     }
 
     return templates.TemplateResponse("history/projects.html", context)
