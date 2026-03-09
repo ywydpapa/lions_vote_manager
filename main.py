@@ -593,13 +593,13 @@ async def history(request: Request):
         files = [f for f in os.listdir(hist_dir) if f.startswith(prefix) and f.lower().endswith(valid_exts)]
         files.sort()
         return [f"/static/assets/hist/{f}" for f in files]
-    h01_images = get_images("h01-")
-    h02_images = get_images("h02-")
-    h03_images = get_images("h03-")
-    h04_images = get_images("h04-")
-    h05_images = get_images("h05-")
-    h06_images = get_images("h06-")
-    h07_images = get_images("h07-")
+    h01_images = get_images("h1-")
+    h02_images = get_images("h2-")
+    h03_images = get_images("h3-")
+    h04_images = get_images("h4-")
+    h05_images = get_images("h5-")
+    h06_images = get_images("h6-")
+    h07_images = get_images("h7-")
 
     # 만약 폴더에 사진이 없을 경우를 대비한 더미 이미지 (테스트용)
     if not h01_images:
