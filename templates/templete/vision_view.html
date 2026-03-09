@@ -211,22 +211,24 @@
             left: 0;
             color: #999;
         
-        .career-item li ul {
+                /* 중첩 리스트(들여쓰기 된 <ul>) 스타일 */
+        .career-item ul ul {
             margin-top: 0.5rem;
-            padding-left: 1.2rem; /* 한 단계 들여쓰기 간격 */
+            padding-left: 1.2rem; /* 들여쓰기 간격 */
         }
 
-        .career-item li ul li {
-            margin-bottom: 0.4rem; /* 하위 항목 간격 조정 */
+        .career-item ul ul li {
+            margin-bottom: 0.4rem;
         }
 
-        /* 중첩 리스트 기호를 도트(•)로 변경 */
-        .career-item li ul li::before {
-            content: "•"; 
-            color: #777; /* 도트 색상 */
-            font-size: 1.2rem; /* 도트 크기 */
-            top: -2px; /* 도트 수직 위치 미세조정 */
+        /* 중첩 리스트 기호를 도트(•)로 '강제' 변경 */
+        .career-item ul ul li::before {
+            content: "•" !important; /* 마이너스(-)를 무시하고 무조건 도트 적용 */
+            color: #777 !important;
+            font-size: 1.2rem;
+            top: -2px;
         }
+
     </style>
 </head>
 <body class="d-flex flex-column h-100 bg-white">
