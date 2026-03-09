@@ -362,7 +362,7 @@ async def get_distmembers(db: AsyncSession):
 
 async def get_clublist(db: AsyncSession):
     try:
-        query = text("select a.*, b.infoNo from lionsClub a left join voteClubaddinfo b on a.clubNo = b.clubNo where a.attrib not like :attpatt")
+        query = text("select a.*, b.infoNo from lionsClub a left join voteClubaddinfo b on a.clubNo = b.clubNo and b.infoType='AINFO' where a.attrib not like :attpatt")
         result = await db.execute(query, {"attpatt": "%XXX%"})
         club_list = result.fetchall()
         return club_list
