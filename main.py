@@ -941,7 +941,7 @@ async def get_circles(db: AsyncSession = Depends(get_db)):
 async def get_reserv(db: AsyncSession = Depends(get_db)):
     try:
         rows = await get_apireserv(db)
-        result = [{"reservNo": row[0], "reservFrom": row[4], "visitCnt": row[7], "reservMemo": row[8], "visitorName": (row[12] or row[13])} for row in rows]
+        result = [{"reservNo": row[0], "reservFrom": row[4], "visitCnt": row[7], "reservMemo": row[8], "visitorName": (row[12] or row[13]), "status": row[11]} for row in rows]
     except Exception as e:
         print(e)
         result = []
