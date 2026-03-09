@@ -253,7 +253,39 @@ async def get_reserv_dtl(reservno: int, db: AsyncSession):
 
 
 async def get_club_dtl(clubno: int, db: AsyncSession):
-    query = text("""select a.*, b.infoContent from lionsClub a left join voteClubaddinfo b on a.clubNo = b.clubNo and b.attrib = :attr where a.clubNo = :clubno""")
+    query = text("""select 
+    a.*,
+    x.infoContent
+from lionsClub a
+left join (
+    select 
+        clubNo,
+        group_concat(
+            concat(
+                case infoType
+                    when 'SLGAN' then '슬로건: '
+                    when 'STF01' then '회장: '
+                    when 'STF02' then '총무: '
+                    when 'STF03' then '재무: '
+                    when 'ESTMB' then '창립회장: '
+                    when 'ESTMC' then '창립회원수: '
+                    when 'MBCNT' then '현재 회원수: '
+                    when 'AINFO' then '봉사실적: '
+                    else concat(infoType, ': ')
+                end,
+                infoContent
+            )
+            order by field(infoType, 'SLGAN', 'STF01', 'STF02', 'STF03', 'ESTMB', 'ESTMC', 'MBCNT', 'AINFO')
+            separator '\n'
+        ) as infoContent
+    from voteClubaddinfo
+    where attrib = :attr
+      and infoContent is not null
+      and trim(infoContent) <> ''
+    group by clubNo
+) x
+    on a.clubNo = x.clubNo
+where a.clubNo = :clubno""")
     result = await db.execute(query, {"clubno": clubno, "attr": "1000010000"})
     row = result.fetchone()
     query2 = text("""select count(*) from lionsMember where clubNo = :clubno""")
@@ -1013,8 +1045,8 @@ async def insertinfo(request: Request,clubno ,db: AsyncSession = Depends(get_db)
     form_data = await request.form()
     info = form_data.get("clubaddinfo")
     query = text(
-        f"UPDATE voteClubaddinfo set attrib = :att , modDate = :nowt where clubNo = :clubno ")
-    await db.execute(query, {"att": "XXXUPXXXUP", "nowt": datetime.now(),"clubno":clubno})
+        f"UPDATE voteClubaddinfo set attrib = :att , modDate = :nowt where clubNo = :clubno and infoType = :infotype ")
+    await db.execute(query, {"att": "XXXUPXXXUP", "nowt": datetime.now(),"clubno":clubno,"infotype":"AINFO"})
     await db.commit()
     ql = text(f"INSERT INTO voteClubaddinfo (clubNo, infoContent) values (:clubno,:infoc)")
     await db.execute(ql, {"clubno": clubno, "infoc": info})
