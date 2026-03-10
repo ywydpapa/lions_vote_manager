@@ -583,7 +583,7 @@
         }
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function () {
         const changeCheck = document.getElementById('changeReservCheck');
         const modifyDiv = document.getElementById('modifymemberSelect');
 
@@ -603,6 +603,7 @@
         const timeRangeText = document.getElementById('time_range_text');
 
         if (dateSelect && timeSelect) {
+            // 1. 날짜 옵션 생성
             for (let day = 11; day <= 20; day++) {
                 let optAm = document.createElement('option');
                 optAm.value = `03-${day.toString().padStart(2, '0')}-AM`;
@@ -615,6 +616,7 @@
                 dateSelect.appendChild(optPm);
             }
 
+            // 2. 날짜 변경 이벤트 설정
             dateSelect.addEventListener('change', function () {
                 const selectedValue = this.value;
 
@@ -641,6 +643,33 @@
                     });
                 }
             });
+
+            // ★ 3. 기존 예약 시간 자동 세팅 로직 추가 ★
+            if (reservDateStr) {
+                // reservDateStr 예시: "2026-03-15 10:30"
+                const parts = reservDateStr.split(' ');
+                if (parts.length === 2) {
+                    const dateParts = parts[0].split('-'); // ["2026", "03", "15"]
+                    const timePart = parts[1];             // "10:30"
+
+                    if (dateParts.length === 3) {
+                        const month = dateParts[1];
+                        const day = dateParts[2];
+                        const hour = parseInt(timePart.split(':')[0], 10);
+
+                        // 12시 이하는 오전(AM), 13시 이상은 오후(PM)로 처리
+                        const ampm = hour <= 12 ? 'AM' : 'PM';
+                        const targetDateVal = `${month}-${day}-${ampm}`;
+
+                        // 일자 선택 및 change 이벤트 강제 발생 (시간 목록을 불러오기 위함)
+                        dateSelect.value = targetDateVal;
+                        dateSelect.dispatchEvent(new Event('change'));
+
+                        // 시간 선택
+                        timeSelect.value = timePart;
+                    }
+                }
+            }
         }
 
         const viewAllBtn = document.getElementById('viewAll');
@@ -656,6 +685,7 @@
             memberSelect.addEventListener('change', updateMemberCount);
         }
     });
+
 
     async function modifyReservation() {
         const btn = document.getElementById('btnSubmit');

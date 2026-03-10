@@ -3,171 +3,55 @@
 <head>
     {% include '/common/header.html' %}
     <style>
-        .photos-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: .75rem;
-        }
+        .photos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+        @media (min-width: 768px) { .photos-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        .photo-thumb { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; aspect-ratio: 4 / 3; }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .page-wrap { padding-top: 2vh; padding-bottom: 8vh; }
+        .summary-card { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; }
+        .summary-card .card-header { background: #fff; border-bottom: 1px solid #f0f2f4; font-weight: 800; }
+        .summary-table { width: 100%; margin: 0; }
+        .summary-table th { width: 140px; color: #6c757d; font-weight: 700; white-space: nowrap; }
+        .summary-table td { font-weight: 600; color: #212529; }
+        .avatar { border-radius: 999px; background: #f1f3f5; overflow: hidden; display: grid; place-items: center; border: 1px solid #eef0f3; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .html-viewer { flex-grow: 1; min-height: 200px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; font-size: 25px; }
+        .visitor-row { background-color: rgba(13, 110, 253, 0.03); }
+        .visitors-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1rem; }
+        @media (min-width: 768px) { .visitors-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 992px) { .visitors-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .person-card { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; display: flex; gap: .9rem; padding: .9rem; align-items: center; min-height: 110px; }
+        .person-card .avatar { width: 72px; height: 72px; flex: 0 0 auto; }
+        .avatar .fallback { font-weight: 800; color: #868e96; }
+        .person-text { min-width: 0; flex: 1 1 auto; }
+        .person-name { font-weight: 800; margin: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .person-sub { margin: .25rem 0 0 0; color: #6c757d; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .avatar-wrap { position: relative; display: inline-block; }
+        .avatar-wrap.sm { width: 48px; height: 48px; }
+        .avatar-wrap.lg { width: 72px; height: 72px; flex: 0 0 72px; }
+        .avatar-wrap.sm .avatar { width: 48px; height: 48px; }
+        .avatar-wrap.lg .avatar { width: 72px; height: 72px; }
+        .right-badge { position: absolute; top: -4px; right: 0; color: #dc3545; font-size: 26px; font-weight: 900; line-height: 1; z-index: 5; text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95); pointer-events: none; }
+        .avatar-wrap.sm .right-badge { font-size: 22px; top: -5px; right: -1px; }
+        .avatar-wrap.lg .right-badge { font-size: 28px; top: -6px; right: 0; }
 
-        @media (min-width: 768px) {
-            .photos-grid {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
-            }
-        }
-
-        .photo-thumb {
-            border: 0;
-            border-radius: 1rem;
-            background: #fff;
-            box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
-            overflow: hidden;
-            aspect-ratio: 4 / 3;
-        }
-
-        .photo-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .page-wrap {
-            padding-top: 2vh;
-            padding-bottom: 8vh;
-        }
-
-        .summary-card {
-            border: 0;
-            border-radius: 1rem;
-            background: #fff;
-            box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
-            overflow: hidden;
-        }
-
-        .summary-card .card-header {
-            background: #fff;
-            border-bottom: 1px solid #f0f2f4;
-            font-weight: 800;
-        }
-
-        .summary-table {
-            width: 100%;
-            margin: 0;
-        }
-
-        .summary-table th {
-            width: 140px;
-            color: #6c757d;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .summary-table td {
-            font-weight: 600;
-            color: #212529;
-        }
-
-        /* 아바타 공통 스타일 */
-        .avatar {
-            border-radius: 999px;
-            background: #f1f3f5;
-            overflow: hidden;
-            display: grid;
-            place-items: center;
-            border: 1px solid #eef0f3;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* HTML 뷰어 영역 스타일 */
-        .html-viewer {
+        /* 캔버스 래퍼 스타일 */
+        .canvas-wrapper {
             flex-grow: 1;
-            min-height: 400px;
-            max-height: 600px;
-            overflow-y: auto;
-            background-color: #f8f9fa;
             border: 1px solid #dee2e6;
             border-radius: 0.5rem;
-            padding: 1rem;
-            font-size: 25px;
-        }
-
-        /* 방문자 행 강조 스타일 */
-        .visitor-row {
-            background-color: rgba(13, 110, 253, 0.03);
-        }
-
-        /* --- 여기서부터 써클(카드형) 방문자 목록을 위한 CSS 추가 --- */
-        .visitors-grid {
-            display: grid;
-            grid-template-columns: repeat(1, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        @media (min-width: 768px) {
-            .visitors-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media (min-width: 992px) {
-            .visitors-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        .person-card {
-            border: 0;
-            border-radius: 1rem;
-            background: #fff;
-            box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08);
+            background-color: #fff;
+            position: relative;
             overflow: hidden;
-            display: flex;
-            gap: .9rem;
-            padding: .9rem;
-            align-items: center;
-            min-height: 110px;
+            touch-action: none; /* 모바일에서 캔버스 터치 시 스크롤 방지 */
         }
-
-        .person-card .avatar {
-            width: 72px;
-            height: 72px;
-            flex: 0 0 auto;
-        }
-
-        .avatar .fallback {
-            font-weight: 800;
-            color: #868e96;
-        }
-
-        .person-text {
-            min-width: 0;
-            flex: 1 1 auto;
-        }
-
-        .person-name {
-            font-weight: 800;
-            margin: 0;
-            line-height: 1.2;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .person-sub {
-            margin: .25rem 0 0 0;
-            color: #6c757d;
-            font-weight: 600;
-            line-height: 1.2;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+        #memoCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
         }
     </style>
 </head>
@@ -187,214 +71,153 @@
             </a>
         </div>
 
-        <!-- 좌우 2단 분할 레이아웃 적용 -->
         <div class="row gx-4 justify-content-center">
 
             <!-- 왼쪽 영역: 예약 정보 및 클럽 회원(방문자) 목록 그리드 -->
             <div class="col-lg-6 mb-4">
-                <!-- 1) 예약 요약 카드 -->
                 <div class="card summary-card mb-4">
                     <div class="card-body px-4 py-3">
                         <table class="table summary-table align-middle">
                             <tbody>
-                            <tr>
-                                <th>예약번호</th>
-                                <td>{{ reserv.reservNo }}</td>
-                            </tr>
-                            <tr>
-                                <th>예약일시</th>
-                                <td>
-                                    {% if reserv.reservFrom %}
-                                    {{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}
-                                    {% else %}
-                                    -
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>방문자수</th>
-                                <td>{{ reserv.visitCnt }} 명</td>
-                            </tr>
-                            <tr>
-                                <th>방문처</th>
-                                <td>{{ reserv.visitorName }}</td>
-                            </tr>
+                            <tr><th>예약번호</th><td>{{ reserv.reservNo }}</td></tr>
+                            <tr><th>예약일시</th><td>{% if reserv.reservFrom %}{{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}{% else %}-{% endif %}</td></tr>
+                            <tr><th>방문자수</th><td>{{ reserv.visitCnt }} 명</td></tr>
+                            <tr><th>방문처</th><td>{{ reserv.visitorName }}</td></tr>
                             </tbody>
                         </table>
-
                         {% if reserv.reservMemo %}
                         <div class="mt-2 text-muted small">메모: {{ reserv.reservMemo }}</div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- 조건 분기: 클럽일 경우 vs 써클일 경우 -->
-                <!-- 백엔드에서 reserv 딕셔너리에 clubNo와 circleNo를 담아 보내므로 reserv.clubNo로 체크합니다 -->
                 {% if reserv.clubNo %}
-                    <!-- 클럽 상세 정보 -->
-                    {% if clubdtl %}
-                    <div class="card summary-card mb-4">
-                        <div class="card-body px-4 py-3">
-                            <table class="table summary-table align-middle">
+                {% if clubdtl %}
+                <div class="card summary-card mb-4">
+                    <div class="card-body px-4 py-3">
+                        <table class="table summary-table align-middle">
+                            <tbody>
+                            <tr><th>창립일</th><td>{% if clubdtl.estDate %}{{ clubdtl.estDate.strftime('%Y-%m-%d') }}{% else %}-{% endif %}</td></tr>
+                            <tr><th>소속지역</th><td>{{ clubdtl.regionNo }} 지역</td></tr>
+                            <tr><th>추가정보</th><td style="white-space: pre-wrap;">{{ clubdtl.infoContent }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                    <div class="fw-bolder">클럽 회원 목록</div>
+                    <div class="text-muted small">총 {{ cmembers|length }}명</div>
+                </div>
+
+                <div class="card summary-card mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                            <table class="table table-hover align-middle text-center mb-0">
+                                <thead class="table-light sticky-top" style="z-index: 2;">
+                                <tr><th scope="col" style="width: 80px;">사진</th><th scope="col">이름</th><th scope="col">직책</th><th scope="col">방문여부</th></tr>
+                                </thead>
                                 <tbody>
-                                <tr>
-                                    <th>창립일</th>
-                                    <td>
-                                        {% if clubdtl.estDate %}
-                                        {{ clubdtl.estDate.strftime('%Y-%m-%d') }}
-                                        {% else %}
-                                        -
-                                        {% endif %}
+                                {% for m in cmembers %}
+                                {% set m_no = m[0] %}
+                                {% set m_name = m[1] %}
+                                {% set m_title = m[3] %}
+                                {% set check = namespace(is_visitor=false, has_right=false) %}
+                                {% for v in visitors %}
+                                    {% if v[0]|string == m_no|string %}
+                                        {% set check.is_visitor = true %}
+                                        {% if v[4] is not none %}{% set check.has_right = true %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if check.is_visitor %}
+                                <tr class="visitor-row">
+                                    <td class="py-2">
+                                        <div class="avatar-wrap sm mx-auto">
+                                            <div class="avatar"><img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                                            {% if check.has_right %}<span class="right-badge">*</span>{% endif %}
+                                        </div>
                                     </td>
+                                    <td class="fw-bold">{{ m_name }}</td>
+                                    <td class="text-muted small">{{ m_title }}</td>
+                                    <td><span class="text-primary fw-bolder fs-4" title="방문 예정">○</span></td>
                                 </tr>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% for m in cmembers %}
+                                {% set m_no = m[0] %}
+                                {% set m_name = m[1] %}
+                                {% set m_title = m[3] %}
+                                {% set check = namespace(is_visitor=false, has_right=false) %}
+                                {% for v in visitors %}
+                                    {% if v[0]|string == m_no|string %}
+                                        {% set check.is_visitor = true %}
+                                        {% if v[4] is not none %}{% set check.has_right = true %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if not check.is_visitor %}
                                 <tr>
-                                    <th>소속지역</th>
-                                    <td>{{ clubdtl.regionNo }} 지역</td>
+                                    <td class="py-2">
+                                        <div class="avatar-wrap sm mx-auto">
+                                            <div class="avatar"><img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                                            {% if check.has_right %}<span class="right-badge">*</span>{% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold">{{ m_name }}</td>
+                                    <td class="text-muted small">{{ m_title }}</td>
+                                    <td><span class="text-muted opacity-25 fs-5">-</span></td>
                                 </tr>
-                                <tr>
-                                    <th>추가정보</th>
-                                    <td style="white-space: pre-wrap;">{{ clubdtl.infoContent }}</td>
-                                </tr>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if not cmembers %}
+                                <tr><td colspan="4" class="text-muted py-5">등록된 회원 정보가 없습니다.</td></tr>
+                                {% endif %}
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    {% endif %}
-
-                    <!-- 클럽 회원 및 방문자 목록 (테이블 형태) -->
-                    <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
-                        <div class="fw-bolder">클럽 회원 목록</div>
-                        <div class="text-muted small">총 {{ cmembers|length }}명</div>
-                    </div>
-
-                    <div class="card summary-card mb-4">
-                        <div class="card-body p-0">
-                            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
-                                <table class="table table-hover align-middle text-center mb-0">
-                                    <thead class="table-light sticky-top" style="z-index: 2;">
-                                    <tr>
-                                        <th scope="col" style="width: 80px;">사진</th>
-                                        <th scope="col">이름</th>
-                                        <th scope="col">직책</th>
-                                        <th scope="col">방문여부</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    {# 1. 방문자 먼저 출력 #}
-                                    {% for m in cmembers %}
-                                        {% set m_no = m[0] %}
-                                        {% set m_name = m[1] %}
-                                        {% set m_title = m[3] %}
-
-                                        {% set check = namespace(is_visitor=false) %}
-                                        {% for v in visitors %}
-                                            {% if v[0]|string == m_no|string %}
-                                                {% set check.is_visitor = true %}
-                                            {% endif %}
-                                        {% endfor %}
-
-                                        {% if check.is_visitor %}
-                                        <tr class="visitor-row">
-                                            <td class="py-2">
-                                                <div class="avatar mx-auto" style="width: 48px; height: 48px;">
-                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}"
-                                                         loading="lazy"
-                                                         onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
-                                                </div>
-                                            </td>
-                                            <td class="fw-bold">{{ m_name }}</td>
-                                            <td class="text-muted small">{{ m_title }}</td>
-                                            <td>
-                                                <span class="text-primary fw-bolder fs-4" title="방문 예정">○</span>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                    {% endfor %}
-
-                                    {# 2. 방문자가 아닌 인원 출력 #}
-                                    {% for m in cmembers %}
-                                        {% set m_no = m[0] %}
-                                        {% set m_name = m[1] %}
-                                        {% set m_title = m[3] %}
-
-                                        {% set check = namespace(is_visitor=false) %}
-                                        {% for v in visitors %}
-                                            {% if v[0]|string == m_no|string %}
-                                                {% set check.is_visitor = true %}
-                                            {% endif %}
-                                        {% endfor %}
-
-                                        {% if not check.is_visitor %}
-                                        <tr>
-                                            <td class="py-2">
-                                                <div class="avatar mx-auto" style="width: 48px; height: 48px;">
-                                                    <img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}"
-                                                         loading="lazy"
-                                                         onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';">
-                                                </div>
-                                            </td>
-                                            <td class="fw-bold">{{ m_name }}</td>
-                                            <td class="text-muted small">{{ m_title }}</td>
-                                            <td>
-                                                <span class="text-muted opacity-25 fs-5">-</span>
-                                            </td>
-                                        </tr>
-                                        {% endif %}
-                                    {% endfor %}
-
-                                    {% if not cmembers %}
-                                    <tr>
-                                        <td colspan="4" class="text-muted py-5">등록된 회원 정보가 없습니다.</td>
-                                    </tr>
-                                    {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+                </div>
 
                 {% elif reserv.circleNo %}
-                    <!-- 써클일 경우 방문자 목록 (카드 형태) -->
-                    <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
-                        <div class="fw-bolder">방문자 목록</div>
-                        <div class="text-muted small">총 {{ visitors|length }}명</div>
-                    </div>
+                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                    <div class="fw-bolder">방문자 목록</div>
+                    <div class="text-muted small">총 {{ visitors|length }}명</div>
+                </div>
 
-                    <div class="visitors-grid mb-4">
-                        {% for v in visitors %}
-                        {% set memberNo = v[0] %}
-                        {% set name = v[1] %}
-                        {% set org = v[2] %}
-                        {% set title = v[3] %}
+                <div class="visitors-grid mb-4">
+                    {% for v in visitors %}
+                    {% set memberNo = v[0] %}
+                    {% set name = v[1] %}
+                    {% set org = v[2] %}
+                    {% set title = v[3] %}
+                    {% set rightNo = v[4] if v|length > 4 else none %}
 
-                        <div class="person-card">
-                            <div class="avatar">
-                                <img
-                                        src="/static/img/members/mphoto_{{ memberNo }}.png"
-                                        alt="{{ name }}"
-                                        loading="lazy"
-                                        onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"
-                                >
-                            </div>
-                            <div class="person-text">
-                                <p class="person-name mb-0">{{ name }}</p>
-                                <p class="person-sub mb-0">
-                                    {{ org }}<br>
-                                    {{ title }}
-                                </p>
-                            </div>
+                    <div class="person-card">
+                        <div class="avatar-wrap lg">
+                            <div class="avatar"><img src="/static/img/members/mphoto_{{ memberNo }}.png" alt="{{ name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                            {% if rightNo is not none %}<span class="right-badge">*</span>{% endif %}
                         </div>
-                        {% endfor %}
+                        <div class="person-text">
+                            <p class="person-name mb-0">{{ name }}</p>
+                            <p class="person-sub mb-0">{{ org }}<br>{{ title }}</p>
+                        </div>
                     </div>
+                    {% endfor %}
+                </div>
                 {% endif %}
             </div>
 
-            <!-- 오른쪽 영역: 노트 셀렉트 박스 및 HTML 뷰어 -->
-            <div class="col-lg-6 mb-4">
-                <div class="card summary-card h-100">
+            <!-- 오른쪽 영역: 인사말 (2/3) + 메모장 (1/3) -->
+            <div class="col-lg-6 mb-4 d-flex flex-column" style="min-height: 800px;">
+
+                <!-- 상단: 인사말 (flex-grow-1로 남는 공간 차지) -->
+                <div class="card summary-card flex-grow-1 mb-3">
                     <div class="card-body px-4 py-4 d-flex flex-column">
                         <h5 class="fw-bolder mb-3">인사말</h5>
-                        <!-- 셀렉트 박스 -->
                         <select id="noteSelect" class="form-select mb-3" onchange="renderNote()">
                             {% for note in notes %}
                             <option value="{{ note.noteNo }}">{{ note.noteTitle }}</option>
@@ -407,8 +230,24 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
+                <!-- 하단: 메모장 (고정 높이 약 1/3) -->
+                <div class="card summary-card" style="height: 300px; flex-shrink: 0;">
+                    <div class="card-body px-4 py-3 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bolder mb-0">메모</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="clearCanvas()">지우기</button>
+                                <button class="btn btn-sm btn-primary" onclick="saveMemo()">저장</button>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper" id="canvasContainer">
+                            <canvas id="memoCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 </main>
@@ -417,7 +256,8 @@
 {% include '/common/adscript.html' %}
 
 <script>
-    const notesData = {{ notes | tojson | safe | default('[]') }};
+    // --- 1. 인사말 렌더링 로직 ---
+    const notesData = {{notes | tojson | safe |default('[]')}};
 
     function renderNote() {
         const select = document.getElementById('noteSelect');
@@ -425,17 +265,10 @@
         const selectedId = select.value;
 
         if (!selectedId) {
-            viewer.innerHTML = `
-                <div class="h-100 d-flex align-items-center justify-content-center text-muted">
-                    등록된 인사말이 없습니다.
-                </div>`;
+            viewer.innerHTML = `<div class="h-100 d-flex align-items-center justify-content-center text-muted">등록된 인사말이 없습니다.</div>`;
             return;
         }
-
-        // 선택된 noteNo와 일치하는 객체 찾기
         const note = notesData.find(n => String(n.noteNo) === String(selectedId));
-
-        // noteContents가 존재하면 뷰어에 삽입
         if (note && note.noteContents) {
             viewer.innerHTML = note.noteContents;
         } else {
@@ -443,11 +276,145 @@
         }
     }
 
-    // DOM(HTML) 로딩이 완료되면 즉시 renderNote 함수를 실행하여 첫 번째 인사말 표시
-    window.addEventListener('DOMContentLoaded', () => {
-        if (notesData.length > 0) {
-            renderNote();
+    // --- 2. 메모장(Canvas) 로직 ---
+    const canvas = document.getElementById('memoCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvasContainer');
+    let isDrawing = false;
+
+    // 캔버스 크기를 부모 컨테이너에 맞춤
+    function resizeCanvas() {
+        // 기존에 그려진 내용을 임시 저장
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (canvas.width > 0) {
+            tempCtx.drawImage(canvas, 0, 0);
         }
+
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        // 배경을 흰색으로 채움
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 리사이즈 후 기존 내용 복구
+        if (canvas.width > 0 && tempCanvas.width > 0) {
+            ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    // 좌표 구하기 (마우스 및 터치 지원)
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function startDrawing(e) {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault(); // 스크롤 방지
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#000000'; // 펜 색상
+        ctx.lineWidth = 3;           // 펜 굵기
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        e.preventDefault();
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        ctx.closePath();
+    }
+
+    // 캔버스 초기화
+    function clearCanvas() {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // ★ 추가된 부분: 저장된 메모 불러오기 ★
+    function loadMemo() {
+        const img = new Image();
+        // 브라우저 캐시(이전 이미지 기억) 방지를 위해 현재 시간을 뒤에 붙여줍니다.
+        img.src = `/static/img/memo/{{ reserv.reservNo }}.png?t=` + new Date().getTime();
+
+        img.onload = function() {
+            // 이미지가 존재하면 캔버스 크기에 맞춰서 그려줍니다.
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+
+        img.onerror = function() {
+            // 저장된 이미지가 없으면(404 에러 등) 아무것도 하지 않고 빈 캔버스를 유지합니다.
+            console.log("저장된 메모가 없습니다.");
+        };
+    }
+
+    // 메모 저장 (서버로 전송)
+    async function saveMemo() {
+        const reservNo = '{{ reserv.reservNo }}';
+        // 캔버스 데이터를 Base64 이미지(PNG)로 변환
+        const dataURL = canvas.toDataURL('image/png');
+
+        try {
+            const response = await fetch('/api/save_memo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reservNo: reservNo,
+                    image: dataURL
+                })
+            });
+
+            if (response.ok) {
+                alert('메모가 성공적으로 저장되었습니다.');
+            } else {
+                alert('메모 저장에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+    // 이벤트 리스너 등록
+    window.addEventListener('resize', resizeCanvas);
+
+    // 마우스 이벤트
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // 터치 이벤트 (모바일 지원)
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // DOM 로딩 완료 시 실행
+    window.addEventListener('DOMContentLoaded', () => {
+        if (notesData.length > 0) renderNote();
+
+        // 약간의 지연 후 캔버스 리사이즈 및 메모 불러오기
+        setTimeout(() => {
+            resizeCanvas();
+            loadMemo(); // ★ 캔버스 크기 설정 후 메모 이미지를 불러옵니다.
+        }, 100);
     });
 </script>
 

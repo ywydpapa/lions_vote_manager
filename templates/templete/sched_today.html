@@ -171,26 +171,34 @@
           // 예약이 없을 때
           contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
         } else {
-          // 완료된 예약과 예정된 예약 분리
-          const doneItems = items.filter(r => r.attrib === '1DONE1DONE');
-          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE');
+          // 완료(1DONE1DONE) 및 도착(1111111111)은 왼쪽, 나머지는 오른쪽에 표시
+          const activeItems = items.filter(r => r.attrib === '1DONE1DONE' || r.attrib === '1111111111');
+          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE' && r.attrib !== '1111111111');
 
-          // 예약 목록을 HTML로 변환하는 헬퍼 함수
-          const renderLines = (arr, isDone) => arr.map(r => `
-            <a class="d-block small text-decoration-none py-1 text-${isDone ? 'start' : 'end'}"
+          const renderLines = (arr, align) => arr.map(r => {
+            let colorClass = 'text-dark'; // 기본 검은색 (예정)
+            if (r.attrib === '1DONE1DONE') {
+                colorClass = 'text-danger'; // 완료: 붉은색
+            } else if (r.attrib === '1111111111') {
+                colorClass = 'text-success'; // 도착: 초록색
+            }
+
+            return `
+            <a class="d-block small text-decoration-none py-1 text-${align}"
                href="${reservDtlUrl(r.reservNo)}">
-              <span class="fw-semibold ${isDone ? 'text-success' : 'text-body'}">${escapeHtml(r.visitorName)}</span>
+              <span class="fw-semibold ${colorClass}">${escapeHtml(r.visitorName)}</span>
               <span class="text-muted">(${r.visitCnt}명)</span>
             </a>
-          `).join('');
+            `;
+          }).join('');
 
-          // 레이아웃: 왼쪽(완료), 오른쪽(예정)
+          // 레이아웃: 왼쪽(완료/도착), 오른쪽(예정)
           contentHtml = `
             <div class="w-50 px-2 border-end" style="border-color: #eef0f3 !important;">
-              ${renderLines(doneItems, true)}
+              ${renderLines(activeItems, 'start')}
             </div>
             <div class="w-50 px-2">
-              ${renderLines(pendingItems, false)}
+              ${renderLines(pendingItems, 'end')}
             </div>
           `;
         }
@@ -221,6 +229,13 @@
   const es = new EventSource("/sse/schedule");
   es.addEventListener("reserv_created", (e) => {
     location.reload();
+  });
+
+  // ★ 추가된 부분: 뒤로 가기로 돌아왔을 때 최신 정보로 업데이트 및 SSE 재연결 ★
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      window.location.reload();
+    }
   });
 </script>
 

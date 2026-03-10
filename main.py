@@ -17,11 +17,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 import dotenv
-import os
 import uvicorn
 from sqlalchemy import text
 import re
-from pydantic import BaseModel
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint, String
@@ -35,7 +33,10 @@ import json
 from fastapi.encoders import jsonable_encoder
 from PIL import Image, ImageFont, ImageDraw
 import io
-
+import os
+import base64
+from fastapi import APIRouter
+from pydantic import BaseModel
 
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
@@ -71,6 +72,11 @@ EXT_BY_CONTENT_TYPE = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+
+
+class MemoRequest(BaseModel):
+    reservNo: int
+    image: str
 
 
 class SseHub:
@@ -296,7 +302,8 @@ where a.clubNo = :clubno""")
 
 
 async def get_visitors(reservno: int, db: AsyncSession):
-    query = text("""select a.memberNo,b.memberName,d.clubName, c.rankTitlekor, a.rightYN, a.visitMemo from visitMembers a left join lionsMember b on a.memberNo = b.memberNo left join lionsRank c on c.rankNo = b.rankNo left join lionsClub d on d.clubNo = b.clubNo where reservNo = :reservno""")
+    query = text("""select a.memberNo,b.memberName,d.clubName, c.rankTitlekor, e.rightNo, a.visitMemo from visitMembers a left join lionsMember b on a.memberNo = b.memberNo left join lionsRank c on c.rankNo = b.rankNo left join lionsClub d on d.clubNo = b.clubNo 
+                    left join voteRight e on a.memberNo = e.memberNo where a.reservNo = :reservno""")
     result = await db.execute(query, {"reservno": reservno})
     visitors = result.fetchall()
     return visitors
@@ -705,11 +712,14 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     reserv_dtl = await get_reserv_dtl(reservno, db)
     circleno = reserv_dtl["circleNo"]
     clubno = reserv_dtl["clubNo"]
-    cmembers = await get_clubmembers(reserv_dtl["clubNo"], db)
-    if clubno :
+
+    cmembers = await get_clubmembers(clubno, db) if clubno else []
+
+    if clubno:
         clubdtl = await get_club_dtl(clubno, db)
-    if circleno :
+    else:
         clubdtl = []
+
     visitors = await get_visitors(reservno, db)
     notes = await get_notelist("CANDI", db)
     photo_dir = Path("static/img/event_photos")
@@ -820,6 +830,7 @@ async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
+            "attrib": row[11],
         })
     return templates.TemplateResponse(
         "templete/sched_today.html",
@@ -1328,6 +1339,23 @@ async def api_get_clubmembers(clubno: int, db: AsyncSession = Depends(get_db)):
             "clubNo": m[4]
         })
     return JSONResponse(content=result)
+
+
+@app.post("/api/save_memo")
+async def save_memo(request: MemoRequest):
+    try:
+        header, encoded = request.image.split(",", 1)
+        image_data = base64.b64decode(encoded)
+        save_dir = "static/img/memo"
+        os.makedirs(save_dir, exist_ok=True)
+        file_path = os.path.join(save_dir, f"{request.reservNo}.png")
+        with open(file_path, "wb") as f:
+            f.write(image_data)
+
+        return {"status": "success", "message": "Memo saved successfully"}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 if __name__ == "__main__":
