@@ -38,6 +38,8 @@
             height: 100%;
             width: 100%;
             object-fit: cover;
+            cursor: zoom-in;
+            user-select: none;
         }
 
         /* 좌측 텍스트 영역 수직 중앙 정렬 */
@@ -51,16 +53,16 @@
         /* 기사 뷰어 컨테이너 부드러운 전환 효과 */
         #article-viewer-container {
             transition: all 0.3s ease-in-out;
-            overflow: hidden; /* iframe이 커졌을 때 컨테이너 밖으로 나가는 것 방지 */
+            overflow: hidden;
         }
 
-        /* --- 추가된 CSS: iframe 스케일링(축소) 처리 --- */
+        /* iframe 스케일링(축소) 처리 */
         .iframe-wrapper {
             width: 100%;
             height: 100%;
             position: relative;
-            overflow: auto; /* 내부 스크롤 허용 */
-            -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         #article-iframe {
@@ -69,7 +71,73 @@
             border: none;
             border-radius: 0.5rem;
             background-color: #fff;
-            transform-origin: 0 0; /* 축소 기준점을 좌상단으로 설정 */
+            transform-origin: 0 0;
+        }
+
+        /* 사진 확장 카드 */
+        .expandable-photo-card {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .expandable-photo-card .row,
+        .expandable-photo-card .text-section,
+        .expandable-photo-card .photo-panel {
+            transition: all 0.3s ease;
+        }
+
+        .expandable-photo-card .photo-panel {
+            cursor: pointer;
+        }
+
+        .expandable-photo-card.photo-expanded .text-section {
+            display: none !important;
+        }
+
+        .expandable-photo-card.photo-expanded .photo-panel {
+            flex: 0 0 100%;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .expandable-photo-card.photo-expanded .row {
+            height: 100%;
+        }
+
+        .expandable-photo-card.photo-expanded .carousel,
+        .expandable-photo-card.photo-expanded .carousel-inner,
+        .expandable-photo-card.photo-expanded .carousel-item {
+            height: 100%;
+            min-height: 450px;
+        }
+
+        /* 확장 시 비율 유지하며 크게 */
+        .expandable-photo-card.photo-expanded .carousel-item img {
+            object-fit: contain;
+            background: #000;
+            cursor: zoom-out;
+        }
+
+        /* 확장 닫기 버튼 */
+        .photo-expand-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 20;
+            display: none;
+            border: none;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 999px;
+            width: 42px;
+            height: 42px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+            font-size: 24px;
+            line-height: 1;
+            font-weight: bold;
+        }
+
+        .expandable-photo-card.photo-expanded .photo-expand-close {
+            display: block;
         }
 
         @media (max-width: 768px) {
@@ -88,90 +156,24 @@
                 margin-bottom: 2rem;
             }
 
-            /* 모바일 화면에서 iframe 내부 콘텐츠를 축소해서 보여주기 위한 트릭 */
             #article-iframe {
-                width: 200%; /* 너비를 2배로 늘림 (가상의 데스크톱 해상도 확보) */
-                height: 200%; /* 높이도 2배로 늘림 */
-                transform: scale(0.5); /* 50%로 축소하여 원래 컨테이너 크기에 맞춤 */
+                width: 200%;
+                height: 200%;
+                transform: scale(0.5);
+            }
+
+            .expandable-photo-card.photo-expanded .photo-panel {
+                width: 100%;
+                max-width: 100%;
+                flex: 0 0 100%;
+            }
+
+            .expandable-photo-card.photo-expanded .carousel,
+            .expandable-photo-card.photo-expanded .carousel-inner,
+            .expandable-photo-card.photo-expanded .carousel-item {
+                min-height: 320px;
             }
         }
-
-        .expandable-photo-card {
-        position: relative;
-        transition: all 0.3s ease;
-    }
-
-    .expandable-photo-card .text-section,
-    .expandable-photo-card .photo-panel {
-        transition: all 0.3s ease;
-    }
-
-    .expandable-photo-card .photo-panel {
-        cursor: zoom-in;
-    }
-
-    .expandable-photo-card.photo-expanded .text-section {
-        display: none !important;
-    }
-
-    .expandable-photo-card.photo-expanded .photo-panel {
-        flex: 0 0 100%;
-        max-width: 100%;
-        width: 100%;
-    }
-
-    .expandable-photo-card.photo-expanded .row {
-        height: 100%;
-    }
-
-    .expandable-photo-card.photo-expanded .carousel,
-    .expandable-photo-card.photo-expanded .carousel-inner,
-    .expandable-photo-card.photo-expanded .carousel-item {
-        height: 100%;
-        min-height: 450px;
-    }
-
-    /* 사진 비율 유지하면서 카드 전체 안에 최대한 크게 */
-    .expandable-photo-card.photo-expanded .carousel-item img {
-        object-fit: contain;
-        background: #000;
-    }
-
-    /* 확장 상태에서 닫기 버튼 */
-    .photo-expand-close {
-        position: absolute;
-        top: 12px;
-        right: 12px;
-        z-index: 20;
-        display: none;
-        border: none;
-        background: rgba(255,255,255,0.9);
-        border-radius: 999px;
-        width: 40px;
-        height: 40px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-        font-size: 20px;
-        line-height: 1;
-    }
-
-    .expandable-photo-card.photo-expanded .photo-expand-close {
-        display: block;
-    }
-
-    @media (max-width: 768px) {
-        .expandable-photo-card.photo-expanded .photo-panel {
-            width: 100%;
-            max-width: 100%;
-            flex: 0 0 100%;
-        }
-
-        .expandable-photo-card.photo-expanded .carousel,
-        .expandable-photo-card.photo-expanded .carousel-inner,
-        .expandable-photo-card.photo-expanded .carousel-item {
-            min-height: 320px;
-        }
-    }
-
     </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
@@ -186,22 +188,21 @@
                 <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 발자취</span></h1>
                 <P>이미지를 좌우로 스와이프하여 후보의 발자취를 확인해보세요.</P>
             </div>
+
             <!-- 상하 스와이프 컨테이너 -->
             <div class="vertical-swipe-container">
-                <!-- 첫 번째 카드 (h01: 회장/자문회) -->
+
+                <!-- 첫 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
-                            <!-- 좌측 텍스트 영역 -->
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">세종클럽회장</h2>
                                 <p class="text-muted mb-0">
                                     클럽회장시절 활동 내역입니다. 클럽 회장으로 지역 사회를 위해 헌신한 다양한 활동들을 확인하실 수 있습니다.
                                 </p>
                             </div>
-
-                            <!-- 우측 이미지 슬라이더 영역 -->
                             <div class="col-md-8 photo-panel">
                                 <div id="carouselH01" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
@@ -217,23 +218,19 @@
                                         {% for img in h01_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="회장/자문회 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="회장/자문회 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH01"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH01" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH01"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH01" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -242,9 +239,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 첫 번째 카드 -->
 
-                <!-- 두 번째 카드 (h02: 총재자문회) -->
+                <!-- 두 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
@@ -270,24 +266,19 @@
                                         {% for img in h02_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="자문회 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="자문회 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH02" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH02"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH02" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -296,8 +287,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 두 번째 카드 -->
-                <!-- 세 번째 카드 (h03: 지대위원장) -->
+
+                <!-- 세 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
@@ -323,24 +314,19 @@
                                         {% for img in h03_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="지대위원장 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="지대위원장 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH03"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH03" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH03"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH03" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -349,9 +335,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 세번째 카드 -->
 
-                <!-- 네 번째 카드 (h04: 지역.기획부총재) -->
+                <!-- 네 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
@@ -377,24 +362,19 @@
                                         {% for img in h04_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="지기획 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="지기획 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH04"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH04" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH04"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH04" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -403,8 +383,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 네 번째 카드 -->
-                <!-- 다섯 번째 카드 (h05: 다문화페스티벌) -->
+
+                <!-- 다섯 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
@@ -430,24 +410,19 @@
                                         {% for img in h05_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="드림하이 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="드림하이 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH05"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH05" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH05"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH05" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -456,8 +431,8 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 다섯 번째 카드 -->
-                <!-- 여섯 번째 카드 (h06: 각종 대회참가) -->
+
+                <!-- 여섯 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
@@ -484,24 +459,19 @@
                                         {% for img in h06_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="드림페스타 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
                                                  alt="드림페스타 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH06"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH06" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH06"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH06" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -510,14 +480,14 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 여섯 번째 카드 -->
-                <!-- 일곱 번째 카드 (h06: 각종 대회참가) -->
+
+                <!-- 일곱 번째 카드 -->
                 <div class="swipe-section">
                     <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
                         <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
-                                <h2 class="fw-bolder mb-3">세계,동남아 대회, 대만자매지구 방문 </h2>
+                                <h2 class="fw-bolder mb-3">세계,동남아 대회, 대만자매지구 방문</h2>
                                 <p class="text-muted mb-0">
                                     세계대회, 동남아 대회, 대만자매지구 방문등 모든 지구행사에 참여한 열정적인 발자취 입니다.
                                 </p>
@@ -537,24 +507,19 @@
                                         {% for img in h07_images %}
                                         <div class="carousel-item {% if loop.first %}active{% endif %}">
                                             {% if loop.index <= 3 %}
-                                            <!-- 처음 3장은 즉시 로드 (loading="lazy"를 추가해 화면 밖 이미지는 브라우저가 알아서 지연시키도록 함) -->
                                             <img src="{{ img }}" alt="대회 방문 활동 사진 {{ loop.index }}" loading="lazy"/>
                                             {% else %}
-                                            <!-- 4번째부터는 가짜 속성(data-src)에 URL을 담아두고 나중에 JS로 로드 -->
                                             <img data-src="{{ img }}" class="lazy-carousel-img"
-                                                 alt="대회방문  활동 사진 {{ loop.index }}"/>
+                                                 alt="대회방문 활동 사진 {{ loop.index }}"/>
                                             {% endif %}
                                         </div>
                                         {% endfor %}
                                     </div>
-
-                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH07"
-                                            data-bs-slide="prev">
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carouselH07" data-bs-slide="prev">
                                         <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">이전</span>
                                     </button>
-                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH07"
-                                            data-bs-slide="next">
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carouselH07" data-bs-slide="next">
                                         <span class="carousel-control-next-icon" aria-hidden="true"></span>
                                         <span class="visually-hidden">다음</span>
                                     </button>
@@ -563,7 +528,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- End 일곱 번째 카드 -->
+
             </div>
 
             <!-- 후보자 관련 기사 영역 -->
@@ -594,18 +559,15 @@
                 </button>
             </div>
 
-            <!-- HTML 뷰어 (iframe) 영역 - 초기에는 숨김 처리 -->
+            <!-- HTML 뷰어 (iframe) 영역 -->
             <div id="article-viewer-container" class="card shadow border-0 rounded-4 mb-5"
                  style="display: none; height: 75vh; min-height: 600px;">
                 <div class="card-body p-2 h-100 position-relative">
-                    <!-- 닫기 버튼 -->
                     <button type="button"
                             class="btn-close position-absolute top-0 end-0 m-3 bg-white rounded-circle p-2 shadow-sm"
                             aria-label="Close" id="close-viewer-btn" style="z-index: 10; opacity: 1;"></button>
 
-                    <!-- 수정된 부분: iframe을 감싸는 wrapper 추가 -->
                     <div class="iframe-wrapper">
-                        <!-- iframe (sandbox 속성 유지) -->
                         <iframe id="article-iframe" src="" sandbox="allow-scripts allow-same-origin"></iframe>
                     </div>
                 </div>
@@ -629,7 +591,6 @@
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
 
-<!-- 기사 뷰어 동작 스크립트 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const buttons = document.querySelectorAll('.article-btn');
@@ -637,55 +598,81 @@
         const iframe = document.getElementById('article-iframe');
         const closeBtn = document.getElementById('close-viewer-btn');
 
-        // 각 기사 버튼 클릭 이벤트
+        // 기사 버튼 클릭 이벤트
         buttons.forEach(button => {
             button.addEventListener('click', function () {
-                // 모든 버튼의 활성화 상태 초기화
                 buttons.forEach(btn => btn.classList.remove('active'));
-                // 클릭된 버튼 활성화
                 this.classList.add('active');
 
-                // iframe src 업데이트 및 뷰어 표시
                 const link = this.getAttribute('data-link');
                 iframe.src = link;
                 viewerContainer.style.display = 'block';
 
-                // 뷰어가 렌더링된 후 부드럽게 스크롤 이동
                 setTimeout(() => {
                     viewerContainer.scrollIntoView({behavior: 'smooth', block: 'center'});
                 }, 100);
             });
         });
 
-        // 닫기 버튼 클릭 이벤트
+        // 기사 뷰어 닫기
         closeBtn.addEventListener('click', function () {
             viewerContainer.style.display = 'none';
-            iframe.src = ''; // iframe 내용 초기화하여 불필요한 리소스 소모 방지
+            iframe.src = '';
             buttons.forEach(btn => btn.classList.remove('active'));
         });
+
+        // 사진 확장 기능
+        const photoCards = document.querySelectorAll('.expandable-photo-card');
+
+        photoCards.forEach(function (card) {
+            const closeExpandBtn = card.querySelector('.photo-expand-close');
+
+            card.querySelectorAll('.carousel-item img').forEach(function (img) {
+                img.addEventListener('click', function (e) {
+                    e.stopPropagation();
+
+                    photoCards.forEach(c => c.classList.remove('photo-expanded'));
+                    card.classList.add('photo-expanded');
+                });
+            });
+
+            if (closeExpandBtn) {
+                closeExpandBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    card.classList.remove('photo-expanded');
+                });
+            }
+        });
+
+        // ESC 키로 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.expandable-photo-card.photo-expanded')
+                    .forEach(card => card.classList.remove('photo-expanded'));
+            }
+        });
     });
-    // 기존 스크립트 아래에 추가
+
     window.addEventListener('load', function () {
-        // 1. 페이지 로드 완료 후 1초(1000ms) 뒤에 나머지 이미지들 백그라운드 로딩 시작
+        // 1초 후 나머지 이미지 백그라운드 로딩
         setTimeout(function () {
             const lazyImages = document.querySelectorAll('img.lazy-carousel-img');
             lazyImages.forEach(function (img) {
                 if (img.dataset.src) {
-                    img.src = img.dataset.src; // data-src의 값을 실제 src로 이동
+                    img.src = img.dataset.src;
                     img.removeAttribute('data-src');
                     img.classList.remove('lazy-carousel-img');
                 }
             });
-        }, 1000); // 필요에 따라 시간을 조절하세요 (예: 500 = 0.5초)
+        }, 1000);
 
-        // 2. (안전장치) 사용자가 1초가 되기 전에 슬라이드를 넘겼을 경우 즉시 로드
+        // 사용자가 빨리 슬라이드 넘기면 즉시 로드
         const carousels = document.querySelectorAll('.carousel');
         carousels.forEach(function (carousel) {
             carousel.addEventListener('slide.bs.carousel', function (e) {
-                const nextSlide = e.relatedTarget; // 다음으로 보여질 슬라이드
+                const nextSlide = e.relatedTarget;
                 const img = nextSlide.querySelector('img.lazy-carousel-img');
 
-                // 다음 슬라이드의 이미지가 아직 로드되지 않았다면 즉시 로드
                 if (img && img.dataset.src) {
                     img.src = img.dataset.src;
                     img.removeAttribute('data-src');
@@ -694,45 +681,6 @@
             });
         });
     });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        const photoCards = document.querySelectorAll('.expandable-photo-card');
-
-        photoCards.forEach(function (card) {
-            const photoPanel = card.querySelector('.photo-panel');
-            const closeBtn = card.querySelector('.photo-expand-close');
-
-            if (!photoPanel) return;
-
-            // 사진 영역 클릭 시 확장
-            photoPanel.addEventListener('click', function (e) {
-                // 캐러셀 이전/다음 버튼 클릭은 확장 트리거에서 제외
-                if (
-                    e.target.closest('.carousel-control-prev') ||
-                    e.target.closest('.carousel-control-next') ||
-                    e.target.closest('.carousel-indicators button')
-                ) {
-                    return;
-                }
-
-                card.classList.add('photo-expanded');
-            });
-
-            // 닫기 버튼 클릭 시 원복
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function (e) {
-                    e.stopPropagation();
-                    card.classList.remove('photo-expanded');
-                });
-            }
-
-            // 확장 상태에서 사진 다시 클릭하면 원복하고 싶다면 사용
-            photoPanel.addEventListener('dblclick', function () {
-                card.classList.remove('photo-expanded');
-            });
-        });
-    });
-
 </script>
 </body>
 </html>
