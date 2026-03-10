@@ -1019,6 +1019,39 @@ async def scribe01(
     )
 
 
+@app.get("/scribe02", response_class=HTMLResponse)
+async def scribe02(
+        request: Request,
+        reservno: int = Query(...),
+        photo: List[str] = Query(default=[]),  # 여러 개의 사진 URL을 리스트로 받음
+        phrase: List[str] = Query(default=[]),  # 여러 개의 문구를 리스트로 받음
+        db: AsyncSession = Depends(get_db),
+):
+    photo_data = []
+    # 최대 2장까지만 처리
+    for i in range(min(len(photo), 2)):
+        p_url = photo[i]
+        # phrase 리스트가 photo보다 짧을 경우를 대비한 안전 처리
+        p_phrase = phrase[i] if i < len(phrase) else ""
+        if not p_url.startswith("/static/"):
+            p_url = "/static/img/event_photos/default.jpg"
+        # 사진과 문구를 딕셔너리로 묶어서 저장
+        photo_data.append({"url": p_url, "phrase": p_phrase})
+
+    # 사진이 하나도 없을 경우 기본값
+    if not photo_data:
+        photo_data = [{"url": "/static/img/event_photos/default.jpg", "phrase": ""}]
+    reserv = await get_reserv_dtl(reservno, db)
+    return templates.TemplateResponse(
+        "templete/scribe02.html",
+        {
+            "request": request,
+            "photo_data": photo_data,  # photo_urls 대신 photo_data(딕셔너리 리스트) 전달
+            "reserv": reserv
+        },
+    )
+
+
 @app.get("/contact", response_class=HTMLResponse)
 async def contact(request: Request):
     return templates.TemplateResponse(

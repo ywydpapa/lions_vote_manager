@@ -232,7 +232,9 @@
                                 <td class="d-flex justify-content-between align-items-center">
                                     <span>{{ reserv.visitorName }}</span>
                                     {% if reserv.attrib != '1DONE1DONE' %}
-                                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="confirmArrival()">방문확인</button>
+                                    <button type="button" class="btn btn-sm btn-success fw-bold"
+                                            onclick="confirmArrival()">방문확인
+                                    </button>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -378,11 +380,16 @@
                 </div>
                 <!-- 선택된 사진과 문구 입력창이 나타날 영역 -->
                 <div id="selected-photos-container" class="mt-4"></div>
-                <div class="text-end mt-3">
+                <div class="text-end mt-3 d-flex justify-content-end gap-2 flex-wrap">
+                    <button id="printBtn02" class="btn btn-outline-primary px-4 py-2 fw-bold" onclick="openScribe02()"
+                            disabled>
+                        방명록용 사진출력 (0/2)
+                    </button>
+
                     <button id="printBtn" class="btn btn-primary px-4 py-2 fw-bold" onclick="openScribe()" disabled>
                         선택한 사진으로 방문기념 액자생성 (0/2)
                     </button>
-                    <!-- 완료된 예약이 아닐 때만 방문완료처리 버튼 표시 (선택사항) -->
+
                     {% if reserv.attrib != '1DONE1DONE' %}
                     <button type="button" class="btn btn-success px-4 py-2 fw-bold" onclick="completeVisit()">
                         방문완료처리
@@ -478,6 +485,12 @@
             btn.disabled = selectedPhotos.length === 0;
             btn.innerText = `선택한 사진으로 방문기념 액자생성 (${selectedPhotos.length}/${maxSelect})`;
         }
+
+        const btn02 = document.getElementById('printBtn02');
+        if (btn02) {
+            btn02.disabled = selectedPhotos.length === 0;
+            btn02.innerText = `방명록용 사진출력 (${selectedPhotos.length}/${maxSelect})`;
+        }
     }
 
     // 입력창에 글자를 칠 때마다 배열 업데이트
@@ -495,6 +508,20 @@
             url += `&photo=${encodeURIComponent(p.url)}&phrase=${encodeURIComponent(p.phrase)}`;
         });
         window.open(url, 'scribe01', 'noopener,noreferrer,width=900,height=1200');
+    }
+
+    function openScribe02() {
+        if (selectedPhotos.length === 0) {
+            alert('사진을 선택해주세요.');
+            return;
+        }
+
+        let url = `/scribe02?reservno=${encodeURIComponent(reservNo)}`;
+        selectedPhotos.forEach(p => {
+            url += `&photo=${encodeURIComponent(p.url)}&phrase=${encodeURIComponent(p.phrase)}`;
+        });
+
+        window.open(url, 'scribe02', 'noopener,noreferrer,width=900,height=1200');
     }
 
     // 방문완료처리 API 호출 함수
@@ -660,7 +687,7 @@
             btn.disabled = true;
             btn.innerText = '처리 중...';
 
-            const cancelRes = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, { method: 'POST' });
+            const cancelRes = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, {method: 'POST'});
             if (!cancelRes.ok) throw new Error('기존 예약 취소 실패: ' + await cancelRes.text());
 
             const regRes = await fetch(`/reg_reserv/${encodeURIComponent(clubNo)}`, {
