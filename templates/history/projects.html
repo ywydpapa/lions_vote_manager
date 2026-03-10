@@ -96,7 +96,82 @@
             }
         }
 
-        /* ------------------------------------------- */
+        .expandable-photo-card {
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .expandable-photo-card .text-section,
+    .expandable-photo-card .photo-panel {
+        transition: all 0.3s ease;
+    }
+
+    .expandable-photo-card .photo-panel {
+        cursor: zoom-in;
+    }
+
+    .expandable-photo-card.photo-expanded .text-section {
+        display: none !important;
+    }
+
+    .expandable-photo-card.photo-expanded .photo-panel {
+        flex: 0 0 100%;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .expandable-photo-card.photo-expanded .row {
+        height: 100%;
+    }
+
+    .expandable-photo-card.photo-expanded .carousel,
+    .expandable-photo-card.photo-expanded .carousel-inner,
+    .expandable-photo-card.photo-expanded .carousel-item {
+        height: 100%;
+        min-height: 450px;
+    }
+
+    /* 사진 비율 유지하면서 카드 전체 안에 최대한 크게 */
+    .expandable-photo-card.photo-expanded .carousel-item img {
+        object-fit: contain;
+        background: #000;
+    }
+
+    /* 확장 상태에서 닫기 버튼 */
+    .photo-expand-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 20;
+        display: none;
+        border: none;
+        background: rgba(255,255,255,0.9);
+        border-radius: 999px;
+        width: 40px;
+        height: 40px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .expandable-photo-card.photo-expanded .photo-expand-close {
+        display: block;
+    }
+
+    @media (max-width: 768px) {
+        .expandable-photo-card.photo-expanded .photo-panel {
+            width: 100%;
+            max-width: 100%;
+            flex: 0 0 100%;
+        }
+
+        .expandable-photo-card.photo-expanded .carousel,
+        .expandable-photo-card.photo-expanded .carousel-inner,
+        .expandable-photo-card.photo-expanded .carousel-item {
+            min-height: 320px;
+        }
+    }
+
     </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
@@ -115,7 +190,8 @@
             <div class="vertical-swipe-container">
                 <!-- 첫 번째 카드 (h01: 회장/자문회) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <!-- 좌측 텍스트 영역 -->
                             <div class="col-md-4 text-section bg-white">
@@ -126,7 +202,7 @@
                             </div>
 
                             <!-- 우측 이미지 슬라이더 영역 -->
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH01" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h01_images %}
@@ -170,7 +246,8 @@
 
                 <!-- 두 번째 카드 (h02: 총재자문회) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">총재자문회/사자회</h2>
@@ -178,7 +255,7 @@
                                     총재자문회와 사자회 회장으로 활동하는 모습입니다. 동기회장들간의 화합을 도모하고 모두가 하나되는 사자회를 만든 발자취입니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH02" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h02_images %}
@@ -222,7 +299,8 @@
                 <!-- End 두 번째 카드 -->
                 <!-- 세 번째 카드 (h03: 지대위원장) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">지대위원장</h2>
@@ -230,7 +308,7 @@
                                     2024-2025 지대위원장 활동 내역입니다. 초보 지구임원으로 클럽 간의 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH03" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h03_images %}
@@ -275,7 +353,8 @@
 
                 <!-- 네 번째 카드 (h04: 지역.기획부총재) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">지역.기획부총재</h2>
@@ -283,7 +362,7 @@
                                     2025-2026 지역부총재 활동 내역입니다. 지구의 허리로 클럽을 넘어 지역 화합을 도모하고 봉사 활동을 성공적으로 이끈 발자취입니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH04" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h04_images %}
@@ -327,7 +406,8 @@
                 <!-- End 네 번째 카드 -->
                 <!-- 다섯 번째 카드 (h05: 다문화페스티벌) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">다문화 드림하이 페스티벌</h2>
@@ -335,7 +415,7 @@
                                     다문화 가족들의 성공적인 정착을 위한 활동 내역입니다. 세종클럽에서 매년 사하구의 다문화 가정 정착을 위해 추진해 오고있습니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH05" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h05_images %}
@@ -379,7 +459,8 @@
                 <!-- End 다섯 번째 카드 -->
                 <!-- 여섯 번째 카드 (h06: 각종 대회참가) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">We Serve, 다문화가족 드림페스타</h2>
@@ -388,7 +469,7 @@
                                     실현하고 있습니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH06" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h06_images %}
@@ -432,7 +513,8 @@
                 <!-- End 여섯 번째 카드 -->
                 <!-- 일곱 번째 카드 (h06: 각종 대회참가) -->
                 <div class="swipe-section">
-                    <div class="card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
                         <div class="row g-0 h-100">
                             <div class="col-md-4 text-section bg-white">
                                 <h2 class="fw-bolder mb-3">세계,동남아 대회, 대만자매지구 방문 </h2>
@@ -440,7 +522,7 @@
                                     세계대회, 동남아 대회, 대만자매지구 방문등 모든 지구행사에 참여한 열정적인 발자취 입니다.
                                 </p>
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-8 photo-panel">
                                 <div id="carouselH07" class="carousel slide h-100" data-bs-ride="carousel">
                                     <div class="carousel-indicators">
                                         {% for img in h07_images %}
@@ -609,6 +691,44 @@
                     img.removeAttribute('data-src');
                     img.classList.remove('lazy-carousel-img');
                 }
+            });
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const photoCards = document.querySelectorAll('.expandable-photo-card');
+
+        photoCards.forEach(function (card) {
+            const photoPanel = card.querySelector('.photo-panel');
+            const closeBtn = card.querySelector('.photo-expand-close');
+
+            if (!photoPanel) return;
+
+            // 사진 영역 클릭 시 확장
+            photoPanel.addEventListener('click', function (e) {
+                // 캐러셀 이전/다음 버튼 클릭은 확장 트리거에서 제외
+                if (
+                    e.target.closest('.carousel-control-prev') ||
+                    e.target.closest('.carousel-control-next') ||
+                    e.target.closest('.carousel-indicators button')
+                ) {
+                    return;
+                }
+
+                card.classList.add('photo-expanded');
+            });
+
+            // 닫기 버튼 클릭 시 원복
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    card.classList.remove('photo-expanded');
+                });
+            }
+
+            // 확장 상태에서 사진 다시 클릭하면 원복하고 싶다면 사용
+            photoPanel.addEventListener('dblclick', function () {
+                card.classList.remove('photo-expanded');
             });
         });
     });
