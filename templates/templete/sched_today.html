@@ -147,7 +147,7 @@
   function reservDtlUrl(reservNo) {
     const n = Number(reservNo);
     if (!Number.isFinite(n)) return '#';
-    return `/view_reservdtl_candi/${n}`;
+    return `/view_reservsimple/${n}`;
   }
 
   function escapeHtml(s) {
