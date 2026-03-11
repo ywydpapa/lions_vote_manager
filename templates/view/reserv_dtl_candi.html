@@ -53,6 +53,10 @@
             height: 100%;
             cursor: crosshair;
         }
+
+        /* 접기/펴기 아이콘 회전 애니메이션 */
+        .collapse-icon { transition: transform 0.3s ease; }
+        [aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
     </style>
 </head>
 
@@ -211,38 +215,59 @@
                 {% endif %}
             </div>
 
-            <!-- 오른쪽 영역: 인사말 (2/3) + 메모장 (1/3) -->
-            <div class="col-lg-6 mb-4 d-flex flex-column" style="min-height: 800px;">
+            <!-- 오른쪽 영역: 인사말 + 메모장 (접기/펴기 기능 추가) -->
+            <div class="col-lg-6 mb-4 d-flex flex-column gap-3">
 
-                <!-- 상단: 인사말 (flex-grow-1로 남는 공간 차지) -->
-                <div class="card summary-card flex-grow-1 mb-3">
-                    <div class="card-body px-4 py-4 d-flex flex-column">
-                        <h5 class="fw-bolder mb-3">인사말</h5>
-                        <select id="noteSelect" class="form-select mb-3" onchange="renderNote()">
-                            {% for note in notes %}
-                            <option value="{{ note.noteNo }}">{{ note.noteTitle }}</option>
-                            {% endfor %}
-                        </select>
-                        <div id="noteViewer" class="html-viewer">
-                            <div class="h-100 d-flex align-items-center justify-content-center text-muted">
-                                상단에서 문서를 선택하면 내용이 표시됩니다.
+                <!-- 상단: 인사말 -->
+                <div class="card summary-card d-flex flex-column flex-grow-1">
+                    <!-- 헤더 (클릭 시 접기/펴기) -->
+                    <div class="card-header d-flex justify-content-between align-items-center py-3"
+                         data-bs-toggle="collapse" data-bs-target="#collapseGreeting"
+                         aria-expanded="true" style="cursor: pointer;">
+                        <h5 class="fw-bolder mb-0">인사말</h5>
+                        <span class="text-muted small d-flex align-items-center gap-1">
+                            접기/펴기 <span class="collapse-icon">▼</span>
+                        </span>
+                    </div>
+                    <!-- 본문 (Collapse) -->
+                    <div id="collapseGreeting" class="collapse show flex-grow-1">
+                        <div class="card-body px-4 py-4 d-flex flex-column h-100" style="min-height: 400px;">
+                            <select id="noteSelect" class="form-select mb-3" onchange="renderNote()">
+                                {% for note in notes %}
+                                <option value="{{ note.noteNo }}">{{ note.noteTitle }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="noteViewer" class="html-viewer">
+                                <div class="h-100 d-flex align-items-center justify-content-center text-muted">
+                                    상단에서 문서를 선택하면 내용이 표시됩니다.
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 하단: 메모장 (고정 높이 약 1/3) -->
-                <div class="card summary-card" style="height: 300px; flex-shrink: 0;">
-                    <div class="card-body px-4 py-3 d-flex flex-column">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h5 class="fw-bolder mb-0">메모</h5>
-                            <div>
+                <!-- 하단: 메모장 -->
+                <div class="card summary-card d-flex flex-column">
+                    <!-- 헤더 (클릭 시 접기/펴기, 기본적으로 접혀있도록 aria-expanded="false" 및 collapsed 클래스 적용) -->
+                    <div class="card-header d-flex justify-content-between align-items-center py-3 collapsed"
+                         data-bs-toggle="collapse" data-bs-target="#collapseMemo"
+                         aria-expanded="false" style="cursor: pointer;">
+                        <h5 class="fw-bolder mb-0">메모</h5>
+                        <span class="text-muted small d-flex align-items-center gap-1">
+                            접기/펴기 <span class="collapse-icon">▼</span>
+                        </span>
+                    </div>
+                    <!-- 본문 (Collapse, 기본적으로 접혀있도록 show 클래스 제거) -->
+                    <div id="collapseMemo" class="collapse">
+                        <!-- 높이를 600px로 변경 -->
+                        <div class="card-body px-4 py-3 d-flex flex-column" style="height: 600px;">
+                            <div class="d-flex justify-content-end mb-2">
                                 <button class="btn btn-sm btn-outline-secondary me-1" onclick="clearCanvas()">지우기</button>
                                 <button class="btn btn-sm btn-primary" onclick="saveMemo()">저장</button>
                             </div>
-                        </div>
-                        <div class="canvas-wrapper" id="canvasContainer">
-                            <canvas id="memoCanvas"></canvas>
+                            <div class="canvas-wrapper" id="canvasContainer">
+                                <canvas id="memoCanvas"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -284,6 +309,8 @@
 
     // 캔버스 크기를 부모 컨테이너에 맞춤
     function resizeCanvas() {
+        if (!container || container.clientWidth === 0) return; // 닫혀있을 땐 무시
+
         // 기존에 그려진 내용을 임시 저장
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = canvas.width;
@@ -346,8 +373,10 @@
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // ★ 추가된 부분: 저장된 메모 불러오기 ★
+    // 저장된 메모 불러오기
     function loadMemo() {
+        if (!container || container.clientWidth === 0) return; // 닫혀있을 땐 불러오지 않음
+
         const img = new Image();
         // 브라우저 캐시(이전 이미지 기억) 방지를 위해 현재 시간을 뒤에 붙여줍니다.
         img.src = `/static/img/memo/{{ reserv.reservNo }}.png?t=` + new Date().getTime();
@@ -358,7 +387,6 @@
         };
 
         img.onerror = function() {
-            // 저장된 이미지가 없으면(404 에러 등) 아무것도 하지 않고 빈 캔버스를 유지합니다.
             console.log("저장된 메모가 없습니다.");
         };
     }
@@ -366,7 +394,6 @@
     // 메모 저장 (서버로 전송)
     async function saveMemo() {
         const reservNo = '{{ reserv.reservNo }}';
-        // 캔버스 데이터를 Base64 이미지(PNG)로 변환
         const dataURL = canvas.toDataURL('image/png');
 
         try {
@@ -406,14 +433,35 @@
     canvas.addEventListener('touchmove', draw, { passive: false });
     canvas.addEventListener('touchend', stopDrawing);
 
+    // ★ 부트스트랩 Collapse 이벤트 (메모장이 다시 펼쳐질 때 캔버스 크기 재계산)
+    const memoCollapse = document.getElementById('collapseMemo');
+    if (memoCollapse) {
+        memoCollapse.addEventListener('shown.bs.collapse', function () {
+            resizeCanvas();
+            // 펼쳐질 때 이미지가 날아갈 수 있으므로 다시 불러오기
+            loadMemo();
+        });
+    }
+
+    // ★ 인사말이 접힐 때 메모장을 자동으로 펼치는 이벤트
+    const greetingCollapse = document.getElementById('collapseGreeting');
+    if (greetingCollapse && memoCollapse) {
+        greetingCollapse.addEventListener('hide.bs.collapse', function () {
+            // 인사말 영역이 접히기 시작할 때, 메모장 영역을 펼침
+            let memoInstance = bootstrap.Collapse.getInstance(memoCollapse);
+            if (!memoInstance) {
+                memoInstance = new bootstrap.Collapse(memoCollapse, { toggle: false });
+            }
+            memoInstance.show();
+        });
+    }
+
     // DOM 로딩 완료 시 실행
     window.addEventListener('DOMContentLoaded', () => {
         if (notesData.length > 0) renderNote();
-
-        // 약간의 지연 후 캔버스 리사이즈 및 메모 불러오기
         setTimeout(() => {
             resizeCanvas();
-            loadMemo(); // ★ 캔버스 크기 설정 후 메모 이미지를 불러옵니다.
+            loadMemo();
         }, 100);
     });
 </script>
