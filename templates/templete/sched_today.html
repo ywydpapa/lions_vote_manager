@@ -413,30 +413,36 @@
       }
   });
 
-  // === SSE (Server-Sent Events) 이벤트 푸시 ===
+    // === SSE (Server-Sent Events) 이벤트 푸시 ===
   const es = new EventSource("/sse/schedule");
 
-  // 페이지 새로고침 함수
-  const reloadPage = () => {
-      console.log("SSE Event Received. Reloading...");
+  // 이벤트를 받으면 실행할 새로고침 함수
+  const reloadPage = (e) => {
+      console.log("SSE Event Received:", e.type); // 개발자 도구에서 어떤 이벤트가 왔는지 확인 가능
       location.reload();
   };
 
-  // 1. 이름이 없는 기본 메시지 수신 (백엔드에서 이름 지정 안 했을 때)
+  // 1. 예약 생성 시
+  es.addEventListener("reserv_created", reloadPage);
+
+  // 2. 예약 상태 변경 시 (도착, 완료 등)
+  es.addEventListener("reserv_updated", reloadPage);
+
+  // 3. 예약 삭제/취소 시
+  es.addEventListener("reserv_deleted", reloadPage);
+
+  // 4. 이벤트 이름이 지정되지 않은 기본 메시지 수신 시 (안전장치)
   es.onmessage = reloadPage;
 
-  // 2. 이름이 지정된 이벤트 수신 (백엔드 설정에 따라 확장)
-  es.addEventListener("reserv_created", reloadPage);
-  es.addEventListener("reserv_updated", reloadPage); // 상태 변경 시
-  es.addEventListener("reserv_deleted", reloadPage); // 삭제 시
-
-  // 에러 발생 시 로그 출력 (연결 끊김 등 확인용)
+  // 5. 연결 끊김 등 에러 발생 시 로그 출력 (자동 재연결됨)
   es.onerror = function(e) {
-      console.error("SSE Connection Error:", e);
+      console.error("SSE Connection Error. Reconnecting...");
   };
 
   window.addEventListener('pageshow', function(event) {
-    if (event.persisted) window.location.reload();
+    if (event.persisted) {
+      window.location.reload();
+    }
   });
 
 </script>
