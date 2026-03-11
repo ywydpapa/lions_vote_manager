@@ -135,8 +135,6 @@
 {% include '/common/adscript.html' %}
 
 <script>
-  const payload = { reservs: {{ reservs | tojson }} };
-
   const START_HOUR = 9;
   const END_HOUR = 18;
   const STEP_MIN = 30;
@@ -165,27 +163,35 @@
     return d;
   }
 
-  // === 데이터 파싱 및 필터링 ===
-  const all = (payload.reservs ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+  // === 전역 상태 변수 ===
+  let all = [];
+  let reservs = [];
+  let groups = new Map();
+  let days = [];
   const todayKey = ymd(new Date());
-  let reservs = all.filter(r => ymd(r._dt) === todayKey);
 
-  // 오늘 예약이 없으면 3월 10일로 대체
-  if (reservs.length === 0) {
-    const now = new Date();
-    const march10 = new Date(now.getFullYear(), 2, 10);
-    const march10Key = ymd(march10);
-    reservs = all.filter(r => ymd(r._dt) === march10Key);
-  }
+  // === 데이터 파싱 및 필터링 함수 ===
+  function processData(reservsData) {
+    all = (reservsData ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+    reservs = all.filter(r => ymd(r._dt) === todayKey);
 
-  // 날짜별 그룹화
-  const groups = new Map();
-  for (const r of reservs) {
-    const key = ymd(r._dt);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(r);
+    // 오늘 예약이 없으면 3월 10일로 대체
+    if (reservs.length === 0) {
+      const now = new Date();
+      const march10 = new Date(now.getFullYear(), 2, 10);
+      const march10Key = ymd(march10);
+      reservs = all.filter(r => ymd(r._dt) === march10Key);
+    }
+
+    // 날짜별 그룹화
+    groups = new Map();
+    for (const r of reservs) {
+      const key = ymd(r._dt);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    }
+    days = Array.from(groups.keys()).sort();
   }
-  const days = Array.from(groups.keys()).sort();
 
 
   // === 뷰 렌더링 로직 ===
@@ -194,7 +200,7 @@
   function getTimelineHtml() {
     if (days.length === 0) return `<div class="text-muted p-4 text-center bg-white rounded shadow-sm">예약이 없습니다.</div>`;
 
-    return days.map(dayKey => {
+    let html = days.map(dayKey => {
       const dayDate = new Date(dayKey + 'T00:00:00');
       const list = groups.get(dayKey);
       const slotMap = new Map();
@@ -218,13 +224,21 @@
         if (items.length === 0) {
           contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
         } else {
-          const activeItems = items.filter(r => r.attrib === '1DONE1DONE' || r.attrib === '1111111111');
-          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE' && r.attrib !== '1111111111');
+          // 상태 체크 (API 응답의 status와 Jinja의 attrib 모두 호환)
+          const activeItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st === '1DONE1DONE' || st === '1111111111';
+          });
+          const pendingItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st !== '1DONE1DONE' && st !== '1111111111';
+          });
 
           const renderLines = (arr, align) => arr.map(r => {
+            const st = r.status || r.attrib;
             let colorClass = 'status-pending';
-            if (r.attrib === '1DONE1DONE') colorClass = 'status-done';
-            else if (r.attrib === '1111111111') colorClass = 'status-arrive';
+            if (st === '1DONE1DONE') colorClass = 'status-done';
+            else if (st === '1111111111') colorClass = 'status-arrive';
 
             return `
             <a class="d-block small text-decoration-none py-1 text-${align}" href="${reservDtlUrl(r.reservNo)}">
@@ -262,6 +276,8 @@
         </div>
       `;
     }).join('');
+
+    return html;
   }
 
   // 2. 테이블 뷰 HTML 생성
@@ -318,9 +334,10 @@
         for (let i = 0; i < 3; i++) {
           if (items[i]) {
             const r = items[i];
+            const st = r.status || r.attrib;
             let textClass = 'status-pending';
-            if (r.attrib === '1DONE1DONE') textClass = 'status-done';
-            else if (r.attrib === '1111111111') textClass = 'status-arrive';
+            if (st === '1DONE1DONE') textClass = 'status-done';
+            else if (st === '1111111111') textClass = 'status-arrive';
 
             html += `
               <td>
@@ -348,7 +365,7 @@
   const labelTimeline = document.getElementById('labelTimeline');
   const labelTable = document.getElementById('labelTable');
 
-  // 스위치 상태 변경 시 실행
+  // 스위치 상태 변경 시 실행 (현재 데이터로 화면 다시 그리기)
   function handleViewChange() {
     const isTableView = toggleInput.checked;
 
@@ -397,14 +414,20 @@
 
   // === 초기화 (새로고침 시 이전 상태 복원) ===
   document.addEventListener("DOMContentLoaded", () => {
-      // 토글 상태 복원
+      // 1. 초기 데이터 파싱
+      const initialPayload = {{ reservs | tojson }};
+      processData(initialPayload);
+
+      // 2. 토글 상태 복원
       const savedToggle = sessionStorage.getItem('scheduleViewToggle');
       if (savedToggle !== null) {
           toggleInput.checked = (savedToggle === 'true');
       }
+
+      // 3. 화면 렌더링
       handleViewChange();
 
-      // 풀화면 상태 복원
+      // 4. 풀화면 상태 복원
       const savedFs = sessionStorage.getItem('scheduleFullscreen');
       if (savedFs === 'true') {
           const area = document.getElementById('fullscreenArea');
@@ -413,35 +436,29 @@
       }
   });
 
-    // === SSE (Server-Sent Events) 이벤트 푸시 ===
-  const es = new EventSource("/sse/schedule");
+  // === AJAX 폴링 (15초마다 최신 데이터 가져오기) ===
+  async function fetchLatestSchedule() {
+    try {
+      const response = await fetch('/api/get_reserv');
+      if (response.ok) {
+        const data = await response.json();
 
-  // 이벤트를 받으면 실행할 새로고침 함수
-  const reloadPage = (e) => {
-      console.log("SSE Event Received:", e.type); // 개발자 도구에서 어떤 이벤트가 왔는지 확인 가능
-      location.reload();
-  };
+        // 데이터 업데이트 후, 현재 선택된 뷰(타임라인 or 테이블) 상태를 유지하며 다시 그리기
+        processData(data.reservs);
+        handleViewChange();
+      }
+    } catch (error) {
+      console.error("스케줄 데이터를 불러오는 중 오류 발생:", error);
+    }
+  }
 
-  // 1. 예약 생성 시
-  es.addEventListener("reserv_created", reloadPage);
+  // 15초마다 실행
+  setInterval(fetchLatestSchedule, 15000);
 
-  // 2. 예약 상태 변경 시 (도착, 완료 등)
-  es.addEventListener("reserv_updated", reloadPage);
-
-  // 3. 예약 삭제/취소 시
-  es.addEventListener("reserv_deleted", reloadPage);
-
-  // 4. 이벤트 이름이 지정되지 않은 기본 메시지 수신 시 (안전장치)
-  es.onmessage = reloadPage;
-
-  // 5. 연결 끊김 등 에러 발생 시 로그 출력 (자동 재연결됨)
-  es.onerror = function(e) {
-      console.error("SSE Connection Error. Reconnecting...");
-  };
-
+  // 브라우저 뒤로가기로 돌아왔을 때 즉시 갱신
   window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-      window.location.reload();
+      fetchLatestSchedule();
     }
   });
 
