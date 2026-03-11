@@ -12,10 +12,8 @@ from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from pathlib import Path
 import dotenv
 import uvicorn
 from sqlalchemy import text
@@ -24,7 +22,6 @@ from typing import List
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint, String
 from datetime import datetime, date
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import DeclarativeBase
 from fastapi.responses import StreamingResponse
@@ -35,7 +32,6 @@ from PIL import Image, ImageFont, ImageDraw
 import io
 import os
 import base64
-from fastapi import APIRouter
 from pydantic import BaseModel
 
 dotenv.load_dotenv()
@@ -451,6 +447,10 @@ async def get_notedtl(noteno:int,db: AsyncSession):
         print(e)
         raise HTTPException(status_code=500, detail="Database query failed(NOTEDETAIL)")
 
+
+# ==========================================
+# [수정됨] SSE 라우터: Timeout을 통한 Blocking 방지 및 연결 해제 감지
+# ==========================================
 @app.get("/sse/schedule")
 async def sse_schedule(request: Request):
     q = hub.connect()
@@ -458,13 +458,17 @@ async def sse_schedule(request: Request):
         try:
             yield "event: connected\ndata: {}\n\n"
             while True:
-                if await request.is_disconnected():
-                    break
-                msg = await q.get()
-                payload = json.dumps(jsonable_encoder(msg["data"]), ensure_ascii=False)
-                # SSE 포맷
-                yield f"event: {msg['event']}\n"
-                yield f"data: {payload}\n\n"
+                try:
+                    # 1초 대기 후 타임아웃 발생시켜 연결 상태를 주기적으로 확인
+                    msg = await asyncio.wait_for(q.get(), timeout=1.0)
+                    payload = json.dumps(jsonable_encoder(msg["data"]), ensure_ascii=False)
+                    yield f"event: {msg['event']}\n"
+                    yield f"data: {payload}\n\n"
+                except asyncio.TimeoutError:
+                    if await request.is_disconnected():
+                        break
+        except asyncio.CancelledError:
+            pass
         finally:
             hub.disconnect(q)
     return StreamingResponse(gen(), media_type="text/event-stream")
@@ -485,6 +489,20 @@ async def login_form(request: Request):
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request, next: str = Query(default="/success")):
     return templates.TemplateResponse("login/login.html", {"request": request, "next": next})
+
+
+@app.api_route("/done_reserv/{reservno}", methods=["POST"])
+async def donereserv(request: Request, reservno: int, db: AsyncSession = Depends(get_db)):
+    query = text(
+        "UPDATE voteReserv set attrib = :upd , modDate = :now where reservNo = :reservno "
+    )
+    await db.execute(query, {"upd": "1DONE1DONE", "now": datetime.now(), "reservno": reservno})
+    await db.commit()
+
+    reserv_dict = {"reservNo": reservno, "reservFrom": "", "visitCnt": ""}
+    await hub.broadcast("reserv_updated", reserv_dict)
+
+    return JSONResponse(content={"message": "성공적으로 저장되었습니다."})
 
 
 @app.post("/login")
@@ -563,6 +581,9 @@ async def new_reservations(request: Request, dateno: str, db: AsyncSession = Dep
     return templates.TemplateResponse("reserv/new_reserv.html", {"request": request, "candino": candino, "dateno": dateno, "clubs": clubs})
 
 
+# ==========================================
+# [수정됨] 예약 취소: 이벤트 이름을 reserv_deleted 로 변경
+# ==========================================
 @app.post("/reserv_canc/{reservno}")
 async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -578,12 +599,15 @@ async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         })
         await db.commit()
         reserv_dict = {"reservNo": reservno, "reservFrom":'' , "visitCnt": ''}
-        await hub.broadcast("reserv_created", reserv_dict)
+        await hub.broadcast("reserv_deleted", reserv_dict)
         return JSONResponse({"canceled": True})
     except Exception as e:
         return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
 
 
+# ==========================================
+# [수정됨] 예약 도착: 이벤트 이름을 reserv_updated 로 변경
+# ==========================================
 @app.post("/reserv_arrv/{reservno}")
 async def arrive_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -599,7 +623,7 @@ async def arrive_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         })
         await db.commit()
         reserv_dict = {"reservNo": reservno, "reservFrom":'' , "visitCnt": ''}
-        await hub.broadcast("reserv_created", reserv_dict)
+        await hub.broadcast("reserv_updated", reserv_dict)
         return JSONResponse({"arrived": True})
     except Exception as e:
         return JSONResponse({"arrived": False, "error": str(e)}, status_code=500)
@@ -940,7 +964,7 @@ async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depen
 
 
 @app.post("/reg_reservc/{circleNo}", response_model=RegReservOut)
-async def reg_reserv(circleNo: int, payload: RegReservIn, db: AsyncSession = Depends(get_db)):
+async def reg_reservc(circleNo: int, payload: RegReservIn, db: AsyncSession = Depends(get_db)):
     if payload.visitorCount != len(payload.memberNos):
         raise HTTPException(status_code=400, detail="visitorCount와 선택 인원 수가 다릅니다.")
     if payload.visitorCount <= 0:
@@ -1111,7 +1135,7 @@ async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
 
 
 @app.api_route("/update_note/{noteno}", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
-async def insertnote(request: Request,noteno:int ,db: AsyncSession = Depends(get_db)):
+async def updatenote(request: Request,noteno:int ,db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
     doctitle = form_data.get("dtitle")
     docconts = form_data.get("dcontent")
@@ -1137,12 +1161,20 @@ async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/contact_list"})
 
 
+# ==========================================
+# [수정됨] 예약 완료: 이벤트 이름을 reserv_updated 로 변경 및 푸시 추가
+# ==========================================
 @app.api_route("/done_reserv/{reservno}", methods=["POST"])
-async def donereserv(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+async def donereserv(request: Request, reservno: int, db: AsyncSession = Depends(get_db)):
     query = text(
         f"UPDATE voteReserv set attrib = :upd , modDate = :now where reservNo = :reservno ")
     await db.execute(query, {"upd": '1DONE1DONE', "now": datetime.now(), "reservno": reservno})
     await db.commit()
+
+    # [추가됨] 완료 처리 시에도 프론트엔드에 상태 변경(reserv_updated) 이벤트 푸시
+    reserv_dict = {"reservNo": reservno, "reservFrom": '', "visitCnt": ''}
+    await hub.broadcast("reserv_updated", reserv_dict)
+
     return JSONResponse(content={"message": "성공적으로 저장되었습니다."})
 
 
@@ -1160,7 +1192,7 @@ async def contact_list(request: Request, db: AsyncSession = Depends(get_db)):
 async def candinote_list(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    notes = await get_notelist("CANDI",db)
+    notes = await get_notelist("CANDI", db)
     return templates.TemplateResponse(
         "manage/candinote_list.html", {"request": request, "contacts": notes}
     )
@@ -1170,19 +1202,19 @@ async def candinote_list(request: Request, db: AsyncSession = Depends(get_db)):
 async def aidenote_list(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    notes = await get_notelist("AIDE",db)
+    notes = await get_notelist("AIDE", db)
     return templates.TemplateResponse(
         "manage/aidenote_list.html", {"request": request, "notes": notes}
     )
 
 
 @app.get("/newnote", response_class=HTMLResponse)
-async def newnote(request: Request,ntype: Optional[str] = None):
+async def newnote(request: Request, ntype: Optional[str] = None):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     ntype = ntype or request.query_params.get("ntype")
     return templates.TemplateResponse("manage/newnote.html", {"request": request, "ntype": ntype}
-    )
+                                      )
 
 
 @app.post("/uploadmphoto/{memberno}")
@@ -1205,7 +1237,7 @@ async def upload_logoimage(request: Request, memberno: int, file: UploadFile = F
 
 
 @app.get("/contact_detail/{contactno}", response_class=HTMLResponse)
-async def contact_dtl(request: Request, contactno:int, db: AsyncSession = Depends(get_db)):
+async def contact_dtl(request: Request, contactno: int, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     contact = await get_contactdtl(contactno, db)
@@ -1215,7 +1247,7 @@ async def contact_dtl(request: Request, contactno:int, db: AsyncSession = Depend
 
 
 @app.get("/note_detail/{noteno}", response_class=HTMLResponse)
-async def note_dtl(request: Request, noteno:int, db: AsyncSession = Depends(get_db)):
+async def note_dtl(request: Request, noteno: int, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     contact = await get_notedtl(noteno, db)
@@ -1228,7 +1260,8 @@ async def note_dtl(request: Request, noteno:int, db: AsyncSession = Depends(get_
 async def managemst(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
-    return templates.TemplateResponse("manage/manage_mster.html", {"request": request, "session": dict(request.session)})
+    return templates.TemplateResponse("manage/manage_mster.html",
+                                      {"request": request, "session": dict(request.session)})
 
 
 @app.get("/manage_cmembers", response_class=HTMLResponse)
@@ -1272,7 +1305,8 @@ async def newmember(request: Request, club_id: Optional[int] = None, db: AsyncSe
 
 
 @app.get("/edit_member/{memberno}", response_class=HTMLResponse)
-async def newmember(request: Request, memberno: Optional[int] = None, club_id: Optional[int] = None, db: AsyncSession = Depends(get_db)):
+async def newmember(request: Request, memberno: Optional[int] = None, club_id: Optional[int] = None,
+                    db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     clubs = await get_clublist(db)
@@ -1360,6 +1394,7 @@ async def save_memo(request: MemoRequest):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
