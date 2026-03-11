@@ -449,7 +449,7 @@ async def get_notedtl(noteno:int,db: AsyncSession):
 
 
 # ==========================================
-# [수정됨] SSE 라우터: Timeout을 통한 Blocking 방지 및 연결 해제 감지
+# [수정됨] SSE 라우터: Heartbeat(Ping) 추가 및 버퍼링 방지 헤더 적용
 # ==========================================
 @app.get("/sse/schedule")
 async def sse_schedule(request: Request):
@@ -457,21 +457,32 @@ async def sse_schedule(request: Request):
     async def gen():
         try:
             yield "event: connected\ndata: {}\n\n"
+
             while True:
                 try:
-                    # 1초 대기 후 타임아웃 발생시켜 연결 상태를 주기적으로 확인
-                    msg = await asyncio.wait_for(q.get(), timeout=1.0)
+                    msg = await asyncio.wait_for(q.get(), timeout=15.0)
                     payload = json.dumps(jsonable_encoder(msg["data"]), ensure_ascii=False)
                     yield f"event: {msg['event']}\n"
                     yield f"data: {payload}\n\n"
+
                 except asyncio.TimeoutError:
+                    # 클라이언트가 연결을 끊었는지 확인
                     if await request.is_disconnected():
                         break
+                    yield ": ping\n\n"
         except asyncio.CancelledError:
             pass
         finally:
             hub.disconnect(q)
-    return StreamingResponse(gen(), media_type="text/event-stream")
+    return StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 @app.get("/favicon.ico")
