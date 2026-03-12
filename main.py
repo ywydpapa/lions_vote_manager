@@ -1530,6 +1530,20 @@ async def upload_ephoto_page(request: Request, db: AsyncSession = Depends(get_db
     return templates.TemplateResponse("manage/upload_ephoto.html", {"request": request})
 
 
+@app.get("/api/distmembers")
+async def api_get_distmembers(db: AsyncSession = Depends(get_db)):
+    members = await get_distmembers(db)
+    result = []
+    for m in members:
+        result.append({
+            "id": m[0],
+            "name": m[1],
+            "position": m[4] if m[4] else "",
+            "club_name": m[5]
+        })
+    return JSONResponse(content=result)
+
+
 if __name__ == "__main__":
     import uvicorn
 
