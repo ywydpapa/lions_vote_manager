@@ -1,7 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     {% include '/common/header.html' %}
+    <style>
+        .day-toggle { cursor: pointer; }
+        .day-card {
+            margin-bottom: 16px;
+        }
+
+        /* 컨테이너 폭(가로 전체)로 꽉 차게 */
+        .schedule-wrap {
+            width: 100%;
+        }
+
+        /* 10분 슬롯을 세로로 쌓는 타임라인 */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* 가로 전체 */
+        }
+
+        .slot {
+            position: relative;
+            min-height: 44px; /* 한 슬롯 높이 */
+            border-top: 1px solid #eef0f3; /* 구분선 */
+            padding: 10px 14px;
+            background: #fff;
+        }
+
+        .slot:first-child {
+            border-top: 0;
+        }
+
+        /* 가독성을 위한 홀수 줄 배경 */
+        .slot:nth-child(2n) {
+            background: #fafbfc;
+        }
+
+        .time {
+            font-weight: 700;
+            color: #495057;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .slot a:hover { text-decoration: underline !important; }
+    </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
 <main class="flex-shrink-0">
@@ -15,73 +57,6 @@
         <div class="row gx-5 justify-content-center">
             <div class="col-lg-11 col-xl-9 col-xxl-8">
                 <div id="scheduleRoot"></div>
-                <style>
-                    .day-toggle { cursor: pointer; }
-                    .day-card {
-                        margin-bottom: 16px;
-                    }
-
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                    }
-
-                    .slot {
-                        border-top: 1px solid #eef0f3;
-                        padding: 10px 14px;
-                        background: #fff;
-                        min-height: 44px;
-                    }
-
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
-
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-                    .slot a:hover { text-decoration: underline !important; }
-
-                    /* 컨테이너 폭(가로 전체)로 꽉 차게 */
-                    .schedule-wrap {
-                        width: 100%;
-                    }
-
-                    /* 10분 슬롯을 세로로 쌓는 타임라인 */
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr; /* 가로 전체 */
-                    }
-
-                    .slot {
-                        position: relative;
-                        min-height: 44px; /* 한 슬롯 높이 */
-                        border-top: 1px solid #eef0f3; /* 구분선 */
-                        padding: 10px 14px;
-                        background: #fff;
-                    }
-
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    /* 가독성을 위한 홀수 줄 배경 */
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
-                </style>
             </div>
         </div>
     </div>
@@ -91,7 +66,6 @@
 {% include '/common/adscript.html' %}
 
 <script>
-  const payload = { reservs: {{ reservs | tojson }} };
   const START_HOUR = 9;
   const END_HOUR = 18;
   const STEP_MIN = 30;
@@ -120,22 +94,32 @@
     return d;
   }
 
-  const reservs = (payload.reservs ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+  // === 화면을 그리는 메인 함수 ===
+  function renderSchedule(reservsData) {
+    // 1. 현재 화면에서 '펼쳐져 있는(열려 있는)' 아코디언의 ID 목록을 수집하여 기억합니다.
+    const openCollapseIds = new Set();
+    document.querySelectorAll('.collapse.show').forEach(el => {
+      openCollapseIds.add(el.id);
+    });
 
-  // 날짜별 그룹
-  const groups = new Map();
-  for (const r of reservs) {
-    const key = ymd(r._dt);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(r);
-  }
+    const reservs = (reservsData ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
 
-  const days = Array.from(groups.keys()).sort();
-  const root = document.getElementById('scheduleRoot');
+    // 날짜별 그룹
+    const groups = new Map();
+    for (const r of reservs) {
+      const key = ymd(r._dt);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    }
 
-  if (days.length === 0) {
-    root.innerHTML = `<div class="text-muted p-4 text-center">예약이 없습니다.</div>`;
-  } else {
+    const days = Array.from(groups.keys()).sort();
+    const root = document.getElementById('scheduleRoot');
+
+    if (days.length === 0) {
+      root.innerHTML = `<div class="text-muted p-4 text-center">예약이 없습니다.</div>`;
+      return;
+    }
+
     root.innerHTML = days.map(dayKey => {
       const dayDate = new Date(dayKey + 'T00:00:00');
       const list = groups.get(dayKey);
@@ -165,14 +149,22 @@
           contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
         } else {
           // 완료(1DONE1DONE) 및 도착(1111111111)은 왼쪽, 나머지는 오른쪽에 표시
-          const activeItems = items.filter(r => r.attrib === '1DONE1DONE');
-          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE' || r.attrib === '1111111111');
+          const activeItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st === '1DONE1DONE' || st === '1111111111';
+          });
+          const pendingItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st !== '1DONE1DONE' && st !== '1111111111';
+          });
 
           const renderLines = (arr, align) => arr.map(r => {
+            const st = r.status || r.attrib;
             let colorClass = 'text-dark'; // 기본 검은색 (예정)
-            if (r.attrib === '1DONE1DONE') {
+
+            if (st === '1DONE1DONE') {
                 colorClass = 'text-danger'; // 완료: 붉은색
-            } else if (r.attrib === '1111111111') {
+            } else if (st === '1111111111') {
                 colorClass = 'text-success'; // 도착: 초록색
             }
 
@@ -209,6 +201,12 @@
       }
 
       const collapseId = `day_${dayKey.replaceAll('-', '')}`;
+
+      // 2. 이전에 열려있던 아코디언인지 확인하여 클래스와 속성을 복원합니다.
+      const isOpen = openCollapseIds.has(collapseId);
+      const collapseClass = isOpen ? 'collapse show' : 'collapse';
+      const ariaExpanded = isOpen ? 'true' : 'false';
+
       return `
         <div class="card shadow-sm day-card mb-3">
           <div class="card-header bg-white p-0">
@@ -217,14 +215,14 @@
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#${collapseId}"
-              aria-expanded="false"
+              aria-expanded="${ariaExpanded}"
               aria-controls="${collapseId}"
             >
               <span>${koDayTitle(dayDate)}</span>
               <span class="badge bg-secondary">${count}건</span>
             </button>
           </div>
-          <div id="${collapseId}" class="collapse">
+          <div id="${collapseId}" class="${collapseClass}">
             <div class="card-body p-0">
               <div class="schedule-grid">${slots.join('')}</div>
             </div>
@@ -234,16 +232,34 @@
     }).join('');
   }
 
-  const es = new EventSource("/sse/schedule");
-  es.addEventListener("reserv_created", (e) => {
-    location.reload();
-  });
+  // === 1. 처음 페이지 로드 시 Jinja2로 넘겨받은 데이터로 즉시 렌더링 ===
+  const initialPayload = {{ reservs | tojson }};
+  renderSchedule(initialPayload);
 
+  // === 2. AJAX로 최신 데이터를 가져오는 함수 ===
+  async function fetchLatestSchedule() {
+    try {
+      const response = await fetch('/api/get_reserv');
+      if (response.ok) {
+        const data = await response.json();
+        // 성공적으로 가져오면 화면 다시 그리기 (펼쳐진 상태 유지됨)
+        renderSchedule(data.reservs);
+      }
+    } catch (error) {
+      console.error("스케줄 데이터를 불러오는 중 오류 발생:", error);
+    }
+  }
+
+  // === 3. 15초(15000ms)마다 백그라운드에서 갱신 (Polling) ===
+  setInterval(fetchLatestSchedule, 15000);
+
+  // === 4. 브라우저 뒤로가기로 돌아왔을 때 즉시 최신화 ===
   window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-      window.location.reload();
+      fetchLatestSchedule();
     }
   });
+
 </script>
 
 </body>

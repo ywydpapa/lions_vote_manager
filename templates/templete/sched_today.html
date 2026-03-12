@@ -1,98 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     {% include '/common/header.html' %}
+    <style>
+        /* --- 공통 및 토글 스위치 스타일 --- */
+        .view-toggle-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .form-switch .form-check-input {
+            width: 3em;
+            height: 1.5em;
+            cursor: pointer;
+        }
+        .toggle-label {
+            font-size: 1.1rem;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* --- 타임라인(Timeline) 뷰 스타일 --- */
+        .day-card { margin-bottom: 16px; border: 0; border-radius: 1rem; }
+        .schedule-grid { display: grid; grid-template-columns: 1fr; }
+        .slot {
+            position: relative;
+            min-height: 44px;
+            border-top: 1px solid #eef0f3;
+            padding: 10px 14px;
+            background: #fff;
+        }
+        .slot:first-child { border-top: 0; }
+        .slot:nth-child(2n) { background: #fafbfc; }
+        .time {
+            font-weight: 700;
+            color: #495057;
+            font-variant-numeric: tabular-nums;
+        }
+        .slot a:hover { text-decoration: underline !important; }
+
+        /* --- 표(Table) 뷰 스타일 --- */
+        .table-schedule th {
+            background-color: #f8f9fa;
+            font-weight: 700;
+            color: #495057;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .table-schedule td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .table-schedule a:hover { text-decoration: underline !important; }
+
+        /* --- 상태별 색상 (공통) --- */
+        .status-done { color: #dc3545 !important; font-weight: 700; } /* 완료: 붉은색 */
+        .status-arrive { color: #198754 !important; font-weight: 700; } /* 도착: 초록색 */
+        .status-pending { color: #212529 !important; font-weight: 600; } /* 대기: 검은색 */
+
+        /* --- 풀화면(Full Screen) 스타일 --- */
+        #fullscreenArea {
+            transition: all 0.3s ease;
+        }
+        #fullscreenArea.is-fullscreen {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background-color: #f8f9fa !important; /* 배경색 유지 */
+            padding: 3rem 1rem 2rem 1rem !important; /* 상단 여백 확보 */
+            overflow-y: auto !important;
+            margin: 0 !important;
+        }
+        .exit-fs-btn {
+            display: none;
+        }
+        #fullscreenArea.is-fullscreen .exit-fs-btn {
+            display: inline-block;
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 10000;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
 <main class="flex-shrink-0">
     <!-- Navigation-->
     {% include '/common/topnav.html' %}
+
     <!-- Page Content-->
     <div class="container px-5 my-5">
-        <div class="text-center mb-5">
+        <div class="position-relative text-center mb-4">
             <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">금일 스케줄</span></h1>
+            <!-- 풀화면 진입 버튼 -->
+            <button class="btn btn-outline-secondary fw-bold position-absolute top-50 end-0 translate-middle-y" onclick="toggleFullScreen()">
+                풀화면 보기
+            </button>
         </div>
+
         <div class="row gx-5 justify-content-center">
-            <div class="col-lg-11 col-xl-9 col-xxl-8">
-                <div id="scheduleRoot"></div>
-                <style>
-                    .day-card {
-                        margin-bottom: 16px;
-                    }
+            <div class="col-lg-12 col-xl-11">
 
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr;
-                    }
+                <!-- 풀화면 전환 영역 (이 안의 내용만 풀화면 시 보임) -->
+                <div id="fullscreenArea">
+                    <!-- 풀화면 닫기 버튼 (평소엔 숨김) -->
+                    <button class="btn btn-dark fw-bold exit-fs-btn shadow" onclick="toggleFullScreen()">
+                        닫기 (X)
+                    </button>
 
-                    .slot {
-                        border-top: 1px solid #eef0f3;
-                        padding: 10px 14px;
-                        background: #fff;
-                        min-height: 44px;
-                    }
+                    <!-- 뷰 전환 토글 스위치 -->
+                    <div class="view-toggle-wrap">
+                        <span id="labelTimeline" class="toggle-label fw-bolder text-primary me-3" onclick="setToggle(false)">타임라인 뷰</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input shadow-none" type="checkbox" role="switch" id="viewToggle" onchange="handleViewChange()">
+                        </div>
+                        <span id="labelTable" class="toggle-label fw-bold text-muted ms-3" onclick="setToggle(true)">테이블 뷰</span>
+                    </div>
 
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
+                    <!-- 스케줄이 렌더링 될 영역 -->
+                    <div id="scheduleRoot"></div>
+                </div>
 
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    .slot a:hover { text-decoration: underline !important; }
-
-                    .schedule-wrap {
-                        width: 100%;
-                    }
-
-                    /* 10분 슬롯을 세로로 쌓는 타임라인 */
-                    .schedule-grid {
-                        display: grid;
-                        grid-template-columns: 1fr; /* 가로 전체 */
-                    }
-
-                    .slot {
-                        position: relative;
-                        min-height: 44px; /* 한 슬롯 높이 */
-                        border-top: 1px solid #eef0f3; /* 구분선 */
-                        padding: 10px 14px;
-                        background: #fff;
-                    }
-
-                    .slot:first-child {
-                        border-top: 0;
-                    }
-
-                    .time {
-                        font-weight: 700;
-                        color: #495057;
-                        font-variant-numeric: tabular-nums;
-                    }
-
-                    /* 가독성을 위한 홀수 줄 배경 */
-                    .slot:nth-child(2n) {
-                        background: #fafbfc;
-                    }
-                </style>
             </div>
         </div>
     </div>
 </main>
+
 <!-- Footer-->
 {% include '/common/footer.html' %}
 {% include '/common/adscript.html' %}
 
-
 <script>
-  const payload = { reservs: {{ reservs | tojson }} };
-
   const START_HOUR = 9;
   const END_HOUR = 18;
   const STEP_MIN = 30;
@@ -105,7 +147,7 @@
   function reservDtlUrl(reservNo) {
     const n = Number(reservNo);
     if (!Number.isFinite(n)) return '#';
-    return `/view_reservdtl/${n}`;
+    return `/view_reservsimple/${n}`;
   }
 
   function escapeHtml(s) {
@@ -121,35 +163,48 @@
     return d;
   }
 
-  // === (1) 파싱 ===
-  const all = (payload.reservs ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
-
-  // === (2) 오늘 날짜키 ===
+  // === 전역 상태 변수 ===
+  let all = [];
+  let reservs = [];
+  let groups = new Map();
+  let days = [];
   const todayKey = ymd(new Date());
 
-  // === (3) 오늘 것만 필터 ===
-  const reservs = all.filter(r => ymd(r._dt) === todayKey);
+  // === 데이터 파싱 및 필터링 함수 ===
+  function processData(reservsData) {
+    all = (reservsData ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+    reservs = all.filter(r => ymd(r._dt) === todayKey);
 
-  // === 이하 로직은 동일 ===
-  const groups = new Map();
-  for (const r of reservs) {
-    const key = ymd(r._dt);
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(r);
+    // 오늘 예약이 없으면 3월 10일로 대체
+    if (reservs.length === 0) {
+      const now = new Date();
+      const march10 = new Date(now.getFullYear(), 2, 10);
+      const march10Key = ymd(march10);
+      reservs = all.filter(r => ymd(r._dt) === march10Key);
+    }
+
+    // 날짜별 그룹화
+    groups = new Map();
+    for (const r of reservs) {
+      const key = ymd(r._dt);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(r);
+    }
+    days = Array.from(groups.keys()).sort();
   }
 
-  const days = Array.from(groups.keys()).sort();
-  const root = document.getElementById('scheduleRoot');
 
-  if (days.length === 0) {
-    // 예약이 없을 때 가운데 정렬 추가
-    root.innerHTML = `<div class="text-muted p-4 text-center">오늘 예약이 없습니다.</div>`;
-  } else {
-    root.innerHTML = days.map(dayKey => {
+  // === 뷰 렌더링 로직 ===
+
+  // 1. 타임라인 뷰 HTML 생성
+  function getTimelineHtml() {
+    if (days.length === 0) return `<div class="text-muted p-4 text-center bg-white rounded shadow-sm">예약이 없습니다.</div>`;
+
+    let html = days.map(dayKey => {
       const dayDate = new Date(dayKey + 'T00:00:00');
       const list = groups.get(dayKey);
-
       const slotMap = new Map();
+
       for (const r of list) {
         const floored = floorToStep(r._dt, STEP_MIN);
         const slotKey = `${ymd(floored)} ${hm(floored)}`;
@@ -159,40 +214,39 @@
 
       const start = new Date(dayKey + `T${pad2(START_HOUR)}:00:00`);
       const end   = new Date(dayKey + `T${pad2(END_HOUR)}:00:00`);
-
       const slots = [];
+
       for (let t = new Date(start); t < end; t = new Date(t.getTime() + STEP_MIN * 60000)) {
         const key = `${ymd(t)} ${hm(t)}`;
         const items = slotMap.get(key) ?? [];
-
         let contentHtml = '';
 
         if (items.length === 0) {
-          // 예약이 없을 때
           contentHtml = `<div class="w-100 text-end text-muted small">-</div>`;
         } else {
-          // 완료(1DONE1DONE) 및 도착(1111111111)은 왼쪽, 나머지는 오른쪽에 표시
-          const activeItems = items.filter(r => r.attrib === '1DONE1DONE' || r.attrib === '1111111111');
-          const pendingItems = items.filter(r => r.attrib !== '1DONE1DONE' && r.attrib !== '1111111111');
+          // 상태 체크 (API 응답의 status와 Jinja의 attrib 모두 호환)
+          const activeItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st === '1DONE1DONE' || st === '1111111111';
+          });
+          const pendingItems = items.filter(r => {
+              const st = r.status || r.attrib;
+              return st !== '1DONE1DONE' && st !== '1111111111';
+          });
 
           const renderLines = (arr, align) => arr.map(r => {
-            let colorClass = 'text-dark'; // 기본 검은색 (예정)
-            if (r.attrib === '1DONE1DONE') {
-                colorClass = 'text-danger'; // 완료: 붉은색
-            } else if (r.attrib === '1111111111') {
-                colorClass = 'text-success'; // 도착: 초록색
-            }
+            const st = r.status || r.attrib;
+            let colorClass = 'status-pending';
+            if (st === '1DONE1DONE') colorClass = 'status-done';
+            else if (st === '1111111111') colorClass = 'status-arrive';
 
             return `
-            <a class="d-block small text-decoration-none py-1 text-${align}"
-               href="${reservDtlUrl(r.reservNo)}">
-              <span class="fw-semibold ${colorClass}">${escapeHtml(r.visitorName)}</span>
+            <a class="d-block small text-decoration-none py-1 text-${align}" href="${reservDtlUrl(r.reservNo)}">
+              <span class="${colorClass}">${escapeHtml(r.visitorName)}</span>
               <span class="text-muted">(${r.visitCnt}명)</span>
-            </a>
-            `;
+            </a>`;
           }).join('');
 
-          // 레이아웃: 왼쪽(완료/도착), 오른쪽(예정)
           contentHtml = `
             <div class="w-50 px-2 border-end" style="border-color: #eef0f3 !important;">
               ${renderLines(activeItems, 'start')}
@@ -207,9 +261,7 @@
           <div class="slot">
             <div class="d-flex w-100 align-items-start">
               <div class="time" style="width: 60px; flex-shrink: 0;">${hm(t)}</div>
-              <div class="flex-grow-1 d-flex justify-content-end">
-                ${contentHtml}
-              </div>
+              <div class="flex-grow-1 d-flex justify-content-end">${contentHtml}</div>
             </div>
           </div>
         `);
@@ -224,20 +276,192 @@
         </div>
       `;
     }).join('');
+
+    return html;
   }
 
-  const es = new EventSource("/sse/schedule");
-  es.addEventListener("reserv_created", (e) => {
-    location.reload();
+  // 2. 테이블 뷰 HTML 생성
+  function getTableHtml() {
+    if (days.length === 0) return `<div class="text-muted p-4 text-center bg-white rounded shadow-sm">예약이 없습니다.</div>`;
+
+    let html = `
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-3">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-schedule mb-0" style="min-width: 800px;">
+            <thead>
+              <tr>
+                <th style="width: 12%;">일자</th>
+                <th style="width: 10%;">시간</th>
+                <th style="width: 20%;">방문자 1</th>
+                <th style="width: 20%;">방문자 2</th>
+                <th style="width: 20%;">방문자 3</th>
+                <th style="width: 18%;">비고</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    for (const dayKey of days) {
+      const dayDate = new Date(dayKey + 'T00:00:00');
+      const list = groups.get(dayKey);
+      const isToday = (dayKey === todayKey);
+      const dateStr = isToday ? `오늘<br><small class="text-muted">(${koDayTitle(dayDate)})</small>` : koDayTitle(dayDate);
+
+      const slotMap = new Map();
+      for (const r of list) {
+        const floored = floorToStep(r._dt, STEP_MIN);
+        const slotKey = `${ymd(floored)} ${hm(floored)}`;
+        if (!slotMap.has(slotKey)) slotMap.set(slotKey, []);
+        slotMap.get(slotKey).push(r);
+      }
+
+      const start = new Date(dayKey + `T${pad2(START_HOUR)}:00:00`);
+      const end   = new Date(dayKey + `T${pad2(END_HOUR)}:00:00`);
+      const totalSlots = (end.getTime() - start.getTime()) / (STEP_MIN * 60000);
+      let isFirstRowOfDay = true;
+
+      for (let t = new Date(start); t < end; t = new Date(t.getTime() + STEP_MIN * 60000)) {
+        const key = `${ymd(t)} ${hm(t)}`;
+        const items = slotMap.get(key) ?? [];
+
+        html += `<tr>`;
+        if (isFirstRowOfDay) {
+          html += `<td rowspan="${totalSlots}" class="bg-light fw-bold">${dateStr}</td>`;
+          isFirstRowOfDay = false;
+        }
+        html += `<td class="fw-bold text-secondary font-monospace">${hm(t)}</td>`;
+
+        for (let i = 0; i < 3; i++) {
+          if (items[i]) {
+            const r = items[i];
+            const st = r.status || r.attrib;
+            let textClass = 'status-pending';
+            if (st === '1DONE1DONE') textClass = 'status-done';
+            else if (st === '1111111111') textClass = 'status-arrive';
+
+            html += `
+              <td>
+                <a href="${reservDtlUrl(r.reservNo)}" class="text-decoration-none ${textClass} d-block">
+                  ${escapeHtml(r.visitorName)}
+                  <span class="text-muted small fw-normal ms-1">(${r.visitCnt}명)</span>
+                </a>
+              </td>`;
+          } else {
+            html += `<td></td>`;
+          }
+        }
+
+        const memos = items.map(r => r.reservMemo).filter(m => m && m.trim() !== '').join(', ');
+        html += `<td class="text-muted small text-start">${escapeHtml(memos)}</td></tr>`;
+      }
+    }
+    html += `</tbody></table></div></div>`;
+    return html;
+  }
+
+  // === 토글 및 화면 갱신 제어 ===
+  const root = document.getElementById('scheduleRoot');
+  const toggleInput = document.getElementById('viewToggle');
+  const labelTimeline = document.getElementById('labelTimeline');
+  const labelTable = document.getElementById('labelTable');
+
+  // 스위치 상태 변경 시 실행 (현재 데이터로 화면 다시 그리기)
+  function handleViewChange() {
+    const isTableView = toggleInput.checked;
+
+    // 상태를 세션 스토리지에 저장 (새로고침 시 유지용)
+    sessionStorage.setItem('scheduleViewToggle', isTableView);
+
+    // 라벨 색상 변경
+    if (isTableView) {
+        labelTimeline.classList.replace('text-primary', 'text-muted');
+        labelTimeline.classList.replace('fw-bolder', 'fw-bold');
+        labelTable.classList.replace('text-muted', 'text-primary');
+        labelTable.classList.replace('fw-bold', 'fw-bolder');
+        root.innerHTML = getTableHtml();
+    } else {
+        labelTable.classList.replace('text-primary', 'text-muted');
+        labelTable.classList.replace('fw-bolder', 'fw-bold');
+        labelTimeline.classList.replace('text-muted', 'text-primary');
+        labelTimeline.classList.replace('fw-bold', 'fw-bolder');
+        root.innerHTML = getTimelineHtml();
+    }
+  }
+
+  // 라벨 클릭 시 스위치 조작
+  function setToggle(isTable) {
+    toggleInput.checked = isTable;
+    handleViewChange();
+  }
+
+  // === 풀화면(Full Screen) 제어 ===
+  function toggleFullScreen() {
+      const area = document.getElementById('fullscreenArea');
+      area.classList.toggle('is-fullscreen');
+
+      const isFs = area.classList.contains('is-fullscreen');
+
+      // 풀화면 상태를 세션 스토리지에 저장 (새로고침 시 유지용)
+      sessionStorage.setItem('scheduleFullscreen', isFs);
+
+      // 풀화면일 때 배경(body) 스크롤 방지
+      if (isFs) {
+          document.body.style.overflow = 'hidden';
+      } else {
+          document.body.style.overflow = '';
+      }
+  }
+
+  // === 초기화 (새로고침 시 이전 상태 복원) ===
+  document.addEventListener("DOMContentLoaded", () => {
+      // 1. 초기 데이터 파싱
+      const initialPayload = {{ reservs | tojson }};
+      processData(initialPayload);
+
+      // 2. 토글 상태 복원
+      const savedToggle = sessionStorage.getItem('scheduleViewToggle');
+      if (savedToggle !== null) {
+          toggleInput.checked = (savedToggle === 'true');
+      }
+
+      // 3. 화면 렌더링
+      handleViewChange();
+
+      // 4. 풀화면 상태 복원
+      const savedFs = sessionStorage.getItem('scheduleFullscreen');
+      if (savedFs === 'true') {
+          const area = document.getElementById('fullscreenArea');
+          area.classList.add('is-fullscreen');
+          document.body.style.overflow = 'hidden';
+      }
   });
 
-  // ★ 추가된 부분: 뒤로 가기로 돌아왔을 때 최신 정보로 업데이트 및 SSE 재연결 ★
+  // === AJAX 폴링 (15초마다 최신 데이터 가져오기) ===
+  async function fetchLatestSchedule() {
+    try {
+      const response = await fetch('/api/get_reserv');
+      if (response.ok) {
+        const data = await response.json();
+
+        // 데이터 업데이트 후, 현재 선택된 뷰(타임라인 or 테이블) 상태를 유지하며 다시 그리기
+        processData(data.reservs);
+        handleViewChange();
+      }
+    } catch (error) {
+      console.error("스케줄 데이터를 불러오는 중 오류 발생:", error);
+    }
+  }
+
+  // 15초마다 실행
+  setInterval(fetchLatestSchedule, 15000);
+
+  // 브라우저 뒤로가기로 돌아왔을 때 즉시 갱신
   window.addEventListener('pageshow', function(event) {
     if (event.persisted) {
-      window.location.reload();
+      fetchLatestSchedule();
     }
   });
-</script>
 
+</script>
 </body>
 </html>
