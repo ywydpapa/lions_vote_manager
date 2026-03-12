@@ -113,6 +113,7 @@
                 photos.forEach(photo => {
                     const col = document.createElement('div');
                     col.className = 'col';
+                    // 버튼 영역에 다운로드 추가 및 gap-1 적용
                     col.innerHTML = `
                         <div class="card h-100 shadow-sm photo-card" id="card-${photo.filename}">
                             <div class="photo-img-wrapper">
@@ -120,12 +121,15 @@
                             </div>
                             <div class="card-body p-3 d-flex flex-column justify-content-between">
                                 <p class="small text-muted text-truncate mb-3" title="${photo.filename}">${photo.filename}</p>
-                                <div class="d-flex justify-content-between w-100">
-                                    <button class="btn btn-sm btn-outline-primary flex-fill me-2" onclick="rotatePhoto('${photo.filename}')">
-                                        ↻ 90도 회전
+                                <div class="d-flex justify-content-between w-100 gap-1">
+                                    <button class="btn btn-sm btn-outline-success flex-fill" onclick="downloadPhoto('${photo.url}', '${photo.filename}')">
+                                        ⬇️ 다운
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary flex-fill" onclick="rotatePhoto('${photo.filename}')">
+                                        ↻ 회전
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger flex-fill" onclick="deletePhoto('${photo.filename}')">
-                                        삭제
+                                        🗑️ 삭제
                                     </button>
                                 </div>
                             </div>
@@ -137,6 +141,34 @@
         } catch (error) {
             console.error("사진 로드 오류:", error);
             alert("사진을 불러오지 못했습니다.");
+        }
+    }
+
+    // [추가됨] 강제 다운로드 함수
+    async function downloadPhoto(url, filename) {
+        try {
+            // 이미지를 Blob 형태로 가져오기 (새 탭 열림 방지)
+            const response = await fetch(url);
+            const blob = await response.blob();
+
+            // Blob을 가리키는 임시 URL 생성
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            // 숨겨진 a 태그를 만들어 클릭 이벤트 발생
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = filename; // 다운로드될 파일명 지정
+
+            document.body.appendChild(a);
+            a.click();
+
+            // 사용한 임시 자원 정리
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error("다운로드 오류:", error);
+            alert("사진 다운로드에 실패했습니다.");
         }
     }
 
