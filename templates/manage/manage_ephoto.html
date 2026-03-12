@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '/common/header.html' %}
+    <style>
+        .photo-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .photo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        }
+        .photo-img-wrapper {
+            height: 250px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .photo-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">사진 관리</span></h1>
+        </div>
+
+        <!-- 상단: 이벤트 선택 Select Box -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-8 col-lg-6">
+                <select id="eventSelect" class="form-select form-select-lg shadow-sm" onchange="loadPhotos()">
+                    <option value="">📸 사진을 확인할 이벤트를 선택하세요</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 하단: 사진 타일 그리드 -->
+        <div id="photoGrid" class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <!-- 사진 카드가 여기에 동적으로 추가됩니다 -->
+        </div>
+
+        <!-- 사진이 없을 때 표시할 안내 문구 -->
+        <div id="emptyState" class="text-center text-muted my-5" style="display: none;">
+            <h4 class="fw-bold mt-4">등록된 사진이 없습니다.</h4>
+        </div>
+    </div>
+</main>
+
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+    // 페이지 로드 시 이벤트 목록 불러오기
+    document.addEventListener("DOMContentLoaded", function() {
+        loadEvents();
+    });
+
+    // API: 이벤트 목록 로드
+    async function loadEvents() {
+        try {
+            const response = await fetch('/api/ephoto/events');
+            const events = await response.json();
+            const select = document.getElementById('eventSelect');
+
+            events.forEach(ev => {
+                const option = document.createElement('option');
+                option.value = ev.reservNo;
+                option.textContent = ev.label;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error("이벤트 목록 로드 오류:", error);
+            alert("이벤트 목록을 불러오지 못했습니다.");
+        }
+    }
+
+    // API: 선택한 이벤트의 사진 로드
+    async function loadPhotos() {
+        const reservNo = document.getElementById('eventSelect').value;
+        const grid = document.getElementById('photoGrid');
+        const emptyState = document.getElementById('emptyState');
+
+        grid.innerHTML = ''; // 기존 사진 초기화
+
+        if (!reservNo) {
+            emptyState.style.display = 'none';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/ephoto/photos/${reservNo}`);
+            const photos = await response.json();
+
+            if (photos.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+                photos.forEach(photo => {
+                    const col = document.createElement('div');
+                    col.className = 'col';
+                    col.innerHTML = `
+                        <div class="card h-100 shadow-sm photo-card" id="card-${photo.filename}">
+                            <div class="photo-img-wrapper">
+                                <img src="${photo.url}" class="photo-img" id="img-${photo.filename}" alt="Event Photo">
+                            </div>
+                            <div class="card-body p-3 d-flex flex-column justify-content-between">
+                                <p class="small text-muted text-truncate mb-3" title="${photo.filename}">${photo.filename}</p>
+                                <div class="d-flex justify-content-between w-100">
+                                    <button class="btn btn-sm btn-outline-primary flex-fill me-2" onclick="rotatePhoto('${photo.filename}')">
+                                        ↻ 90도 회전
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger flex-fill" onclick="deletePhoto('${photo.filename}')">
+                                        삭제
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(col);
+                });
+            }
+        } catch (error) {
+            console.error("사진 로드 오류:", error);
+            alert("사진을 불러오지 못했습니다.");
+        }
+    }
+
+    // API: 사진 90도 회전
+    async function rotatePhoto(filename) {
+        try {
+            const response = await fetch(`/api/ephoto/photos/${filename}/rotate`, { method: 'POST' });
+            if (response.ok) {
+                const data = await response.json();
+                // 브라우저 캐시를 무시하고 회전된 이미지를 즉시 반영
+                document.getElementById(`img-${filename}`).src = data.url;
+            } else {
+                alert("사진 회전에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("회전 오류:", error);
+            alert("오류가 발생했습니다.");
+        }
+    }
+
+    // API: 사진 삭제
+    async function deletePhoto(filename) {
+        if (!confirm("정말로 이 사진을 삭제하시겠습니까? (복구할 수 없습니다)")) return;
+
+        try {
+            const response = await fetch(`/api/ephoto/photos/${filename}`, { method: 'DELETE' });
+            if (response.ok) {
+                // 화면에서 해당 사진 카드 제거
+                document.getElementById(`card-${filename}`).closest('.col').remove();
+
+                // 모든 사진을 삭제했다면 '사진이 없습니다' 문구 표시
+                if (document.getElementById('photoGrid').children.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                }
+            } else {
+                alert("사진 삭제에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("삭제 오류:", error);
+            alert("오류가 발생했습니다.");
+        }
+    }
+</script>
+</body>
+</html>

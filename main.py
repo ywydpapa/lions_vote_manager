@@ -1403,6 +1403,133 @@ async def save_memo(request: MemoRequest):
         return {"status": "error", "message": str(e)}
 
 
+# ==========================================
+# [추가] 사진 관리 페이지 렌더링
+# ==========================================
+@app.get("/manage_ephoto", response_class=HTMLResponse)
+async def manage_ephoto(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("manage/manage_ephoto.html", {"request": request})
+
+
+# ==========================================
+# [추가] 사진이 존재하는 이벤트(예약) 목록 가져오기 API
+# ==========================================
+@app.get("/api/ephoto/events")
+async def get_ephoto_events(db: AsyncSession = Depends(get_db)):
+    photo_dir = Path("static/img/event_photos")
+    if not photo_dir.exists():
+        return JSONResponse([])
+
+    # 폴더 내 파일명에서 이벤트 번호(reservNo) 추출
+    event_nos = set()
+    for file in photo_dir.iterdir():
+        if file.is_file() and "-" in file.name:
+            try:
+                event_no = int(file.name.split("-")[0])
+                event_nos.add(event_no)
+            except ValueError:
+                continue
+
+    if not event_nos:
+        return JSONResponse([])
+
+    # 추출한 이벤트 번호로 DB에서 상세 정보(날짜, 클럽명 등) 조회
+    query = text("""
+                 SELECT a.reservNo, a.reservFrom, b.circleName, c.clubName
+                 FROM voteReserv a
+                          LEFT JOIN lionsCircle b ON a.circleNo = b.circleNo
+                          LEFT JOIN lionsClub c ON a.clubNo = c.clubNo
+                 WHERE a.reservNo IN :event_nos
+                 ORDER BY a.reservFrom DESC
+                 """)
+    result = await db.execute(query, {"event_nos": tuple(event_nos)})
+    rows = result.fetchall()
+
+    events = []
+    for row in rows:
+        dt = row[1]
+        dt_str = dt.strftime("%Y-%m-%d %H:%M") if hasattr(dt, "strftime") else str(dt)
+        name = row[2] or row[3] or "알 수 없음"
+        events.append({
+            "reservNo": row[0],
+            "label": f"[{dt_str}] {name} (예약번호: {row[0]})"
+        })
+
+    return JSONResponse(events)
+
+
+# ==========================================
+# [추가] 특정 이벤트의 사진 목록 가져오기 API
+# ==========================================
+@app.get("/api/ephoto/photos/{reserv_no}")
+async def get_ephoto_photos(reserv_no: int):
+    photo_dir = Path("static/img/event_photos")
+    if not photo_dir.exists():
+        return JSONResponse([])
+
+    photos = []
+    for file in photo_dir.glob(f"{reserv_no}-*.*"):
+        if file.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]:
+            photos.append({
+                "filename": file.name,
+                "url": f"/static/img/event_photos/{file.name}"
+            })
+
+    # 파일명 기준으로 정렬하여 반환
+    photos.sort(key=lambda x: x["filename"])
+    return JSONResponse(photos)
+
+
+# ==========================================
+# [추가] 사진 삭제 API
+# ==========================================
+@app.delete("/api/ephoto/photos/{filename}")
+async def delete_ephoto(filename: str):
+    file_path = Path("static/img/event_photos") / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    try:
+        file_path.unlink()  # 파일 삭제
+        return JSONResponse({"success": True})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==========================================
+# [추가] 사진 90도 회전 API
+# ==========================================
+@app.post("/api/ephoto/photos/{filename}/rotate")
+async def rotate_ephoto(filename: str):
+    file_path = Path("static/img/event_photos") / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    try:
+        with Image.open(file_path) as img:
+            # 시계방향 90도 회전 (Pillow의 ROTATE_270이 시계방향 90도와 동일)
+            rotated = img.transpose(Image.ROTATE_270)
+            rotated.save(file_path)
+
+        import time
+        # 브라우저 캐시를 무시하고 새로고침된 이미지를 보여주기 위해 타임스탬프 추가
+        return JSONResponse({
+            "success": True,
+            "url": f"/static/img/event_photos/{filename}?t={int(time.time())}"
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# [추가] 사진 업로드 페이지 렌더링
+# ==========================================
+@app.get("/upload_ephoto", response_class=HTMLResponse)
+async def upload_ephoto_page(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("manage/upload_ephoto.html", {"request": request})
+
+
 if __name__ == "__main__":
     import uvicorn
 
