@@ -71,12 +71,9 @@
                             </a>
                         </div>
 
-                        <!-- [수정됨] 사진 관리 / 사진 전송 반반 분할 영역 -->
-                        <!-- col에 d-flex를 주어 내부 div가 무조건 부모 높이를 100% 꽉 채우도록 강제합니다. -->
+                        <!-- 사진 관리 / 사진 전송 반반 분할 영역 -->
                         <div class="col d-flex">
-                            <!-- gap: 1.5rem을 주어 부트스트랩의 g-4 간격과 완벽하게 똑같은 여백을 만듭니다. -->
                             <div class="d-flex flex-column w-100" style="gap: 1.5rem;">
-                                <!-- style="min-height: 0;"를 주어 기존의 큰 높이 제한을 무력화시킵니다. -->
                                 <a class="card card-link flex-fill m-0" style="min-height: 0;" href="/manage_ephoto">
                                     <div class="card-body d-flex align-items-center justify-content-center text-center p-3">
                                         <h2 class="card-title-text-sm">사진 관리</h2>
@@ -91,8 +88,8 @@
                         </div>
                     </div>
 
-                    <!-- [하단] 2개의 버튼 영역 -->
-                    <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
+                    <!-- [중단] 2개의 버튼 영역 (mb-5 추가하여 아래 여백 확보) -->
+                    <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center mb-5">
                         <div class="col">
                             <a class="card card-link h-100" href="/notelist_candi">
                                 <div class="card-body d-flex align-items-center justify-content-center text-center">
@@ -104,6 +101,24 @@
                             <a class="card card-link h-100" href="/notelist_aide">
                                 <div class="card-body d-flex align-items-center justify-content-center text-center">
                                     <h2 class="card-title-text">보좌관용 시나리오</h2>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- [하단] 방명록 관련 2개의 버튼 영역 추가 -->
+                    <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
+                        <div class="col">
+                            <a class="card card-link h-100" href="/manage_gstbook">
+                                <div class="card-body d-flex align-items-center justify-content-center text-center">
+                                    <h2 class="card-title-text text-success">방명록 관리</h2>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col">
+                            <a class="card card-link h-100" href="/upload_gstbook">
+                                <div class="card-body d-flex align-items-center justify-content-center text-center">
+                                    <h2 class="card-title-text text-success">방명록 전송</h2>
                                 </div>
                             </a>
                         </div>
