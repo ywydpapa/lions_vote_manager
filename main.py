@@ -658,15 +658,23 @@ async def new_reservations(request: Request,dateno: str, db: AsyncSession = Depe
 
 @app.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
-    # 이미지가 저장된 실제 폴더 경로 (프로젝트 구조에 맞게 수정 필요)
     hist_dir = "static/assets/hist"
+
+    # 💡 자연 정렬을 위한 키 함수 추가
+    def natural_sort_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
     def get_images(prefix):
         if not os.path.exists(hist_dir):
             return []
         valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
         files = [f for f in os.listdir(hist_dir) if f.startswith(prefix) and f.lower().endswith(valid_exts)]
-        files.sort()
+
+        # 💡 일반 sort() 대신 자연 정렬(natural_sort_key) 적용
+        files.sort(key=natural_sort_key)
+
         return [f"/static/assets/hist/{f}" for f in files]
+
     h01_images = get_images("h1-")
     h02_images = get_images("h2-")
     h03_images = get_images("h3-")
