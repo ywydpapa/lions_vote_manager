@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">방명록 이미지 업로드</span></h1>
+            <p class="lead fw-normal text-muted mb-0">방명록 이미지를 선택하여 해당 이벤트(일자)에 업로드합니다.</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body p-5">
+
+                        <!-- 1. 이벤트 선택 -->
+                        <div class="mb-4">
+                            <label for="eventSelect" class="form-label fw-bold">1. 이벤트(예약) 선택</label>
+                            <select id="eventSelect" class="form-select form-select-lg">
+                                <option value="">⏳ 이벤트 목록을 불러오는 중...</option>
+                            </select>
+                            <div class="form-text mt-2 text-primary">
+                                <i class="bi bi-info-circle"></i> 선택한 이벤트의 날짜가 방명록 그룹화 기준(연월일)이 됩니다.
+                            </div>
+                        </div>
+
+                        <!-- 2. 사진 파일 선택 (여러 장 가능) -->
+                        <div class="mb-4">
+                            <label for="photoFiles" class="form-label fw-bold">2. 방명록 이미지 선택 (다중 선택 가능)</label>
+                            <!-- multiple 속성으로 여러 파일 동시 선택 지원 -->
+                            <input class="form-control form-control-lg" type="file" id="photoFiles" multiple accept="image/jpeg, image/png, image/webp">
+                            <div class="form-text mt-2">지원 형식: JPG, PNG, WEBP</div>
+                        </div>
+
+                        <!-- 3. 업로드 버튼 -->
+                        <div class="d-grid gap-2 mt-5">
+                            <button class="btn btn-primary btn-lg" type="button" onclick="uploadPhotos()" id="uploadBtn">
+                                🚀 선택한 방명록 업로드하기
+                            </button>
+                        </div>
+
+                        <!-- 4. 업로드 진행 상태 및 결과 표시 영역 -->
+                        <div class="mt-4" id="resultArea" style="display: none;">
+                            <h5 class="fw-bold mb-3">업로드 결과</h5>
+                            <ul class="list-group" id="resultList">
+                                <!-- 결과가 여기에 동적으로 추가됩니다 -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+    // 페이지 로드 시 전체 이벤트 목록 불러오기
+    document.addEventListener("DOMContentLoaded", async function() {
+        try {
+            // 이미 만들어두신 전체 예약 목록 API 활용
+            const response = await fetch('/api/get_reserv');
+            const data = await response.json();
+            const select = document.getElementById('eventSelect');
+
+            select.innerHTML = '<option value="">📸 방명록을 업로드할 이벤트를 선택하세요</option>';
+
+            data.reservs.forEach(ev => {
+                // 날짜 포맷팅 (예: "2026-03-10T09:00" -> "2026-03-10 09:00")
+                const dateStr = ev.reservFrom.replace('T', ' ');
+
+                // 💡 백엔드 API에 넘겨줄 gdate(YYYYMMDD) 추출
+                // 앞에서 10자리(YYYY-MM-DD)를 자른 후 하이픈(-) 제거
+                const datePart = ev.reservFrom.substring(0, 10);
+                const gdate = datePart.replace(/-/g, '');
+
+                const option = document.createElement('option');
+                option.value = ev.reservNo;
+                option.setAttribute('data-gdate', gdate); // option 태그에 gdate 데이터 저장
+                option.textContent = `[${dateStr}] ${ev.visitorName} (예약번호: ${ev.reservNo})`;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error("이벤트 목록 로드 오류:", error);
+            document.getElementById('eventSelect').innerHTML = '<option value="">❌ 목록을 불러오지 못했습니다.</option>';
+        }
+    });
+
+    // 사진 업로드 실행 함수
+    async function uploadPhotos() {
+        const eventSelect = document.getElementById('eventSelect');
+        const eventNo = eventSelect.value;
+        const fileInput = document.getElementById('photoFiles');
+        const files = fileInput.files;
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resultArea = document.getElementById('resultArea');
+        const resultList = document.getElementById('resultList');
+
+        // 유효성 검사
+        if (!eventNo) {
+            alert('이벤트를 먼저 선택해주세요.');
+            return;
+        }
+        if (files.length === 0) {
+            alert('업로드할 방명록 이미지를 1장 이상 선택해주세요.');
+            return;
+        }
+
+        // 💡 선택된 option에서 gdate 값 가져오기
+        const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+        const gdate = selectedOption.getAttribute('data-gdate');
+
+        // UI 초기화 및 로딩 상태
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 업로드 중...';
+        resultArea.style.display = 'block';
+        resultList.innerHTML = '';
+
+        let successCount = 0;
+
+        // 선택한 파일들을 순회하며 하나씩 서버로 전송
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append('photo', file); // 백엔드의 File(...) 매개변수 이름과 동일하게 'photo' 사용
+
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-secondary rounded-pill">대기중</span>`;
+            resultList.appendChild(listItem);
+
+            try {
+                // 💡 URL에 추출한 gdate와 eventNo를 동적으로 삽입하여 API 호출
+                const response = await fetch(`/api/guestbookupload/${gdate}/${eventNo}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const resultData = await response.json();
+                    listItem.innerHTML = `<span>${file.name} <i class="text-muted small">→ ${resultData.filename}</i></span> <span class="badge bg-success rounded-pill">성공</span>`;
+                    successCount++;
+                } else {
+                    listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-danger rounded-pill">실패</span>`;
+                }
+            } catch (error) {
+                console.error("업로드 오류:", error);
+                listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-danger rounded-pill">오류</span>`;
+            }
+        }
+
+        // 업로드 완료 후 처리
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '🚀 선택한 방명록 업로드하기';
+        fileInput.value = ''; // 파일 선택 초기화
+
+        alert(`총 ${files.length}장 중 ${successCount}장 업로드 완료되었습니다.`);
+    }
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 from typing import Optional
 from pathlib import Path
+from collections import defaultdict
 from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File, Body, Query
@@ -62,6 +63,7 @@ MEMBERPHOTO_DIR = "./static/img/members"
 BASE_DIR = Path(__file__).resolve().parent
 # 업로드 저장 경로(원하는 위치로 변경 가능)
 PHOTO_DIR = Path("./static/img/event_photos")
+GSTB_DIR = Path("./static/img/gstbook")
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 EXT_BY_CONTENT_TYPE = {
     "image/jpeg": ".jpg",
@@ -711,6 +713,55 @@ async def history(request: Request):
     }
     return templates.TemplateResponse("history/projects.html", context)
 
+
+@app.get("/guestbook", response_class=HTMLResponse)
+async def history(request: Request):
+    hist_dir = "static/img/gstbook"
+
+    # 💡 자연 정렬을 위한 키 함수
+    def natural_sort_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
+    # 일자별로 이미지를 담을 딕셔너리 생성
+    grouped_images = defaultdict(list)
+
+    if os.path.exists(hist_dir):
+        valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+        # gstb- 로 시작하고 유효한 확장자를 가진 파일만 필터링
+        files = [f for f in os.listdir(hist_dir) if f.startswith("gstb-") and f.lower().endswith(valid_exts)]
+        for f in files:
+            parts = f.split('-')
+            if len(parts) >= 2:
+                date_str = parts[1]
+                grouped_images[date_str].append(f"/static/img/gstbook/{f}")
+
+    for date_str in grouped_images:
+        grouped_images[date_str].sort(key=natural_sort_key)
+
+    sorted_dates = sorted(grouped_images.keys(), reverse=True)
+
+    guestbook_data = []
+    for date_str in sorted_dates:
+        guestbook_data.append({
+            "date": date_str,
+            "images": grouped_images[date_str]
+        })
+
+    if not guestbook_data:
+        guestbook_data = [
+            {
+                "date": "등록된 방명록 없음",
+                "images": ["https://dummyimage.com/800x500/343a40/ffffff&text=No+Images"]
+            }
+        ]
+
+    context = {
+        "request": request,
+        "guestbook_data": guestbook_data
+    }
+    return templates.TemplateResponse("history/guestbook.html", context)
+
+
 @app.get("/success", response_class=HTMLResponse)
 async def success(request: Request):
     return templates.TemplateResponse(
@@ -924,6 +975,29 @@ async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
     url_path = f"/static/img/event_photos/{filename}"
+    return {"eventNo": eventNo, "filename": filename, "contentType": photo.content_type, "savedPath": str(save_path), "url": url_path}
+
+
+@app.post("/api/guestbookupload/{gdate}/{eventNo}")
+async def upload_guestbook(eventNo: int,gdate:str, photo: UploadFile = File(...)):
+    if photo.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported content type: {photo.content_type}")
+    ext = EXT_BY_CONTENT_TYPE.get(photo.content_type, "")
+    if not ext:
+        raise HTTPException(status_code=415, detail="Unsupported content type (no extension mapping)")
+    idx = 1
+    while True:
+        filename = f"gstb-{gdate}-{eventNo}-{idx}{ext}"   # <- 하이픈을 항상 명시
+        save_path = GSTB_DIR / filename
+        if not save_path.exists():
+            break
+        idx += 1
+    try:
+        with save_path.open("wb") as buffer:
+            shutil.copyfileobj(photo.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+    url_path = f"/static/img/gstbook/{filename}"
     return {"eventNo": eventNo, "filename": filename, "contentType": photo.content_type, "savedPath": str(save_path), "url": url_path}
 
 
@@ -1536,6 +1610,12 @@ async def upload_ephoto_page(request: Request, db: AsyncSession = Depends(get_db
     if not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("manage/upload_ephoto.html", {"request": request})
+
+@app.get("/upload_gstbook", response_class=HTMLResponse)
+async def upload_gstbook(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("manage/upload_gstbook.html", {"request": request})
 
 
 @app.get("/api/distmembers")

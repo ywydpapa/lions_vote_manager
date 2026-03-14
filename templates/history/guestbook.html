@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+    <style>
+        /* 상하 스와이프(Scroll Snap) 컨테이너 설정 */
+        .vertical-swipe-container {
+            height: 85vh;
+            min-height: 500px;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .vertical-swipe-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 스와이프 되는 각 섹션(카드 영역) */
+        .swipe-section {
+            height: 100%;
+            min-height: 450px;
+            scroll-snap-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0;
+        }
+
+        /* 카드 내 이미지 슬라이더 맞춤 설정 */
+        .carousel-inner, .carousel-item {
+            height: 100%;
+            min-height: 350px;
+        }
+
+        .carousel-item img {
+            height: 100%;
+            width: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+            user-select: none;
+        }
+
+        /* 좌측 텍스트 영역 수직 중앙 정렬 */
+        .text-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        /* 기사 뷰어 컨테이너 부드러운 전환 효과 */
+        #article-viewer-container {
+            transition: all 0.3s ease-in-out;
+            overflow: hidden;
+        }
+
+        /* iframe 스케일링(축소) 처리 */
+        .iframe-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #article-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 0.5rem;
+            background-color: #fff;
+            transform-origin: 0 0;
+        }
+
+        /* 사진 확장 카드 */
+        .expandable-photo-card {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .expandable-photo-card .row,
+        .expandable-photo-card .text-section,
+        .expandable-photo-card .photo-panel {
+            transition: all 0.3s ease;
+        }
+
+        .expandable-photo-card .photo-panel {
+            cursor: pointer;
+        }
+
+        .expandable-photo-card.photo-expanded .text-section {
+            display: none !important;
+        }
+
+        .expandable-photo-card.photo-expanded .photo-panel {
+            flex: 0 0 100%;
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .expandable-photo-card.photo-expanded .row {
+            height: 100%;
+        }
+
+        .expandable-photo-card.photo-expanded .carousel,
+        .expandable-photo-card.photo-expanded .carousel-inner,
+        .expandable-photo-card.photo-expanded .carousel-item {
+            height: 100%;
+            min-height: 450px;
+        }
+
+        /* 확장 시 비율 유지하며 크게 */
+        .expandable-photo-card.photo-expanded .carousel-item img {
+            object-fit: contain;
+            background: #000;
+            cursor: zoom-out;
+        }
+
+        /* 확장 닫기 버튼 */
+        .photo-expand-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 20;
+            display: none;
+            border: none;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 999px;
+            width: 42px;
+            height: 42px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+            font-size: 24px;
+            line-height: 1;
+            font-weight: bold;
+        }
+
+        .expandable-photo-card.photo-expanded .photo-expand-close {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .text-section {
+                padding: 2rem;
+            }
+
+            .vertical-swipe-container {
+                height: auto;
+                scroll-snap-type: none;
+                overflow-y: visible;
+            }
+
+            .swipe-section {
+                height: auto;
+                margin-bottom: 2rem;
+            }
+
+            #article-iframe {
+                width: 200%;
+                height: 200%;
+                transform: scale(0.5);
+            }
+
+            .expandable-photo-card.photo-expanded .photo-panel {
+                width: 100%;
+                max-width: 100%;
+                flex: 0 0 100%;
+            }
+
+            .expandable-photo-card.photo-expanded .carousel,
+            .expandable-photo-card.photo-expanded .carousel-inner,
+            .expandable-photo-card.photo-expanded .carousel-item {
+                min-height: 320px;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Projects Section-->
+    <section class="py-5">
+        <div class="container px-5">
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">방명록</span></h1>
+                <p>이미지를 좌우로 스와이프하여 방명록을 확인해보세요. (위아래로 스크롤하여 날짜 이동)</p>
+            </div>
+
+            <div class="vertical-swipe-container">
+                <!-- 백엔드에서 전달받은 일자별 데이터를 반복하여 카드 생성 -->
+                {% for item in guestbook_data %}
+                <div class="swipe-section">
+                    <div class="card expandable-photo-card overflow-hidden shadow rounded-4 border-0 w-100 h-100" style="max-width: 1200px;">
+                        <button type="button" class="photo-expand-close" aria-label="사진 닫기">×</button>
+                        <div class="row g-0 h-100">
+                            <div class="col-md-4 text-section bg-white">
+                                <!-- 날짜가 8자리(YYYYMMDD)일 경우 보기 좋게 포맷팅 -->
+                                <h2 class="fw-bolder mb-3">
+                                    {% if item.date|length == 8 %}
+                                        {{ item.date[:4] }}년 {{ item.date[4:6] }}월 {{ item.date[6:8] }}일
+                                    {% else %}
+                                        {{ item.date }}
+                                    {% endif %}
+                                </h2>
+                                <p class="text-muted mb-0">
+                                    해당 일자의 방명록 기록입니다. 이미지를 클릭하면 전체 화면으로 확대하여 볼 수 있습니다.
+                                </p>
+                            </div>
+                            <div class="col-md-8 photo-panel">
+                                <!-- 슬라이더 ID에 날짜를 포함시켜 독립적으로 동작하게 함 -->
+                                <div id="carousel-{{ item.date }}" class="carousel slide h-100" data-bs-ride="carousel">
+                                    <div class="carousel-indicators">
+                                        {% for img in item.images %}
+                                        <button type="button" data-bs-target="#carousel-{{ item.date }}"
+                                                data-bs-slide-to="{{ loop.index0 }}"
+                                                class="{% if loop.first %}active{% endif %}"
+                                                aria-current="{% if loop.first %}true{% endif %}"
+                                                aria-label="Slide {{ loop.index }}"></button>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="carousel-inner">
+                                        {% for img in item.images %}
+                                        <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                            {% if loop.index <= 3 %}
+                                            <img src="{{ img }}" alt="{{ item.date }} 방명록 사진 {{ loop.index }}" loading="lazy"/>
+                                            {% else %}
+                                            <img data-src="{{ img }}" class="lazy-carousel-img"
+                                                 alt="{{ item.date }} 방명록 사진 {{ loop.index }}"/>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+
+                                    <!-- 이미지가 2장 이상일 때만 좌우 이동 버튼 표시 -->
+                                    {% if item.images|length > 1 %}
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ item.date }}" data-bs-slide="prev">
+                                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">이전</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ item.date }}" data-bs-slide="next">
+                                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                        <span class="visually-hidden">다음</span>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Call to action section-->
+    <section class="py-5 bg-gradient-primary-to-secondary text-white">
+        <div class="container px-5 my-5">
+            <div class="text-center">
+                <h2 class="display-4 fw-bolder mb-4">Let's build something together</h2>
+                <a class="btn btn-outline-light btn-lg px-5 py-3 fs-6 fw-bolder" href="/contact">Contact me</a>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.article-btn');
+        const viewerContainer = document.getElementById('article-viewer-container');
+        const iframe = document.getElementById('article-iframe');
+        const closeBtn = document.getElementById('close-viewer-btn');
+
+        // 기사 버튼 클릭 이벤트 (기존 코드 유지)
+        if(buttons.length > 0 && viewerContainer && iframe && closeBtn) {
+            buttons.forEach(button => {
+                button.addEventListener('click', function () {
+                    buttons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const link = this.getAttribute('data-link');
+                    iframe.src = link;
+                    viewerContainer.style.display = 'block';
+
+                    setTimeout(() => {
+                        viewerContainer.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    }, 100);
+                });
+            });
+
+            closeBtn.addEventListener('click', function () {
+                viewerContainer.style.display = 'none';
+                iframe.src = '';
+                buttons.forEach(btn => btn.classList.remove('active'));
+            });
+        }
+
+        // 사진 확장 기능
+        const photoCards = document.querySelectorAll('.expandable-photo-card');
+
+        photoCards.forEach(function (card) {
+            const closeExpandBtn = card.querySelector('.photo-expand-close');
+
+            card.querySelectorAll('.carousel-item img').forEach(function (img) {
+                img.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    // 다른 확장된 카드가 있다면 닫기
+                    photoCards.forEach(c => c.classList.remove('photo-expanded'));
+                    card.classList.add('photo-expanded');
+                });
+            });
+
+            if (closeExpandBtn) {
+                closeExpandBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    card.classList.remove('photo-expanded');
+                });
+            }
+        });
+
+        // ESC 키로 확장 닫기
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.expandable-photo-card.photo-expanded')
+                    .forEach(card => card.classList.remove('photo-expanded'));
+            }
+        });
+    });
+
+    window.addEventListener('load', function () {
+        // 1초 후 나머지 이미지 백그라운드 로딩
+        setTimeout(function () {
+            const lazyImages = document.querySelectorAll('img.lazy-carousel-img');
+            lazyImages.forEach(function (img) {
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    img.classList.remove('lazy-carousel-img');
+                }
+            });
+        }, 1000);
+
+        // 사용자가 빨리 슬라이드 넘기면 즉시 로드
+        const carousels = document.querySelectorAll('.carousel');
+        carousels.forEach(function (carousel) {
+            carousel.addEventListener('slide.bs.carousel', function (e) {
+                const nextSlide = e.relatedTarget;
+                const img = nextSlide.querySelector('img.lazy-carousel-img');
+
+                if (img && img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    img.classList.remove('lazy-carousel-img');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
