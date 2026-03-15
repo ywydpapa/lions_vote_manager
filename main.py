@@ -1,35 +1,30 @@
 from typing import Optional
 from pathlib import Path
 from collections import defaultdict
-from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from fastapi import UploadFile, File, Body, Query
 from fastapi.responses import JSONResponse
-from datetime import datetime
 import shutil
 from fastapi import FastAPI, Request, Depends, HTTPException, Form, Response
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 import dotenv
-import uvicorn
 from sqlalchemy import text
 import re
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, DateTime, ForeignKey,CheckConstraint, String
 from datetime import datetime, date
-from sqlalchemy.orm import Session
 from sqlalchemy.orm import DeclarativeBase
 from fastapi.responses import StreamingResponse
 import asyncio
 import json
 from fastapi.encoders import jsonable_encoder
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image
 import io
 import os
 import base64
@@ -51,7 +46,7 @@ app = FastAPI()
 app.add_middleware(SessionMiddleware, secret_key="supersecretkey")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 모든 도메인 허용
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,7 +56,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/thumbnails", StaticFiles(directory="static/img/members/"), name="thumbnails")
 MEMBERPHOTO_DIR = "./static/img/members"
 BASE_DIR = Path(__file__).resolve().parent
-# 업로드 저장 경로(원하는 위치로 변경 가능)
 PHOTO_DIR = Path("./static/img/event_photos")
 GSTB_DIR = Path("./static/img/gstbook")
 ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
@@ -97,8 +91,8 @@ class Base(DeclarativeBase):
     pass
 
 class RegReservIn(BaseModel):
-    dateno: str        # 예: "02271" (MMDD + 오전/오후코드)
-    visitTime: str     # 예: "09:00"
+    dateno: str
+    visitTime: str
     visitorCount: int
     memberNos: List[int]
     reservMemo: str | None = None
@@ -154,29 +148,21 @@ async def resize_image_if_needed(contents: bytes, max_bytes: int = 314572) -> by
 
 
 async def save_memberPhoto(image_data: bytes, memberno: int, size=(200, 300)):
-    # 디렉토리가 없으면 생성
     os.makedirs(MEMBERPHOTO_DIR, exist_ok=True)
-    # 원본 이미지를 Pillow로 열기
     image = Image.open(io.BytesIO(image_data))
-    # 썸네일 생성
     image.thumbnail(size)
-    # 저장 경로
     thumbnail_path = os.path.join(MEMBERPHOTO_DIR, f"mphoto_{memberno}.png")
-    # 썸네일 저장
     image.save(thumbnail_path, format="PNG")
     return thumbnail_path
 
 
 def dateno_time_to_datetime(dateno: str, visit_time: str) -> datetime:
-    # dateno: "MMDDX" (X=오전/오후코드), visit_time: "HH:MM"
     if not dateno or len(dateno) < 4:
         raise ValueError("invalid dateno")
     mm = int(dateno[0:2])
     dd = int(dateno[2:4])
-
     hh, mi = visit_time.split(":")
     hh = int(hh); mi = int(mi)
-
     y = date.today().year
     return datetime(y, mm, dd, hh, mi, 0)
 
@@ -207,7 +193,7 @@ async def get_reservations(candino: int,db: AsyncSession):
     try:
         query = text("select * from voteReserv where attrib not like :attpatt and candino = :candino order by reservFrom")
         result = await db.execute(query, {"attpatt": "%XXX%", "candino": candino})
-        reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        reserv_list = result.fetchall()
         return reserv_list
     except:
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
@@ -217,7 +203,7 @@ async def get_apireserv(db: AsyncSession):
     try:
         query = text("select a.*, b.circleName, c.clubName from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsaddr.lionsClub c on a.clubNo = c.clubNo where a.attrib not like :attpatt order by a.reservFrom")
         result = await db.execute(query, {"attpatt": "%XXX%"})
-        reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        reserv_list = result.fetchall()
         return reserv_list
     except:
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
@@ -227,7 +213,7 @@ async def get_club_reserv(clubno:int,db: AsyncSession):
     try:
         query = text("SELECT * FROM voteReserv where attrib not like :attpatt and clubNo = :clubno")
         result = await db.execute(query, {"attpatt": "%XXX%", "clubno": clubno})
-        reserv_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        reserv_list = result.fetchall()
         return reserv_list
     except Exception as e:
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
@@ -243,7 +229,7 @@ async def get_circle_reserv(circleno: int, db: AsyncSession):
             ORDER BY reservFrom DESC
         """)
         result = await db.execute(query, {"attpatt": "%XXX%", "circleno": circleno})
-        return result.mappings().all()  # <-- list[dict]
+        return result.mappings().all()
     except Exception:
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
 
@@ -311,7 +297,7 @@ async def get_clubmembers(clubno:int,db: AsyncSession):
     try:
         query = text("SELECT a.memberNo, a.memberName, a.rankNo, b.rankTitlekor, a.clubNo FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo where a.clubNo = :clubno")
         result = await db.execute(query, {"clubno": clubno})
-        member_list = result.fetchall()  # 클럽 데이터를 모두 가져오기
+        member_list = result.fetchall()
         return member_list
     except Exception as e:
         print(e)
@@ -322,7 +308,7 @@ async def get_memberdtl(memberno:int,db: AsyncSession):
     try:
         query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo FROM lionsMember a where a.memberNo = :memberno")
         result = await db.execute(query, {"memberno": memberno})
-        member_dtl = result.fetchone()  # 클럽 데이터를 모두 가져오기
+        member_dtl = result.fetchone()
         print(member_dtl)
         return member_dtl
     except Exception as e:
@@ -334,7 +320,7 @@ async def get_clubdtl(clubno:int,db: AsyncSession):
     try:
         query = text("SELECT * FROM lionsClub where clubNo = :clubno")
         result = await db.execute(query, {"clubno": clubno})
-        clubdtl = result.fetchone()  # 클럽 데이터를 모두 가져오기
+        clubdtl = result.fetchone()
         return clubdtl
     except Exception as e:
         print(e)
@@ -345,7 +331,7 @@ async def get_allmembers(db: AsyncSession):
     try:
         query = text("SELECT a.memberNo, a.memberName, a.rankNo, a.clubNo, b.rankTitlekor, c.clubName FROM lionsMember a left join lionsRank b on a.rankNo = b.rankNo  left join lionsClub c on a.clubNo = c.clubNo where a.clubNo != :cno order by c.clubNo")
         result = await db.execute(query,{"cno": 0})
-        member_list = result.fetchall()  # 회원 데이터를 모두 가져오기
+        member_list = result.fetchall()
         return member_list
     except Exception as e:
         print(e)
@@ -358,7 +344,7 @@ async def get_distmembers(db: AsyncSession):
                      "left join lionsRank b on a.rankNo = b.rankNo  left join lionsClub c on a.clubNo = c.clubNo "
                      "where a.clubNo != :cno and a.rankNo not in (19,29,48)order by c.clubNo")
         result = await db.execute(query,{"cno": 0})
-        member_list = result.fetchall()  # 회원 데이터를 모두 가져오기
+        member_list = result.fetchall()
         return member_list
     except Exception as e:
         print(e)
@@ -416,7 +402,6 @@ async def get_notelist(candtype: str, db: AsyncSession):
         note_list = []
         for row in rows:
             row_dict = dict(row)
-            # datetime 객체를 JSON 직렬화가 가능한 문자열로 변환
             for key, value in row_dict.items():
                 if isinstance(value, datetime):
                     row_dict[key] = value.strftime('%Y-%m-%d %H:%M:%S')
@@ -450,9 +435,6 @@ async def get_notedtl(noteno:int,db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(NOTEDETAIL)")
 
 
-# ==========================================
-# [수정됨] SSE 라우터: Heartbeat(Ping) 추가 및 버퍼링 방지 헤더 적용
-# ==========================================
 @app.get("/sse/schedule")
 async def sse_schedule(request: Request):
     q = hub.connect()
@@ -468,7 +450,6 @@ async def sse_schedule(request: Request):
                     yield f"data: {payload}\n\n"
 
                 except asyncio.TimeoutError:
-                    # 클라이언트가 연결을 끊었는지 확인
                     if await request.is_disconnected():
                         break
                     yield ": ping\n\n"
@@ -511,10 +492,8 @@ async def donereserv(request: Request, reservno: int, db: AsyncSession = Depends
     )
     await db.execute(query, {"upd": "1DONE1DONE", "now": datetime.now(), "reservno": reservno})
     await db.commit()
-
     reserv_dict = {"reservNo": reservno, "reservFrom": "", "visitCnt": ""}
     await hub.broadcast("reserv_updated", reserv_dict)
-
     return JSONResponse(content={"message": "성공적으로 저장되었습니다."})
 
 
@@ -533,15 +512,12 @@ async def login_post(
     """)
     result = await db.execute(query, {"username": username, "password": password})
     user = result.fetchone()
-
     if user is None:
-        # 로그인 실패 시에도 next를 다시 넘겨줘야 화면에서 유지됨
         return templates.TemplateResponse(
             "login/login.html",
             {"request": request, "error": "Invalid credentials", "next": next},
             status_code=401,
         )
-
     query2 = text("""
         UPDATE voteUser
         SET loginStamp = :now, logoutStamp = NULL
@@ -549,15 +525,11 @@ async def login_post(
     """)
     await db.execute(query2, {"now": datetime.now(), "userNo": user[0]})
     await db.commit()
-
     request.session["vote_user_No"] = user[0]
     request.session["vote_user_Name"] = user[1]
     request.session["vote_user_Role"] = user[2]
-
-    # next가 외부 URL이면 오픈리다이렉트 위험 -> 내부 경로만 허용
     if not next.startswith("/"):
         next = "/success"
-
     return RedirectResponse(url=next, status_code=303)
 
 
@@ -593,10 +565,6 @@ async def new_reservations(request: Request, dateno: str, db: AsyncSession = Dep
     clubs = await get_clublist(db)
     return templates.TemplateResponse("reserv/new_reserv.html", {"request": request, "candino": candino, "dateno": dateno, "clubs": clubs})
 
-
-# ==========================================
-# [수정됨] 예약 취소: 이벤트 이름을 reserv_deleted 로 변경
-# ==========================================
 @app.post("/reserv_canc/{reservno}")
 async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -618,9 +586,6 @@ async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
 
 
-# ==========================================
-# [수정됨] 예약 도착: 이벤트 이름을 reserv_updated 로 변경
-# ==========================================
 @app.post("/reserv_arrv/{reservno}")
 async def arrive_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
     try:
@@ -661,22 +626,15 @@ async def new_reservations(request: Request,dateno: str, db: AsyncSession = Depe
 @app.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
     hist_dir = "static/assets/hist"
-
-    # 💡 자연 정렬을 위한 키 함수 추가
     def natural_sort_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
-
     def get_images(prefix):
         if not os.path.exists(hist_dir):
             return []
         valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
         files = [f for f in os.listdir(hist_dir) if f.startswith(prefix) and f.lower().endswith(valid_exts)]
-
-        # 💡 일반 sort() 대신 자연 정렬(natural_sort_key) 적용
         files.sort(key=natural_sort_key)
-
         return [f"/static/assets/hist/{f}" for f in files]
-
     h01_images = get_images("h1-")
     h02_images = get_images("h2-")
     h03_images = get_images("h3-")
@@ -684,8 +642,6 @@ async def history(request: Request):
     h05_images = get_images("h5-")
     h06_images = get_images("h6-")
     h07_images = get_images("h7-")
-
-    # 만약 폴더에 사진이 없을 경우를 대비한 더미 이미지 (테스트용)
     if not h01_images:
         h01_images = ["https://dummyimage.com/800x500/343a40/6c757d"]
     if not h02_images:
@@ -717,14 +673,9 @@ async def history(request: Request):
 @app.get("/guestbook", response_class=HTMLResponse)
 async def history(request: Request):
     hist_dir = "static/img/gstbook"
-
-    # 💡 자연 정렬을 위한 키 함수
     def natural_sort_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
-
-    # 일자별로 이미지를 담을 딕셔너리 생성
     grouped_images = defaultdict(list)
-
     if os.path.exists(hist_dir):
         valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
         # gstb- 로 시작하고 유효한 확장자를 가진 파일만 필터링
@@ -734,19 +685,15 @@ async def history(request: Request):
             if len(parts) >= 2:
                 date_str = parts[1]
                 grouped_images[date_str].append(f"/static/img/gstbook/{f}")
-
     for date_str in grouped_images:
         grouped_images[date_str].sort(key=natural_sort_key)
-
     sorted_dates = sorted(grouped_images.keys(), reverse=True)
-
     guestbook_data = []
     for date_str in sorted_dates:
         guestbook_data.append({
             "date": date_str,
             "images": grouped_images[date_str]
         })
-
     if not guestbook_data:
         guestbook_data = [
             {
@@ -754,7 +701,6 @@ async def history(request: Request):
                 "images": ["https://dummyimage.com/800x500/343a40/ffffff&text=No+Images"]
             }
         ]
-
     context = {
         "request": request,
         "guestbook_data": guestbook_data
@@ -806,14 +752,11 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     reserv_dtl = await get_reserv_dtl(reservno, db)
     circleno = reserv_dtl["circleNo"]
     clubno = reserv_dtl["clubNo"]
-
     cmembers = await get_clubmembers(clubno, db) if clubno else []
-
     if clubno:
         clubdtl = await get_club_dtl(clubno, db)
     else:
         clubdtl = []
-
     visitors = await get_visitors(reservno, db)
     notes = await get_notelist("CANDI", db)
     photo_dir = Path("static/img/event_photos")
@@ -860,7 +803,7 @@ async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
         reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
         result.append({
             "reservNo": row[0],
-            "reservFrom": reserv_from,  # "2026-03-10T09:00"
+            "reservFrom": reserv_from,
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
@@ -883,7 +826,7 @@ async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
         reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
         result.append({
             "reservNo": row[0],
-            "reservFrom": reserv_from,  # "2026-03-10T09:00"
+            "reservFrom": reserv_from,
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
@@ -920,7 +863,7 @@ async def view_today(request: Request, db: AsyncSession = Depends(get_db)):
         reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
         result.append({
             "reservNo": row[0],
-            "reservFrom": reserv_from,   # "2026-03-10T09:00"
+            "reservFrom": reserv_from,
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
@@ -939,11 +882,11 @@ async def view_week(request: Request, db: AsyncSession = Depends(get_db)):
     rows = await get_apireserv(db)
     result = []
     for row in rows:
-        dt = row[4]  # datetime일 가능성
+        dt = row[4]
         reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
         result.append({
             "reservNo": row[0],
-            "reservFrom": reserv_from,   # "2026-03-10T09:00"
+            "reservFrom": reserv_from,
             "visitCnt": row[7],
             "reservMemo": row[8],
             "visitorName": (row[12] or row[13]) or "",
@@ -964,7 +907,7 @@ async def upload_event_photo(eventNo: int, photo: UploadFile = File(...)):
         raise HTTPException(status_code=415, detail="Unsupported content type (no extension mapping)")
     idx = 1
     while True:
-        filename = f"{eventNo}-{idx}{ext}"   # <- 하이픈을 항상 명시
+        filename = f"{eventNo}-{idx}{ext}"
         save_path = PHOTO_DIR / filename
         if not save_path.exists():
             break
@@ -987,7 +930,7 @@ async def upload_guestbook(eventNo: int,gdate:str, photo: UploadFile = File(...)
         raise HTTPException(status_code=415, detail="Unsupported content type (no extension mapping)")
     idx = 1
     while True:
-        filename = f"gstb-{gdate}-{eventNo}-{idx}{ext}"   # <- 하이픈을 항상 명시
+        filename = f"gstb-{gdate}-{eventNo}-{idx}{ext}"
         save_path = GSTB_DIR / filename
         if not save_path.exists():
             break
@@ -1041,7 +984,7 @@ async def reg_reserv(clubNo: int, payload: RegReservIn, db: AsyncSession = Depen
             reservMemo=payload.reservMemo,
         )
         db.add(vr)
-        await db.flush()  # reservNo 생성
+        await db.flush()
         db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
         await db.commit()
         reserv_dict = {"reservNo": vr.reservNo, "reservFrom": vr.reservFrom, "visitCnt": vr.visitorCount}
@@ -1072,7 +1015,7 @@ async def reg_reservc(circleNo: int, payload: RegReservIn, db: AsyncSession = De
             reservMemo=payload.reservMemo,
         )
         db.add(vr)
-        await db.flush()  # reservNo 생성
+        await db.flush()
         db.add_all([VisitMembers(reservNo=vr.reservNo, memberNo=mn) for mn in payload.memberNos])
         await db.commit()
         reserv_dict = {"reservNo": vr.reservNo, "reservFrom": vr.reservFrom, "visitCnt": vr.visitorCount}
@@ -1113,35 +1056,26 @@ async def get_reserv(db: AsyncSession = Depends(get_db)):
 async def scribe01(
         request: Request,
         reservno: int = Query(...),
-        photo: List[str] = Query(default=[]),  # 여러 개의 사진 URL을 리스트로 받음
-        phrase: List[str] = Query(default=[]),  # 여러 개의 문구를 리스트로 받음
+        photo: List[str] = Query(default=[]),
+        phrase: List[str] = Query(default=[]),
         db: AsyncSession = Depends(get_db),
 ):
     photo_data = []
-
-    # 최대 2장까지만 처리
     for i in range(min(len(photo), 2)):
         p_url = photo[i]
         # phrase 리스트가 photo보다 짧을 경우를 대비한 안전 처리
         p_phrase = phrase[i] if i < len(phrase) else ""
-
         if not p_url.startswith("/static/"):
             p_url = "/static/img/event_photos/default.jpg"
-
-        # 사진과 문구를 딕셔너리로 묶어서 저장
         photo_data.append({"url": p_url, "phrase": p_phrase})
-
-    # 사진이 하나도 없을 경우 기본값
     if not photo_data:
         photo_data = [{"url": "/static/img/event_photos/default.jpg", "phrase": ""}]
-
     reserv = await get_reserv_dtl(reservno, db)
-
     return templates.TemplateResponse(
         "templete/scribe01.html",
         {
             "request": request,
-            "photo_data": photo_data,  # photo_urls 대신 photo_data(딕셔너리 리스트) 전달
+            "photo_data": photo_data,
             "reserv": reserv
         },
     )
@@ -1151,22 +1085,17 @@ async def scribe01(
 async def scribe02(
         request: Request,
         reservno: int = Query(...),
-        photo: List[str] = Query(default=[]),  # 여러 개의 사진 URL을 리스트로 받음
-        phrase: List[str] = Query(default=[]),  # 여러 개의 문구를 리스트로 받음
+        photo: List[str] = Query(default=[]),
+        phrase: List[str] = Query(default=[]),
         db: AsyncSession = Depends(get_db),
 ):
     photo_data = []
-    # 최대 2장까지만 처리
     for i in range(min(len(photo), 2)):
         p_url = photo[i]
-        # phrase 리스트가 photo보다 짧을 경우를 대비한 안전 처리
         p_phrase = phrase[i] if i < len(phrase) else ""
         if not p_url.startswith("/static/"):
             p_url = "/static/img/event_photos/default.jpg"
-        # 사진과 문구를 딕셔너리로 묶어서 저장
         photo_data.append({"url": p_url, "phrase": p_phrase})
-
-    # 사진이 하나도 없을 경우 기본값
     if not photo_data:
         photo_data = [{"url": "/static/img/event_photos/default.jpg", "phrase": ""}]
     reserv = await get_reserv_dtl(reservno, db)
@@ -1174,7 +1103,7 @@ async def scribe02(
         "templete/scribe02.html",
         {
             "request": request,
-            "photo_data": photo_data,  # photo_urls 대신 photo_data(딕셔너리 리스트) 전달
+            "photo_data": photo_data,
             "reserv": reserv
         },
     )
@@ -1187,7 +1116,7 @@ async def contact(request: Request):
     )
 
 
-@app.api_route("/insert_contact/", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+@app.api_route("/insert_contact/", methods=["POST"])
 async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
     doctitle = form_data.get("dtitle")
@@ -1201,7 +1130,7 @@ async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     await db.commit()
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
-@app.api_route("/club_infoadd/{clubno}", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+@app.api_route("/club_infoadd/{clubno}", methods=["POST"])
 async def insertinfo(request: Request,clubno ,db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
     info = form_data.get("clubaddinfo")
@@ -1214,7 +1143,7 @@ async def insertinfo(request: Request,clubno ,db: AsyncSession = Depends(get_db)
     await db.commit()
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/manage_clubs"})
 
-@app.api_route("/insert_note/", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+@app.api_route("/insert_note/", methods=["POST"])
 async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
     doctitle = form_data.get("dtitle")
@@ -1227,7 +1156,7 @@ async def insertnote(request: Request, db: AsyncSession = Depends(get_db)):
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/"})
 
 
-@app.api_route("/update_note/{noteno}", methods=["POST"])  # GET은 불필요하므로 제거해도 무방합니다
+@app.api_route("/update_note/{noteno}", methods=["POST"])
 async def updatenote(request: Request,noteno:int ,db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
     doctitle = form_data.get("dtitle")
@@ -1254,17 +1183,12 @@ async def donecontact(request: Request,contactno:int ,db: AsyncSession = Depends
     return JSONResponse(content={"message": "성공적으로 저장되었습니다.", "redirect_url": "/contact_list"})
 
 
-# ==========================================
-# [수정됨] 예약 완료: 이벤트 이름을 reserv_updated 로 변경 및 푸시 추가
-# ==========================================
 @app.api_route("/done_reserv/{reservno}", methods=["POST"])
 async def donereserv(request: Request, reservno: int, db: AsyncSession = Depends(get_db)):
     query = text(
         f"UPDATE voteReserv set attrib = :upd , modDate = :now where reservNo = :reservno ")
     await db.execute(query, {"upd": '1DONE1DONE', "now": datetime.now(), "reservno": reservno})
     await db.commit()
-
-    # [추가됨] 완료 처리 시에도 프론트엔드에 상태 변경(reserv_updated) 이벤트 푸시
     reserv_dict = {"reservNo": reservno, "reservFrom": '', "visitCnt": ''}
     await hub.broadcast("reserv_updated", reserv_dict)
 
@@ -1316,13 +1240,9 @@ async def upload_logoimage(request: Request, memberno: int, file: UploadFile = F
     try:
         if not file.content_type.startswith('image/'):
             raise HTTPException(status_code=400, detail="File type not supported.")
-        # 파일 읽기
         contents = await file.read()
-        # 이미지 사이즈 조절
         contents = await resize_image_if_needed(contents, max_bytes=102400)
-        # 이미지 저장
         await save_memberPhoto(contents, memberno)
-        # 리다이렉트
         return RedirectResponse(f"/edit_member/{memberno}", status_code=303)
     except Exception as e:
         print(f"Error: {e}")
@@ -1485,9 +1405,6 @@ async def save_memo(request: MemoRequest):
         return {"status": "error", "message": str(e)}
 
 
-# ==========================================
-# [추가] 사진 관리 페이지 렌더링
-# ==========================================
 @app.get("/manage_ephoto", response_class=HTMLResponse)
 async def manage_ephoto(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -1502,16 +1419,11 @@ async def manage_gstbook(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse("manage/manage_gstbook.html", {"request": request})
 
 
-# ==========================================
-# [추가] 사진이 존재하는 이벤트(예약) 목록 가져오기 API
-# ==========================================
 @app.get("/api/ephoto/events")
 async def get_ephoto_events(db: AsyncSession = Depends(get_db)):
     photo_dir = Path("static/img/event_photos")
     if not photo_dir.exists():
         return JSONResponse([])
-
-    # 폴더 내 파일명에서 이벤트 번호(reservNo) 추출
     event_nos = set()
     for file in photo_dir.iterdir():
         if file.is_file() and "-" in file.name:
@@ -1523,8 +1435,6 @@ async def get_ephoto_events(db: AsyncSession = Depends(get_db)):
 
     if not event_nos:
         return JSONResponse([])
-
-    # 추출한 이벤트 번호로 DB에서 상세 정보(날짜, 클럽명 등) 조회
     query = text("""
                  SELECT a.reservNo, a.reservFrom, b.circleName, c.clubName
                  FROM voteReserv a
@@ -1554,8 +1464,6 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
     gstbook_dir = Path("static/img/gstbook")
     if not gstbook_dir.exists():
         return JSONResponse([])
-
-    # 폴더 내 파일명에서 이벤트 번호(reservNo) 추출
     event_nos = set()
     for file in gstbook_dir.iterdir():
         if file.is_file() and "-" in file.name:
@@ -1568,7 +1476,6 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
     if not event_nos:
         return JSONResponse([])
 
-    # 추출한 이벤트 번호로 DB에서 상세 정보(날짜, 클럽명 등) 조회
     query = text("""
                  SELECT a.reservNo, a.reservFrom, b.circleName, c.clubName
                  FROM voteReserv a
@@ -1593,9 +1500,6 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
     return JSONResponse(events)
 
 
-# ==========================================
-# [추가] 특정 이벤트의 사진 목록 가져오기 API
-# ==========================================
 @app.get("/api/ephoto/photos/{reserv_no}")
 async def get_ephoto_photos(reserv_no: int):
     photo_dir = Path("static/img/event_photos")
@@ -1609,15 +1513,10 @@ async def get_ephoto_photos(reserv_no: int):
                 "filename": file.name,
                 "url": f"/static/img/event_photos/{file.name}"
             })
-
-    # 파일명 기준으로 정렬하여 반환
     photos.sort(key=lambda x: x["filename"])
     return JSONResponse(photos)
 
 
-# ==========================================
-# [수정됨] 특정 이벤트의 방명록 사진 목록 가져오기 API
-# ==========================================
 @app.get("/api/gstbook/photos/{reserv_no}")
 async def get_gstbook_photos(reserv_no: int):
     gstbook_dir = Path("static/img/gstbook")
@@ -1632,22 +1531,18 @@ async def get_gstbook_photos(reserv_no: int):
                 "url": f"/static/img/gstbook/{file.name}"
             })
 
-    # 파일명 기준으로 정렬하여 반환
     photos.sort(key=lambda x: x["filename"])
     return JSONResponse(photos)
 
 
 
-# ==========================================
-# [추가] 사진 삭제 API
-# ==========================================
 @app.delete("/api/ephoto/photos/{filename}")
 async def delete_ephoto(filename: str):
     file_path = Path("static/img/event_photos") / filename
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     try:
-        file_path.unlink()  # 파일 삭제
+        file_path.unlink()
         return JSONResponse({"success": True})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1664,10 +1559,6 @@ async def delete_gstbook(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ==========================================
-# [추가] 사진 90도 회전 API
-# ==========================================
 @app.post("/api/ephoto/photos/{filename}/rotate")
 async def rotate_ephoto(filename: str):
     file_path = Path("static/img/event_photos") / filename
@@ -1675,12 +1566,10 @@ async def rotate_ephoto(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     try:
         with Image.open(file_path) as img:
-            # 시계방향 90도 회전 (Pillow의 ROTATE_270이 시계방향 90도와 동일)
             rotated = img.transpose(Image.ROTATE_270)
             rotated.save(file_path)
 
         import time
-        # 브라우저 캐시를 무시하고 새로고침된 이미지를 보여주기 위해 타임스탬프 추가
         return JSONResponse({
             "success": True,
             "url": f"/static/img/event_photos/{filename}?t={int(time.time())}"
@@ -1696,12 +1585,10 @@ async def rotate_guestbook(filename: str):
         raise HTTPException(status_code=404, detail="File not found")
     try:
         with Image.open(file_path) as img:
-            # 시계방향 90도 회전 (Pillow의 ROTATE_270이 시계방향 90도와 동일)
             rotated = img.transpose(Image.ROTATE_270)
             rotated.save(file_path)
 
         import time
-        # 브라우저 캐시를 무시하고 새로고침된 이미지를 보여주기 위해 타임스탬프 추가
         return JSONResponse({
             "success": True,
             "url": f"/static/img/gstbook/{filename}?t={int(time.time())}"
@@ -1709,10 +1596,6 @@ async def rotate_guestbook(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ==========================================
-# [추가] 사진 업로드 페이지 렌더링
-# ==========================================
 @app.get("/upload_ephoto", response_class=HTMLResponse)
 async def upload_ephoto_page(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -1739,10 +1622,6 @@ async def api_get_distmembers(db: AsyncSession = Depends(get_db)):
         })
     return JSONResponse(content=result)
 
-
-# ==========================================
-# [추가] 방명록 일자 선택 화면 (동적 일자 생성)
-# ==========================================
 @app.get("/select_gstbook", response_class=HTMLResponse)
 async def select_gstbook(request: Request):
     gstbook_dir = Path("static/img/gstbook")
@@ -1757,7 +1636,6 @@ async def select_gstbook(request: Request):
                     date_str = parts[1]  # {gdate} 추출
                     dates.add(date_str)
 
-    # 최신 날짜가 먼저 오도록 내림차순 정렬
     sorted_dates = sorted(list(dates), reverse=True)
 
     return templates.TemplateResponse(
@@ -1766,9 +1644,6 @@ async def select_gstbook(request: Request):
     )
 
 
-# ==========================================
-# [추가] 특정 일자의 방명록 타일뷰 화면
-# ==========================================
 @app.get("/tileview_gstbook/{gdate}", response_class=HTMLResponse)
 async def tileview_gstbook(request: Request, gdate: str):
     gstbook_dir = Path("static/img/gstbook")
@@ -1777,11 +1652,9 @@ async def tileview_gstbook(request: Request, gdate: str):
     if gstbook_dir.exists():
         valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
         for file in gstbook_dir.iterdir():
-            # 해당 날짜(gdate)가 포함된 파일만 필터링
             if file.is_file() and file.name.startswith(f"gstb-{gdate}-") and file.name.lower().endswith(valid_exts):
                 images.append(f"/static/img/gstbook/{file.name}")
 
-    # 자연 정렬 (숫자 순서대로 정렬)
     def natural_sort_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
