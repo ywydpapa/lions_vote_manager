@@ -140,6 +140,30 @@
             display: block;
         }
 
+        /* ▼▼▼ 다문화 소신 텍스트 스크롤 애니메이션 추가 ▼▼▼ */
+        .scroll-container {
+            height: 500px;
+            overflow: hidden;
+            position: relative;
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+            mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+        }
+
+        .scroll-content {
+            animation: scrollUp 35s linear infinite;
+            padding: 20px 10px;
+        }
+
+        .scroll-container:hover .scroll-content {
+            animation-play-state: paused;
+        }
+
+        @keyframes scrollUp {
+            0% { transform: translateY(500px); }
+            100% { transform: translateY(-100%); }
+        }
+        /* ▲▲▲ 다문화 소신 텍스트 스크롤 애니메이션 추가 ▲▲▲ */
+
         @media (max-width: 768px) {
             .text-section {
                 padding: 2rem;
@@ -188,25 +212,25 @@
                 <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 발자취</span></h1>
                 <P>이미지를 좌우로 스와이프하여 후보의 발자취를 확인해보세요.</P>
             </div>
-             <!-- ▼▼▼ 새로 추가할 자동 재생 동영상 영역 ▼▼▼ -->
+             <!-- 자동 재생 동영상 영역 -->
             <div id="intro-video-container" class="container mb-5 position-relative" style="max-width: 800px;">
                 <div class="card shadow border-0 rounded-4 overflow-hidden">
                     <!-- 닫기 버튼 -->
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle p-2 shadow-sm" aria-label="Close" id="close-intro-video-btn" style="z-index: 10;"></button>
-                    
+
                     <!-- 16:9 비율 유튜브 iframe -->
                     <div class="ratio ratio-16x9">
-                        <iframe id="intro-video-iframe" 
-                                src="https://www.youtube.com/embed/afYZDCiciD0?autoplay=1" 
-                                title="YouTube video player" 
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        <iframe id="intro-video-iframe"
+                                src="https://www.youtube.com/embed/afYZDCiciD0?autoplay=1"
+                                title="YouTube video player"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowfullscreen>
                         </iframe>
                     </div>
                 </div>
             </div>
-            <!-- ▲▲▲ 새로 추가할 자동 재생 동영상 영역 ▲▲▲ -->
+
             <!-- 상하 스와이프 컨테이너 -->
             <div class="vertical-swipe-container">
 
@@ -548,6 +572,70 @@
                 </div>
 
             </div>
+            <!-- 상하 스와이프 컨테이너 끝 -->
+
+            <!-- ▼▼▼ 새로 추가된 다문화에 대한 소신 스크롤 영역 ▼▼▼ -->
+            <div class="text-center mb-4 mt-5">
+                <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">다문화 행사의 취지</span></h1>
+                <p class="text-muted mt-2">마우스를 올리면 스크롤이 일시 정지됩니다.</p>
+            </div>
+
+            <div class="row gx-5 justify-content-center mb-5">
+                <div class="col-lg-11 col-xl-9 col-xxl-8">
+                    <div class="scroll-container bg-white rounded-4 shadow-sm p-4">
+                        <div class="scroll-content">
+                            <!-- 행사 취지 -->
+                            <div class="mb-5">
+                                <h3 class="fw-bolder text-primary mb-3">행사 취지</h3>
+                                <p class="fs-6 text-muted lh-lg mb-3">
+                                    다문화가족은 한국 사회를 함께 이루어가는 소중한 이웃이자 당당한 한국 국민입니다. 그러나 문화적 차이, 언어 장벽, 친정 가족과의 거리로 인해 정서적·사회적 어려움을 겪는 경우가 많습니다.
+                                </p>
+                                <p class="fs-6 text-muted lh-lg mb-3">
+                                    본 행사는 라이온스회원들이 다문화가족과 직접 만나 소통하고, 함께 운동하고, 함께 식사하며 서로를 이해하는 시간을 통해 지역사회의 인식 개선과 편견 해소를 실천하고자 마련되었습니다.
+                                </p>
+                                <p class="fs-6 text-muted lh-lg mb-3">
+                                    또한, 다문화가족 학생들에게 장학금을 지원하여 학업적 동기와 자긍심을 높이고, 한국에 시집 와 쉽게 만날 수 없는 친정부모를 초청해 가족 간의 따뜻한 정을 나눌 수 있도록 함으로써 정서적 안정과 지역사회 정착을 돕는 것을 중요한 취지로 합니다.
+                                </p>
+                                <p class="fs-6 text-muted lh-lg fw-bold text-dark">
+                                    이를 통해 다문화가족이 지역사회의 당당한 구성원으로 자리 잡을 수 있도록 실질적이고 따뜻한 사회통합의 장을 만드는 것이 본 행사의 근본적 목표입니다.
+                                </p>
+                            </div>
+
+                            <!-- 행사 목적 -->
+                            <div>
+                                <h3 class="fw-bolder text-primary mb-4">행사 목적</h3>
+                                <ol class="fs-6 text-muted lh-lg ps-3">
+                                    <li class="mb-3">
+                                        <strong class="text-dark">다문화가족의 안정적 지역사회 정착 지원</strong><br>
+                                        정서적·사회적으로 소외감을 줄이고 지역사회에 자연스럽게 정착할 수 있도록 다양한 교류의 기회를 제공한다.
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong class="text-dark">편견·차별 해소와 상호이해 증진</strong><br>
+                                        라이온스회원과 지역주민인 다문화가족을 직접 만나 대화하고 활동함으로써 문화적 이해를 높이고 편견을 해소한다.
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong class="text-dark">장학금 지원을 통한 자긍심 및 교육 기회 확대</strong><br>
+                                        다문화가족 자녀들에게 장학금을 지급하여 "나도 당당한 한국국민이다"라는 자긍심을 심어주고 학업 의지를 고취시킨다.
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong class="text-dark">친정부모 초청을 통한 정서적 지지 제공</strong><br>
+                                        한국에 시집 와 자주 만나지 못한 친정부모를 초청하여 가족 간의 따뜻한 시간을 마련함으로써 다문화가정 어머니들의 외로움과 애환을 덜어주고 정서적 안정을 높인다.
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong class="text-dark">사회통합과 공동체 의식 강화</strong><br>
+                                        함께 대화하며 운동하고 식사하며 나누는 교류 활동을 통해 지역사회 구성원 간의 신뢰와 유대감을 높이고 사회통합의 기반을 강화한다.
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong class="text-dark">라이온스클럽의 지역사회 포용성 증진 역할 수행</strong><br>
+                                        지역의 다양성과 포용성을 확대하는 봉사활동을 통해 라이온스클럽이 사회적 책임을 실천하고 건강한 공동체 형성에 기여한다.
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- ▲▲▲ 새로 추가된 다문화에 대한 소신 스크롤 영역 끝 ▲▲▲ -->
 
             <!-- 후보자 관련 기사 영역 -->
             <div class="text-center mb-4 mt-5">
@@ -582,9 +670,9 @@
                 <p class="text-muted mt-2">버튼을 클릭하시면 해당 동영상이 새창에서 열립니다.</p>
             </div>
             <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
-    <button class="btn btn-outline-primary px-4 rounded-pill" onclick="window.open('https://www.youtube.com/embed/70NJWdjfFX8?autoplay=1', 'youtube_pop', 'width=800,height=450,scrollbars=no,resizable=yes');">홍보영상1</button>
-    <button class="btn btn-outline-primary px-4 rounded-pill" onclick="window.open('https://www.youtube.com/embed/afYZDCiciD0?autoplay=1', 'youtube_pop', 'width=800,height=450,scrollbars=no,resizable=yes');">홍보영상2</button>
-</div>
+                <button class="btn btn-outline-primary px-4 rounded-pill" onclick="window.open('https://www.youtube.com/embed/70NJWdjfFX8?autoplay=1', 'youtube_pop', 'width=800,height=450,scrollbars=no,resizable=yes');">홍보영상1</button>
+                <button class="btn btn-outline-primary px-4 rounded-pill" onclick="window.open('https://www.youtube.com/embed/afYZDCiciD0?autoplay=1', 'youtube_pop', 'width=800,height=450,scrollbars=no,resizable=yes');">홍보영상2</button>
+            </div>
 
             <!-- HTML 뷰어 (iframe) 영역 -->
             <div id="article-viewer-container" class="card shadow border-0 rounded-4 mb-5"
@@ -679,9 +767,7 @@
             }
         });
 
-                // ... 기존 코드 (ESC 키로 닫기 등) ...
-
-        // ▼▼▼ 새로 추가할 동영상 닫기 기능 ▼▼▼
+        // 동영상 닫기 기능
         const introVideoContainer = document.getElementById('intro-video-container');
         const closeIntroVideoBtn = document.getElementById('close-intro-video-btn');
         const introVideoIframe = document.getElementById('intro-video-iframe');
@@ -691,12 +777,10 @@
                 // 컨테이너 숨기기
                 introVideoContainer.style.display = 'none';
                 // iframe의 src를 비워서 백그라운드에서 동영상이 계속 재생되는 것을 방지
-                introVideoIframe.src = ''; 
+                introVideoIframe.src = '';
             });
         }
-        // ▲▲▲ 새로 추가할 동영상 닫기 기능 ▲▲▲
-    }); // DOMContentLoaded 끝부분
-
+    });
 
     window.addEventListener('load', function () {
         // 1초 후 나머지 이미지 백그라운드 로딩

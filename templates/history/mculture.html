@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        {% include '/common/header.html' %}
+        <style>
+            /* 스크롤 애니메이션 영역 설정 */
+            .scroll-container {
+                height: 500px; /* 보여질 창의 높이 (필요에 따라 조절하세요) */
+                overflow: hidden;
+                position: relative;
+                /* 위/아래 경계선에서 텍스트가 자연스럽게 사라지는 페이드 효과 */
+                -webkit-mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+                mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+            }
+
+            /* 스크롤되는 콘텐츠 설정 */
+            .scroll-content {
+                /* 30s는 스크롤 속도입니다. 숫자를 늘리면 느려지고, 줄이면 빨라집니다. */
+                animation: scrollUp 30s linear infinite;
+                padding: 20px 10px;
+            }
+
+            /* 마우스를 올렸을 때 스크롤 일시 정지 */
+            .scroll-container:hover .scroll-content {
+                animation-play-state: paused;
+            }
+
+            /* 애니메이션 키프레임 (아래에서 위로 이동) */
+            @keyframes scrollUp {
+                0% {
+                    transform: translateY(500px); /* scroll-container의 height와 동일하게 설정 */
+                }
+                100% {
+                    transform: translateY(-100%); /* 콘텐츠 전체가 위로 빠져나갈 때까지 */
+                }
+            }
+        </style>
+    </head>
+    <body class="d-flex flex-column h-100 bg-light">
+        <main class="flex-shrink-0">
+            <!-- Navigation-->
+            {% include '/common/topnav.html' %}
+            <!-- Page Content-->
+            <div class="container px-5 my-5">
+                <div class="text-center mb-5">
+                    <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">다문화에 대한 소신</span></h1>
+                </div>
+                <div class="row gx-5 justify-content-center">
+                    <div class="col-lg-11 col-xl-9 col-xxl-8">
+
+                        <!-- 스크롤 효과 컨테이너 시작 -->
+                        <div class="scroll-container bg-white rounded-4 shadow-sm p-4">
+                            <div class="scroll-content">
+
+                                <!-- 행사 취지 -->
+                                <div class="mb-5">
+                                    <h3 class="fw-bolder text-primary mb-3">행사 취지</h3>
+                                    <p class="fs-6 text-muted lh-lg mb-3">
+                                        다문화가족은 한국 사회를 함께 이루어가는 소중한 이웃이자 당당한 한국 국민입니다. 그러나 문화적 차이, 언어 장벽, 친정 가족과의 거리로 인해 정서적·사회적 어려움을 겪는 경우가 많습니다.
+                                    </p>
+                                    <p class="fs-6 text-muted lh-lg mb-3">
+                                        본 행사는 라이온스회원들이 다문화가족과 직접 만나 소통하고, 함께 운동하고, 함께 식사하며 서로를 이해하는 시간을 통해 지역사회의 인식 개선과 편견 해소를 실천하고자 마련되었습니다.
+                                    </p>
+                                    <p class="fs-6 text-muted lh-lg mb-3">
+                                        또한, 다문화가족 학생들에게 장학금을 지원하여 학업적 동기와 자긍심을 높이고, 한국에 시집 와 쉽게 만날 수 없는 친정부모를 초청해 가족 간의 따뜻한 정을 나눌 수 있도록 함으로써 정서적 안정과 지역사회 정착을 돕는 것을 중요한 취지로 합니다.
+                                    </p>
+                                    <p class="fs-6 text-muted lh-lg fw-bold text-dark">
+                                        이를 통해 다문화가족이 지역사회의 당당한 구성원으로 자리 잡을 수 있도록 실질적이고 따뜻한 사회통합의 장을 만드는 것이 본 행사의 근본적 목표입니다.
+                                    </p>
+                                </div>
+
+                                <!-- 행사 목적 -->
+                                <div>
+                                    <h3 class="fw-bolder text-primary mb-4">행사 목적</h3>
+                                    <ol class="fs-6 text-muted lh-lg ps-3">
+                                        <li class="mb-3">
+                                            <strong class="text-dark">다문화가족의 안정적 지역사회 정착 지원</strong><br>
+                                            정서적·사회적으로 소외감을 줄이고 지역사회에 자연스럽게 정착할 수 있도록 다양한 교류의 기회를 제공한다.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">편견·차별 해소와 상호이해 증진</strong><br>
+                                            라이온스회원과 지역주민인 다문화가족을 직접 만나 대화하고 활동함으로써 문화적 이해를 높이고 편견을 해소한다.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">장학금 지원을 통한 자긍심 및 교육 기회 확대</strong><br>
+                                            다문화가족 자녀들에게 장학금을 지급하여 "나도 당당한 한국국민이다"라는 자긍심을 심어주고 학업 의지를 고취시킨다.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">친정부모 초청을 통한 정서적 지지 제공</strong><br>
+                                            한국에 시집 와 자주 만나지 못한 친정부모를 초청하여 가족 간의 따뜻한 시간을 마련함으로써 다문화가정 어머니들의 외로움과 애환을 덜어주고 정서적 안정을 높인다.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">사회통합과 공동체 의식 강화</strong><br>
+                                            함께 대화하며 운동하고 식사하며 나누는 교류 활동을 통해 지역사회 구성원 간의 신뢰와 유대감을 높이고 사회통합의 기반을 강화한다.
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong class="text-dark">라이온스클럽의 지역사회 포용성 증진 역할 수행</strong><br>
+                                            지역의 다양성과 포용성을 확대하는 봉사활동을 통해 라이온스클럽이 사회적 책임을 실천하고 건강한 공동체 형성에 기여한다.
+                                        </li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                        <!-- 스크롤 효과 컨테이너 끝 -->
+
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Footer-->
+        {% include '/common/footer.html' %}
+        {% include '/common/adscript.html' %}
+    </body>
+</html>

@@ -1116,6 +1116,13 @@ async def contact(request: Request):
     )
 
 
+@app.get("/mculture", response_class=HTMLResponse)
+async def mculture(request: Request):
+    return templates.TemplateResponse(
+        "history/mculture.html", {"request": request}
+    )
+
+
 @app.api_route("/insert_contact/", methods=["POST"])
 async def insertcontact(request: Request, db: AsyncSession = Depends(get_db)):
     form_data = await request.form()
