@@ -188,7 +188,25 @@
                 <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보의 발자취</span></h1>
                 <P>이미지를 좌우로 스와이프하여 후보의 발자취를 확인해보세요.</P>
             </div>
-
+             <!-- ▼▼▼ 새로 추가할 자동 재생 동영상 영역 ▼▼▼ -->
+            <div id="intro-video-container" class="container mb-5 position-relative" style="max-width: 800px;">
+                <div class="card shadow border-0 rounded-4 overflow-hidden">
+                    <!-- 닫기 버튼 -->
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle p-2 shadow-sm" aria-label="Close" id="close-intro-video-btn" style="z-index: 10;"></button>
+                    
+                    <!-- 16:9 비율 유튜브 iframe -->
+                    <div class="ratio ratio-16x9">
+                        <iframe id="intro-video-iframe" 
+                                src="https://www.youtube.com/embed/afYZDCiciD0?autoplay=1&mute=1" 
+                                title="YouTube video player" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+            <!-- ▲▲▲ 새로 추가할 자동 재생 동영상 영역 ▲▲▲ -->
             <!-- 상하 스와이프 컨테이너 -->
             <div class="vertical-swipe-container">
 
@@ -660,7 +678,25 @@
                     .forEach(card => card.classList.remove('photo-expanded'));
             }
         });
-    });
+
+                // ... 기존 코드 (ESC 키로 닫기 등) ...
+
+        // ▼▼▼ 새로 추가할 동영상 닫기 기능 ▼▼▼
+        const introVideoContainer = document.getElementById('intro-video-container');
+        const closeIntroVideoBtn = document.getElementById('close-intro-video-btn');
+        const introVideoIframe = document.getElementById('intro-video-iframe');
+
+        if (closeIntroVideoBtn) {
+            closeIntroVideoBtn.addEventListener('click', function () {
+                // 컨테이너 숨기기
+                introVideoContainer.style.display = 'none';
+                // iframe의 src를 비워서 백그라운드에서 동영상이 계속 재생되는 것을 방지
+                introVideoIframe.src = ''; 
+            });
+        }
+        // ▲▲▲ 새로 추가할 동영상 닫기 기능 ▲▲▲
+    }); // DOMContentLoaded 끝부분
+
 
     window.addEventListener('load', function () {
         // 1초 후 나머지 이미지 백그라운드 로딩
