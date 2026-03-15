@@ -31,13 +31,12 @@
         /* 카드 내 이미지 슬라이더 맞춤 설정 */
         .carousel-inner, .carousel-item {
             height: 100%;
-            min-height: 350px;
         }
 
         .carousel-item img {
             height: 100%;
             width: 100%;
-            object-fit: cover;
+            object-fit: cover; /* 틀에 맞춰 꽉 채움 (찌그러짐 방지) */
             cursor: zoom-in;
             user-select: none;
         }
@@ -88,6 +87,7 @@
 
         .expandable-photo-card .photo-panel {
             cursor: pointer;
+            height: 100%; /* 데스크탑에서 부모 높이에 완벽히 고정 */
         }
 
         .expandable-photo-card.photo-expanded .text-section {
@@ -108,7 +108,6 @@
         .expandable-photo-card.photo-expanded .carousel-inner,
         .expandable-photo-card.photo-expanded .carousel-item {
             height: 100%;
-            min-height: 450px;
         }
 
         /* 확장 시 비율 유지하며 크게 */
@@ -140,7 +139,7 @@
             display: block;
         }
 
-        /* ▼▼▼ 다문화 소신 텍스트 스크롤 애니메이션 추가 ▼▼▼ */
+        /* 다문화 소신 텍스트 스크롤 애니메이션 */
         .scroll-container {
             height: 500px;
             overflow: hidden;
@@ -162,7 +161,6 @@
             0% { transform: translateY(500px); }
             100% { transform: translateY(-100%); }
         }
-        /* ▲▲▲ 다문화 소신 텍스트 스크롤 애니메이션 추가 ▲▲▲ */
 
         @media (max-width: 768px) {
             .text-section {
@@ -186,16 +184,25 @@
                 transform: scale(0.5);
             }
 
+            /* 모바일에서 사진 영역 비율을 4:3으로 완전히 고정하여 점프 현상 방지 */
+            .expandable-photo-card .photo-panel {
+                height: auto;
+                aspect-ratio: 4 / 3;
+            }
+
             .expandable-photo-card.photo-expanded .photo-panel {
                 width: 100%;
                 max-width: 100%;
                 flex: 0 0 100%;
+                aspect-ratio: auto; /* 확장 시에는 비율 고정 해제 */
+                height: 60vh; /* 확장 시 화면의 60% 높이 사용 */
             }
 
             .expandable-photo-card.photo-expanded .carousel,
             .expandable-photo-card.photo-expanded .carousel-inner,
             .expandable-photo-card.photo-expanded .carousel-item {
-                min-height: 320px;
+                height: 100%;
+                min-height: auto;
             }
         }
     </style>
@@ -574,7 +581,7 @@
             </div>
             <!-- 상하 스와이프 컨테이너 끝 -->
 
-            <!-- ▼▼▼ 새로 추가된 다문화에 대한 소신 스크롤 영역 ▼▼▼ -->
+            <!-- 다문화에 대한 소신 스크롤 영역 -->
             <div class="text-center mb-4 mt-5">
                 <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">다문화 행사의 취지</span></h1>
                 <p class="text-muted mt-2">마우스를 올리면 스크롤이 일시 정지됩니다.</p>
@@ -635,7 +642,6 @@
                     </div>
                 </div>
             </div>
-            <!-- ▲▲▲ 새로 추가된 다문화에 대한 소신 스크롤 영역 끝 ▲▲▲ -->
 
             <!-- 후보자 관련 기사 영역 -->
             <div class="text-center mb-4 mt-5">
