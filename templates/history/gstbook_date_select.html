@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+    <style>
+        a.btn {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">후보사무실 방문기념 방명록 보기</span></h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-11 col-xl-9 col-xxl-8">
+                <section>
+                    <div class="card shadow border-0 rounded-4 mb-5">
+                        <div class="card-body p-5">
+                            <div class="mb-5">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="feature bg-primary bg-gradient-primary-to-secondary text-white rounded-3 me-3">
+                                        <i class="bi bi-calendar"></i>
+                                    </div>
+                                    <h3 class="fw-bolder mb-0"><span class="text-gradient d-inline">방문 일자</span></h3>
+                                </div>
+
+                                {% if dates %}
+                                <!-- 동적 일자 생성 영역 -->
+                                <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+                                    {% for date in dates %}
+                                    <div class="col">
+                                        <div class="d-flex justify-content-between align-items-center bg-light rounded-4 p-3 h-100">
+                                            <!-- date 문자열(예: 20260311)을 슬라이싱하여 월/일 표시 (|int 로 앞의 0 제거) -->
+                                            <span class="fw-bold">{{ date[4:6]|int }}월 {{ date[6:8]|int }}일</span>
+                                            <span class="d-flex gap-2">
+                                                <a href="/tileview_gstbook/{{ date }}" class="btn btn-sm btn-outline-primary rounded-pill">방명록</a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center py-5 bg-light rounded-4">
+                                    <p class="text-muted mb-0">등록된 방명록이 없습니다.</p>
+                                </div>
+                                {% endif %}
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</main>
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+</body>
+</html>

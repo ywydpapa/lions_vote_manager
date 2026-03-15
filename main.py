@@ -1740,6 +1740,59 @@ async def api_get_distmembers(db: AsyncSession = Depends(get_db)):
     return JSONResponse(content=result)
 
 
+# ==========================================
+# [추가] 방명록 일자 선택 화면 (동적 일자 생성)
+# ==========================================
+@app.get("/select_gstbook", response_class=HTMLResponse)
+async def select_gstbook(request: Request):
+    gstbook_dir = Path("static/img/gstbook")
+    dates = set()
+
+    if gstbook_dir.exists():
+        for file in gstbook_dir.iterdir():
+            # 파일명이 gstb- 로 시작하는 파일만 처리
+            if file.is_file() and file.name.startswith("gstb-"):
+                parts = file.name.split("-")
+                if len(parts) >= 2:
+                    date_str = parts[1]  # {gdate} 추출
+                    dates.add(date_str)
+
+    # 최신 날짜가 먼저 오도록 내림차순 정렬
+    sorted_dates = sorted(list(dates), reverse=True)
+
+    return templates.TemplateResponse(
+        "history/gstbook_date_select.html",
+        {"request": request, "dates": sorted_dates}
+    )
+
+
+# ==========================================
+# [추가] 특정 일자의 방명록 타일뷰 화면
+# ==========================================
+@app.get("/tileview_gstbook/{gdate}", response_class=HTMLResponse)
+async def tileview_gstbook(request: Request, gdate: str):
+    gstbook_dir = Path("static/img/gstbook")
+    images = []
+
+    if gstbook_dir.exists():
+        valid_exts = ('.png', '.jpg', '.jpeg', '.gif', '.webp')
+        for file in gstbook_dir.iterdir():
+            # 해당 날짜(gdate)가 포함된 파일만 필터링
+            if file.is_file() and file.name.startswith(f"gstb-{gdate}-") and file.name.lower().endswith(valid_exts):
+                images.append(f"/static/img/gstbook/{file.name}")
+
+    # 자연 정렬 (숫자 순서대로 정렬)
+    def natural_sort_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
+    images.sort(key=natural_sort_key)
+
+    return templates.TemplateResponse(
+        "history/gstbook_tileview.html",
+        {"request": request, "date": gdate, "images": images}
+    )
+
+
 if __name__ == "__main__":
     import uvicorn
 
