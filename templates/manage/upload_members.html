@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">회원 사진 일괄 업로드</span></h1>
+            <p class="lead fw-normal text-muted mb-0">회원 사진을 선택하여 원본 파일명 그대로 업로드합니다.</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="card shadow-sm border-0 rounded-3">
+                    <div class="card-body p-5">
+
+                        <!-- 1. 사진 파일 선택 (여러 장 가능) -->
+                        <div class="mb-4">
+                            <label for="photoFiles" class="form-label fw-bold">1. 회원 사진 선택 (다중 선택 가능)</label>
+                            <!-- multiple 속성으로 여러 파일 동시 선택 지원 -->
+                            <input class="form-control form-control-lg" type="file" id="photoFiles" multiple accept="image/jpeg, image/png, image/webp">
+                            <div class="form-text mt-2 text-primary">
+                                <i class="bi bi-info-circle"></i> 파일명 그대로 /static/img/members 폴더에 저장됩니다. (예: 홍길동.jpg)
+                            </div>
+                        </div>
+
+                        <!-- 2. 업로드 버튼 -->
+                        <div class="d-grid gap-2 mt-5">
+                            <button class="btn btn-primary btn-lg" type="button" onclick="uploadPhotos()" id="uploadBtn">
+                                🚀 선택한 사진 업로드하기
+                            </button>
+                        </div>
+
+                        <!-- 3. 업로드 진행 상태 및 결과 표시 영역 -->
+                        <div class="mt-4" id="resultArea" style="display: none;">
+                            <h5 class="fw-bold mb-3">업로드 결과</h5>
+                            <ul class="list-group" id="resultList">
+                                <!-- 결과가 여기에 동적으로 추가됩니다 -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+    // 사진 업로드 실행 함수
+    async function uploadPhotos() {
+        const fileInput = document.getElementById('photoFiles');
+        const files = fileInput.files;
+        const uploadBtn = document.getElementById('uploadBtn');
+        const resultArea = document.getElementById('resultArea');
+        const resultList = document.getElementById('resultList');
+
+        // 유효성 검사
+        if (files.length === 0) {
+            alert('업로드할 사진을 1장 이상 선택해주세요.');
+            return;
+        }
+
+        // UI 초기화 및 로딩 상태
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 업로드 중...';
+        resultArea.style.display = 'block';
+        resultList.innerHTML = '';
+
+        let successCount = 0;
+
+        // 선택한 파일들을 순회하며 하나씩 서버로 전송
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const formData = new FormData();
+            formData.append('photo', file); // 백엔드의 File(...) 매개변수 이름과 동일하게 'photo' 사용
+
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+            listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-secondary rounded-pill">대기중</span>`;
+            resultList.appendChild(listItem);
+
+            try {
+                // 회원 사진 일괄 업로드 API 호출
+                const response = await fetch(`/api/memberphotoupload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const resultData = await response.json();
+                    listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-success rounded-pill">성공</span>`;
+                    successCount++;
+                } else {
+                    listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-danger rounded-pill">실패</span>`;
+                }
+            } catch (error) {
+                console.error("업로드 오류:", error);
+                listItem.innerHTML = `<span>${file.name}</span> <span class="badge bg-danger rounded-pill">오류</span>`;
+            }
+        }
+
+        // 업로드 완료 후 처리
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '🚀 선택한 사진 업로드하기';
+        fileInput.value = ''; // 파일 선택 초기화
+
+        alert(`총 ${files.length}장 중 ${successCount}장 업로드 완료되었습니다.`);
+    }
+</script>
+</body>
+</html>

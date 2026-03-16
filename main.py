@@ -1673,6 +1673,37 @@ async def tileview_gstbook(request: Request, gdate: str):
     )
 
 
+# 1. 프론트엔드 페이지를 렌더링하는 라우터
+@app.get("/upload_members", response_class=HTMLResponse)
+async def upload_members_page(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("manage/upload_members.html", {"request": request})
+
+
+# 2. 원본 파일명 그대로 /static/img/members 에 저장하는 API
+@app.post("/api/memberphotoupload")
+async def upload_member_photo_batch(photo: UploadFile = File(...)):
+    if photo.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(status_code=415, detail=f"Unsupported content type: {photo.content_type}")
+
+    # 원본 파일명 사용
+    filename = photo.filename
+    save_path = Path(MEMBERPHOTO_DIR) / filename
+
+    # 디렉토리가 없으면 생성
+    os.makedirs(MEMBERPHOTO_DIR, exist_ok=True)
+
+    try:
+        with save_path.open("wb") as buffer:
+            shutil.copyfileobj(photo.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {e}")
+
+    url_path = f"/static/img/members/{filename}"
+    return {"filename": filename, "url": url_path}
+
+
 if __name__ == "__main__":
     import uvicorn
 
