@@ -88,13 +88,13 @@
                                                             {% endfor %}
                                                             <option value="12:00">12:00</option>
                                                         {% elif ap == '오후' %}
-                                                            {% for h in range(13, 16) %}
+                                                            {% for h in range(13, 17) %}
                                                                 {% for m in [0,30] %}
                                                                     {% set mm = "%02d"|format(m) %}
                                                                     <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
                                                                 {% endfor %}
                                                             {% endfor %}
-                                                            <option value="17:00">17:00</option>
+                                                            <option value="18:00">18:00</option>
                                                         {% else %}
                                                             <option value="" selected disabled>오전/오후를 확인할 수 없습니다
                                                             </option>
