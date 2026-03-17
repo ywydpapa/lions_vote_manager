@@ -123,18 +123,21 @@
       return;
     }
 
+    // [수정됨] 방문자 4, 5 열 추가 및 테이블 최소 너비, 열 비율 조정
     let html = `
       <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
         <div class="table-responsive">
-          <table class="table table-bordered table-hover table-schedule mb-0" style="min-width: 800px;">
+          <table class="table table-bordered table-hover table-schedule mb-0" style="min-width: 1000px;">
             <thead>
               <tr>
-                <th style="width: 12%;">일자</th>
-                <th style="width: 10%;">시간</th>
-                <th style="width: 20%;">방문자 1</th>
-                <th style="width: 20%;">방문자 2</th>
-                <th style="width: 20%;">방문자 3</th>
-                <th style="width: 18%;">비고</th>
+                <th style="width: 10%;">일자</th>
+                <th style="width: 8%;">시간</th>
+                <th style="width: 13%;">방문자 1</th>
+                <th style="width: 13%;">방문자 2</th>
+                <th style="width: 13%;">방문자 3</th>
+                <th style="width: 13%;">방문자 4</th>
+                <th style="width: 13%;">방문자 5</th>
+                <th style="width: 17%;">비고</th>
               </tr>
             </thead>
             <tbody>
@@ -177,8 +180,8 @@
         // 시간
         html += `<td class="fw-bold text-secondary font-monospace">${hm(t)}</td>`;
 
-        // 방문자 1, 2, 3 처리 로직
-        for (let i = 0; i < 3; i++) {
+        // [수정됨] 방문자 1~5 처리 로직 (반복문 조건을 i < 5 로 변경)
+        for (let i = 0; i < 5; i++) {
           if (items[i]) {
             const r = items[i];
 
