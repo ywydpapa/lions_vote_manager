@@ -238,6 +238,24 @@
                 </div>
             </div>
 
+            <div id="intro-video-container" class="container mb-5 position-relative" style="max-width: 800px;">
+                <div class="card shadow border-0 rounded-4 overflow-hidden">
+                    <!-- 닫기 버튼 -->
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-2 bg-white rounded-circle p-2 shadow-sm" aria-label="Close" id="close-intro-video-btn" style="z-index: 10;"></button>
+
+                    <!-- 16:9 비율 유튜브 iframe -->
+                    <div class="ratio ratio-16x9">
+                        <iframe id="intro-video-iframe"
+                                src="https://www.youtube.com/embed/5XrLaiSA3ZE?autoplay=0"
+                                title="YouTube video player"
+                                frameborder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+
             <!-- 상하 스와이프 컨테이너 -->
             <div class="vertical-swipe-container">
 
