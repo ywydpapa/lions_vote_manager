@@ -233,9 +233,15 @@
                                 <td class="d-flex justify-content-between align-items-center">
                                     <span>{{ reserv.visitorName }}</span>
                                     {% if reserv.attrib != '1DONE1DONE' %}
-                                    <button type="button" class="btn btn-sm btn-success fw-bold"
-                                            onclick="confirmArrival()">방문확인
-                                    </button>
+                                        {% if reserv.attrib == '1111111111' %}
+                                        <button type="button" class="btn btn-sm btn-outline-danger fw-bold"
+                                                onclick="toggleArrival(false)">도착확인 취소
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="btn btn-sm btn-success fw-bold"
+                                                onclick="toggleArrival(true)">방문확인
+                                        </button>
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                             </tr>
@@ -639,14 +645,20 @@
         }
     }
 
-    async function confirmArrival() {
-        if (!confirm("방문자가 도착했습니까?")) return;
+    // 방문 확인 및 취소 토글 함수
+    async function toggleArrival(isArriving) {
+        const msg = isArriving ? "방문자가 도착했습니까?" : "도착 확인을 취소하고 예약 상태로 되돌리시겠습니까?";
+        if (!confirm(msg)) return;
+
+        // 백엔드 라우트에 맞게 URL 변경 (reserv_arrv_cancl)
+        const url = isArriving ? `/reserv_arrv/${reservNo}` : `/reserv_arrv_cancl/${reservNo}`;
+
         try {
-            const response = await fetch(`/reserv_arrv/${reservNo}`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
             if (response.ok) {
                 const result = await response.json();
-                if (result.arrived) {
-                    alert("방문 확인이 완료되었습니다.");
+                if (result.arrived || !isArriving) {
+                    alert(isArriving ? "방문 확인이 완료되었습니다." : "방문 확인이 취소되었습니다.");
                     location.reload();
                 } else {
                     alert("처리 중 오류가 발생했습니다.");

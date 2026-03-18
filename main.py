@@ -607,6 +607,27 @@ async def arrive_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         return JSONResponse({"arrived": False, "error": str(e)}, status_code=500)
 
 
+@app.post("/reserv_arrv_cancl/{reservno}")
+async def cancl_arrive_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
+    try:
+        query = text("""
+            update voteReserv
+            set modDate = :now, attrib = :attr
+            where reservNo = :reservno
+        """)
+        await db.execute(query, {
+            "now": datetime.now(),
+            "attr": "1000010000",
+            "reservno": reservno,
+        })
+        await db.commit()
+        reserv_dict = {"reservNo": reservno, "reservFrom":'' , "visitCnt": ''}
+        await hub.broadcast("reserv_updated", reserv_dict)
+        return JSONResponse({"arrived": True})
+    except Exception as e:
+        return JSONResponse({"arrived": False, "error": str(e)}, status_code=500)
+
+
 @app.get("/reserv_newclub/{clubno}/{dateno}", response_class=HTMLResponse)
 async def new_reservations(request: Request,clubno:int ,dateno: str, db: AsyncSession = Depends(get_db)):
     candino = int(os.getenv("candiNo"))
