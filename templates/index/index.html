@@ -228,7 +228,7 @@
 
         // 1. 불꽃놀이 효과 (사진 양옆 위쪽에서 터짐)
         function fireworkEffect() {
-            var duration = 2.5 * 1000;
+            var duration = 4.5 * 1000;
             var animationEnd = Date.now() + duration;
             var defaults = { startVelocity: 25, spread: 360, ticks: 60, zIndex: 1050 };
             const bounds = getProfileBounds();
@@ -238,7 +238,7 @@
                 if (timeLeft <= 0) {
                     return clearInterval(interval);
                 }
-                var particleCount = 40 * (timeLeft / duration);
+                var particleCount = 60 * (timeLeft / duration);
 
                 // 사진 왼쪽 상단 부근
                 confetti(Object.assign({}, defaults, {
@@ -262,12 +262,12 @@
             (function frame() {
                 // 사진 왼쪽 아래에서 바깥쪽(위-왼쪽)을 향해 발사
                 confetti({
-                    particleCount: 5, angle: 110, spread: 40, origin: { x: bounds.left, y: bounds.bottom - 0.05 },
+                    particleCount: 5, angle: 60, spread: 50, origin: { x: bounds.left, y: bounds.bottom - 0.05 },
                     colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'], zIndex: 1050
                 });
                 // 사진 오른쪽 아래에서 바깥쪽(위-오른쪽)을 향해 발사
                 confetti({
-                    particleCount: 5, angle: 70, spread: 40, origin: { x: bounds.right, y: bounds.bottom - 0.05 },
+                    particleCount: 5, angle: 120, spread: 50, origin: { x: bounds.right, y: bounds.bottom - 0.05 },
                     colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'], zIndex: 1050
                 });
                 if (Date.now() < end) {
