@@ -205,42 +205,113 @@
         {% include '/common/adscript.html' %}
 
         <!-- 축포 효과를 위한 canvas-confetti 라이브러리 추가 -->
-        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                // 프로필 요소를 찾습니다.
-                const profileElement = document.getElementById('profile-section');
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const profileElement = document.getElementById('profile-section');
+        let currentEffectIndex = 0;
 
-                function fireConfetti() {
-                    if (!profileElement) return;
+        // 프로필 사진의 정확한 위치와 크기를 가져오는 함수
+        function getProfileBounds() {
+            if (!profileElement) return { centerX: 0.5, centerY: 0.5, left: 0.4, right: 0.6, top: 0.4, bottom: 0.6 };
+            const rect = profileElement.getBoundingClientRect();
+            return {
+                centerX: (rect.left + rect.width / 2) / window.innerWidth,
+                centerY: (rect.top + rect.height / 2) / window.innerHeight,
+                left: rect.left / window.innerWidth,
+                right: rect.right / window.innerWidth,
+                top: rect.top / window.innerHeight,
+                bottom: rect.bottom / window.innerHeight
+            };
+        }
 
-                    // 프로필 사진의 현재 화면상 위치를 계산합니다.
-                    const rect = profileElement.getBoundingClientRect();
+        // 1. 불꽃놀이 효과 (사진 양옆 위쪽에서 터짐)
+        function fireworkEffect() {
+            var duration = 2.5 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 25, spread: 360, ticks: 60, zIndex: 1050 };
+            const bounds = getProfileBounds();
 
-                    // 화면 비율(0 ~ 1)로 변환하여 축포가 터질 중심점(origin)을 설정합니다.
-                    const x = (rect.left + rect.width / 2) / window.innerWidth;
-                    const y = (rect.top + rect.height / 2) / window.innerHeight;
-
-                    // 축포 실행
-                    confetti({
-                        particleCount: 250, // 꽃가루 개수
-                        spread: 100,        // 퍼지는 각도
-                        origin: { x: x, y: y }, // 프로필 사진 중앙에서 시작
-                        zIndex: 1050,       // 화면 최상단에 표시
-                        colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'] // 화려한 색상
-                    });
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
                 }
+                var particleCount = 40 * (timeLeft / duration);
 
-                // 페이지 로드 후 0.5초 뒤에 당선 축하 축포 발사
-                setTimeout(fireConfetti, 500);
+                // 사진 왼쪽 상단 부근
+                confetti(Object.assign({}, defaults, {
+                    particleCount,
+                    origin: { x: bounds.left - 0.02, y: bounds.top + (Math.random() * 0.2) }
+                }));
+                // 사진 오른쪽 상단 부근
+                confetti(Object.assign({}, defaults, {
+                    particleCount,
+                    origin: { x: bounds.right + 0.02, y: bounds.top + (Math.random() * 0.2) }
+                }));
+            }, 250);
+        }
 
-                // (선택사항) 프로필 사진을 클릭할 때마다 축포가 터지도록 설정
-                if(profileElement) {
-                    profileElement.addEventListener('click', fireConfetti);
-                    profileElement.style.cursor = 'pointer'; // 클릭 가능한 요소임을 나타냄
+        // 2. 양쪽 대포 효과 (사진 양쪽 아래 모서리에서 위로 쏘아 올림)
+        function sideCannonEffect() {
+            var duration = 2000;
+            var end = Date.now() + duration;
+            const bounds = getProfileBounds();
+
+            (function frame() {
+                // 사진 왼쪽 아래에서 바깥쪽(위-왼쪽)을 향해 발사
+                confetti({
+                    particleCount: 5, angle: 110, spread: 40, origin: { x: bounds.left, y: bounds.bottom - 0.05 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'], zIndex: 1050
+                });
+                // 사진 오른쪽 아래에서 바깥쪽(위-오른쪽)을 향해 발사
+                confetti({
+                    particleCount: 5, angle: 70, spread: 40, origin: { x: bounds.right, y: bounds.bottom - 0.05 },
+                    colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'], zIndex: 1050
+                });
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
                 }
-            });
-        </script>
+            }());
+        }
+
+        // 3. 황금빛 별가루 효과 (사진 정중앙에서 터지며 사진을 감쌈)
+        function goldenStarEffect() {
+            const bounds = getProfileBounds();
+            var defaults = {
+                spread: 360, ticks: 60, gravity: 0.5, decay: 0.94, startVelocity: 35,
+                colors: ['#FFE400', '#FFD700', '#B8860B', '#FFA500'], zIndex: 1050
+            };
+
+            function shoot() {
+                confetti({ ...defaults, particleCount: 50, scalar: 1.2, shapes: ['star'], origin: { x: bounds.centerX, y: bounds.centerY } });
+                confetti({ ...defaults, particleCount: 20, scalar: 0.75, shapes: ['circle'], origin: { x: bounds.centerX, y: bounds.centerY } });
+            }
+
+            setTimeout(shoot, 0);
+            setTimeout(shoot, 150);
+            setTimeout(shoot, 300);
+        }
+
+        const effects = [fireworkEffect, sideCannonEffect, goldenStarEffect];
+
+        function triggerNextEffect() {
+            effects[currentEffectIndex]();
+            currentEffectIndex = (currentEffectIndex + 1) % effects.length;
+        }
+
+        // 페이지 로드 후 0.5초 뒤에 첫 번째 효과 자동 발사
+        setTimeout(triggerNextEffect, 500);
+
+        // 프로필 사진 클릭 이벤트
+        if(profileElement) {
+            profileElement.addEventListener('click', triggerNextEffect);
+            profileElement.style.cursor = 'pointer';
+            profileElement.title = "클릭해서 축포를 터뜨려보세요!";
+        }
+    });
+</script>
+
     </body>
 </html>
