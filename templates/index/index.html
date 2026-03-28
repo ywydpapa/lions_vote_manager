@@ -56,14 +56,12 @@
                         <div class="col-xxl-7">
                             <!-- Header profile picture-->
                             <div class="d-flex justify-content-center mt-5 mt-xxl-0">
-                                <div class="profile bg-gradient-primary-to-secondary">
+                                <div class="profile bg-gradient-primary-to-secondary" id="profile-section">
 
                                     <!-- 수정된 부분: 이미지를 감싸는 wrapper div 추가 -->
                                     <div class="profile-img-wrapper">
                                         <img class="profile-img" src="/static/assets/profile.png" alt="..." />
                                     </div>
-                                    <!-- // 수정된 부분 끝 -->
-
                                     <div class="dots-1">
                                         <!-- SVG Dots-->
                                         <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 191.6 1215.4" style="enable-background: new 0 0 191.6 1215.4" xml:space="preserve">
@@ -189,15 +187,13 @@
                         <div class="col-xxl-8">
                             <div class="text-center my-5">
                                 <h2 class="display-5 fw-bolder"><span class="text-gradient d-inline">전희충</span></h2>
-                                
-                                <!-- 수정된 부분: 볼드체 적용 및 문장 합치기 -->
+
                                 <p class="lead fw-bold mb-4">근본적인 변화를 위한 새로운 선택.</p>
                                 <p class="lead fw-light mb-4">
                                     즐거운 봉사가 이어질 때 라이온의 자부심은 더욱 커지고 조직은 더욱 단단해집니다.<br>
                                     전희충 L은 현장의 목소리를 듣고 신뢰로 연결하며 실행으로 증명하는 리더가 되겠습니다.
                                 </p>
-                                <!-- // 수정된 부분 끝 -->
-                                
+
                             </div>
                         </div>
                     </div>
@@ -207,6 +203,44 @@
         <!-- Footer-->
         {% include '/common/footer.html' %}
         {% include '/common/adscript.html' %}
-        <script></script>
+
+        <!-- 축포 효과를 위한 canvas-confetti 라이브러리 추가 -->
+        <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                // 프로필 요소를 찾습니다.
+                const profileElement = document.getElementById('profile-section');
+
+                function fireConfetti() {
+                    if (!profileElement) return;
+
+                    // 프로필 사진의 현재 화면상 위치를 계산합니다.
+                    const rect = profileElement.getBoundingClientRect();
+
+                    // 화면 비율(0 ~ 1)로 변환하여 축포가 터질 중심점(origin)을 설정합니다.
+                    const x = (rect.left + rect.width / 2) / window.innerWidth;
+                    const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+                    // 축포 실행
+                    confetti({
+                        particleCount: 150, // 꽃가루 개수
+                        spread: 100,        // 퍼지는 각도
+                        origin: { x: x, y: y }, // 프로필 사진 중앙에서 시작
+                        zIndex: 1050,       // 화면 최상단에 표시
+                        colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'] // 화려한 색상
+                    });
+                }
+
+                // 페이지 로드 후 0.5초 뒤에 당선 축하 축포 발사
+                setTimeout(fireConfetti, 500);
+
+                // (선택사항) 프로필 사진을 클릭할 때마다 축포가 터지도록 설정
+                if(profileElement) {
+                    profileElement.addEventListener('click', fireConfetti);
+                    profileElement.style.cursor = 'pointer'; // 클릭 가능한 요소임을 나타냄
+                }
+            });
+        </script>
     </body>
 </html>
