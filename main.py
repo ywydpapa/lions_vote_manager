@@ -836,6 +836,37 @@ async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
     )
 
 
+@app.get("/viewer/club_view", response_class=HTMLResponse)
+async def view_candi(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    rows = await get_apireserv(db)
+    clubs = await get_clublist(db)
+    clubs_data = []
+    for row in clubs:
+        clubs_data.append({
+            "clubNo": row.clubNo,  # 혹은 row[0]
+            "clubName": row.clubName,  # 혹은 row[1]
+        })
+    result = []
+    for row in rows:
+        dt = row[4]
+        reserv_from = dt.isoformat(timespec="minutes") if hasattr(dt, "isoformat") else str(dt)
+        result.append({
+            "reservNo": row[0],
+            "reservFrom": reserv_from,
+            "visitCnt": row[7],
+            "reservMemo": row[8],
+            "visitorName": (row[12] or row[13]) or "",
+            "clubNo": row[2],
+            "attrib": row[11],
+        })
+    return templates.TemplateResponse(
+        "templete/club_view.html",
+        {"request": request, "reservs": result, "clubs": clubs_data},
+    )
+
+
 @app.get("/viewer/aide_view", response_class=HTMLResponse)
 async def view_aide(request: Request, db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):

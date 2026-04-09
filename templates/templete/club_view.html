@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+    <style>
+        .table-schedule th {
+            background-color: #f8f9fa;
+            font-weight: 700;
+            color: #495057;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .table-schedule td {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        /* 방문 일정 링크(버튼) 스타일 */
+        .visit-link {
+            text-decoration: none !important;
+            border-radius: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid transparent;
+        }
+
+        .visit-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 완료된 예약 (붉은색) */
+        .status-done {
+            background-color: #fff5f5;
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        /* 도착한 예약 (초록색) */
+        .status-arrive {
+            background-color: #f0fdf4;
+            color: #198754;
+            border-color: #198754;
+        }
+
+        /* 대기 중인 예약 (검은색/회색) */
+        .status-pending {
+            background-color: #f8f9fa;
+            color: #212529;
+            border-color: #ced4da;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bolder mb-0"><span class="text-gradient d-inline">클럽별 방문 목록</span></h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-12 col-xl-11">
+                <div id="scheduleRoot"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+  const pad2 = (n) => String(n).padStart(2, '0');
+
+  // 날짜 포맷팅 함수 (예: 3월 10일 14:30)
+  const formatDateTime = (d) => {
+      return `${d.getMonth()+1}월 ${d.getDate()}일 ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  };
+
+  function reservDtlUrl(reservNo) {
+    const n = Number(reservNo);
+    if (!Number.isFinite(n)) return '#';
+    // 후보자용 상세 페이지 경로
+    return `/view_reservdtl_candi/${n}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+      .replaceAll('"','&quot;').replaceAll("'","&#039;");
+  }
+
+  // === 화면을 그리는 메인 함수 ===
+  function renderSchedule(reservsData, clubsData) {
+    let rawReservs = (reservsData ?? []).map(r => ({ ...r, _dt: new Date(r.reservFrom) }));
+    let rawClubs = clubsData ?? [];
+
+    // ★ 1. 클럽 데이터 중복 제거 (clubNo 기준)
+    const uniqueClubsMap = new Map();
+    for (const club of rawClubs) {
+        if (!uniqueClubsMap.has(club.clubNo)) {
+            uniqueClubsMap.set(club.clubNo, club);
+        }
+    }
+    const clubs = Array.from(uniqueClubsMap.values());
+
+    // ★ 2. 예약 데이터 중복 제거 (reservNo 기준, 동일한 예약이 버튼으로 여러개 생기는 것 방지)
+    const uniqueReservsMap = new Map();
+    for (const r of rawReservs) {
+        if (!uniqueReservsMap.has(r.reservNo)) {
+            uniqueReservsMap.set(r.reservNo, r);
+        }
+    }
+    const reservs = Array.from(uniqueReservsMap.values());
+
+    // 클럽 번호(clubNo)를 기준으로 오름차순 정렬
+    clubs.sort((a, b) => Number(a.clubNo) - Number(b.clubNo));
+
+    const root = document.getElementById('scheduleRoot');
+
+    if (clubs.length === 0) {
+      root.innerHTML = `<div class="text-muted p-4 text-center bg-white rounded shadow-sm">등록된 클럽이 없습니다.</div>`;
+      return;
+    }
+
+    // 클럽 번호(clubNo)를 기준으로 예약 데이터 그룹화
+    const reservsByClub = {};
+    for (const r of reservs) {
+        if (!reservsByClub[r.clubNo]) {
+            reservsByClub[r.clubNo] = [];
+        }
+        reservsByClub[r.clubNo].push(r);
+    }
+
+    // 각 클럽의 예약 데이터를 시간순으로 정렬
+    for (const clubNo in reservsByClub) {
+        reservsByClub[clubNo].sort((a, b) => a._dt - b._dt);
+    }
+
+    let html = `
+      <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-schedule mb-0">
+            <thead>
+              <tr>
+                <th style="width: 15%;">클럽 번호</th>
+                <th style="width: 25%;">클럽명</th>
+                <th style="width: 60%;">방문 일정 (클릭 시 상세 이동)</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    // 클럽 목록을 순회하며 표의 행(Row) 생성
+    for (const club of clubs) {
+      const cNo = club.clubNo;
+      const cName = club.clubName;
+      const clubReservs = reservsByClub[cNo] || [];
+
+      html += `<tr>
+        <td class="fw-bold align-middle bg-light">${escapeHtml(cNo)}</td>
+        <td class="fw-bold align-middle bg-light">${escapeHtml(cName)}</td>
+        <td class="text-start align-middle p-3">
+      `;
+
+      if (clubReservs.length === 0) {
+        // 예약이 없는 경우
+        html += `<span class="text-muted small">예정된 방문이 없습니다.</span>`;
+      } else {
+        // 예약이 있는 경우, Flex 컨테이너 안에 버튼 형태로 나열
+        html += `<div class="d-flex flex-wrap gap-2">`;
+
+        for (const r of clubReservs) {
+            const status = r.attrib;
+
+            // 상태에 따른 클래스 부여
+            let textClass = 'status-pending'; // 기본 대기
+            if (status === '1DONE1DONE') {
+              textClass = 'status-done';      // 완료
+            } else if (status === '1111111111') {
+              textClass = 'status-arrive';    // 도착
+            }
+
+            // 방문일자 하이퍼링크 생성
+            html += `
+              <a href="${reservDtlUrl(r.reservNo)}" class="visit-link ${textClass}" title="${escapeHtml(r.reservMemo)}">
+                <i class="bi bi-calendar-check"></i> ${formatDateTime(r._dt)}
+                <span class="badge bg-secondary bg-opacity-25 text-dark ms-1">${escapeHtml(r.visitorName)} ${r.visitCnt}명</span>
+              </a>
+            `;
+        }
+        html += `</div>`;
+      }
+
+      html += `</td></tr>`;
+    }
+
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    root.innerHTML = html;
+  }
+
+  // === 1. 처음 페이지 로드 시 Jinja2로 넘겨받은 데이터로 즉시 렌더링 ===
+  const initialReservs = {{ reservs | tojson }};
+  const initialClubs = {{ clubs | tojson }};
+  renderSchedule(initialReservs, initialClubs);
+
+  // === 2. AJAX로 최신 데이터를 가져오는 함수 ===
+  async function fetchLatestSchedule() {
+    try {
+      const response = await fetch('/api/get_reserv');
+      if (response.ok) {
+        const data = await response.json();
+        // API에서 clubs 데이터를 같이 내려주면 갱신, 아니면 초기 클럽 데이터 유지
+        const updatedClubs = data.clubs ? data.clubs : initialClubs;
+        renderSchedule(data.reservs, updatedClubs);
+      }
+    } catch (error) {
+      console.error("스케줄 데이터를 불러오는 중 오류 발생:", error);
+    }
+  }
+
+  // === 3. 15초(15000ms)마다 백그라운드에서 갱신 (Polling) ===
+  // setInterval(fetchLatestSchedule, 15000);
+
+  // === 4. 브라우저 뒤로가기로 돌아왔을 때 최신화 ===
+  window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+      fetchLatestSchedule();
+    }
+  });
+
+</script>
+<!-- Bootstrap Icons (달력 아이콘용, 없으면 제외하셔도 됩니다) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+</body>
+</html>
