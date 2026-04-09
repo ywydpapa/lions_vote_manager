@@ -786,6 +786,41 @@ async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depend
     return templates.TemplateResponse("view/reserv_dtl_candi.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes, "cmembers":cmembers})
 
 
+@app.get("/view_reservdtl_candi2/{reservno}", response_class=HTMLResponse)
+async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    candino = int(os.getenv("candiNo"))
+    reserv_dtl = await get_reserv_dtl(reservno, db)
+    circleno = reserv_dtl["circleNo"]
+    clubno = reserv_dtl["clubNo"]
+    cmembers = await get_clubmembers(clubno, db) if clubno else []
+    if clubno:
+        clubdtl = await get_club_dtl(clubno, db)
+    else:
+        clubdtl = []
+    visitors = await get_visitors(reservno, db)
+    notes = await get_notelist("CANDI", db)
+    photo_dir = Path("static/img/event_photos")
+    files = sorted(photo_dir.glob(f"{reservno}-*.jpg"))
+    event_photos = [f"/static/img/event_photos/{p.name}" for p in files]
+    return templates.TemplateResponse("view/reserv_dtl_candi2.html", {"request": request, "reserv": reserv_dtl, "visitors": visitors,"event_photos": event_photos, "clubdtl": clubdtl, "notes":notes, "cmembers":cmembers})
+
+
+@app.get("/view_clubdtl_candi/{clubno}", response_class=HTMLResponse)
+async def view_clubdtl(request: Request,clubno:int ,db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    candino = int(os.getenv("candiNo"))
+    cmembers = await get_clubmembers(clubno, db) if clubno else []
+    if clubno:
+        clubdtl = await get_club_dtl(clubno, db)
+    else:
+        clubdtl = []
+    notes = await get_notelist("CANDI", db)
+    return templates.TemplateResponse("view/club_dtl_candi.html", {"request": request, "clubdtl": clubdtl, "notes":notes, "cmembers":cmembers})
+
+
 @app.get("/view_reservdtl_aide/{reservno}", response_class=HTMLResponse)
 async def view_visitors(request: Request,reservno:int ,db: AsyncSession = Depends(get_db)):
     if not request.session.get("vote_user_No"):
@@ -1462,6 +1497,32 @@ async def save_memo(request: MemoRequest):
 
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# 클럽 메모용 데이터 모델
+class ClubMemoData(BaseModel):
+    clubNo: str
+    image: str
+
+
+@app.post("/api/save_cmemo")
+async def save_cmemo(data: ClubMemoData):
+    try:
+        # base64 이미지 데이터 분리 (data:image/png;base64, 이후의 문자열)
+        image_data = data.image.split(",")[1]
+        # 저장할 폴더 경로 설정 (cmemo 폴더)
+        save_dir = "static/img/cmemo"
+        # 폴더가 없으면 생성
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        # 파일명은 클럽번호.png 로 저장
+        file_path = os.path.join(save_dir, f"{data.clubNo}.png")
+        # base64 디코딩 후 파일 쓰기
+        with open(file_path, "wb") as f:
+            f.write(base64.b64decode(image_data))
+        return {"message": "Success"}
+    except Exception as e:
+        return {"message": "Error", "details": str(e)}
 
 
 @app.get("/manage_ephoto", response_class=HTMLResponse)

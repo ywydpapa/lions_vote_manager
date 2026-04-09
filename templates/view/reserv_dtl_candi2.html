@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    {% include '/common/header.html' %}
+    <style>
+        .photos-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+        @media (min-width: 768px) { .photos-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        .photo-thumb { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; aspect-ratio: 4 / 3; }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .page-wrap { padding-top: 2vh; padding-bottom: 8vh; }
+        .summary-card { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; }
+        .summary-card .card-header { background: #fff; border-bottom: 1px solid #f0f2f4; font-weight: 800; }
+        .summary-table { width: 100%; margin: 0; }
+        .summary-table th { width: 140px; color: #6c757d; font-weight: 700; white-space: nowrap; }
+        .summary-table td { font-weight: 600; color: #212529; }
+        .avatar { border-radius: 999px; background: #f1f3f5; overflow: hidden; display: grid; place-items: center; border: 1px solid #eef0f3; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .html-viewer { flex-grow: 1; min-height: 200px; overflow-y: auto; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; font-size: 25px; }
+        .visitor-row { background-color: rgba(13, 110, 253, 0.03); }
+        .visitors-grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 1rem; }
+        @media (min-width: 768px) { .visitors-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 992px) { .visitors-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .person-card { border: 0; border-radius: 1rem; background: #fff; box-shadow: 0 .5rem 1.25rem rgba(0, 0, 0, .08); overflow: hidden; display: flex; gap: .9rem; padding: .9rem; align-items: center; min-height: 110px; }
+        .person-card .avatar { width: 72px; height: 72px; flex: 0 0 auto; }
+        .avatar .fallback { font-weight: 800; color: #868e96; }
+        .person-text { min-width: 0; flex: 1 1 auto; }
+        .person-name { font-weight: 800; margin: 0; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .person-sub { margin: .25rem 0 0 0; color: #6c757d; font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .avatar-wrap { position: relative; display: inline-block; }
+        .avatar-wrap.sm { width: 48px; height: 48px; }
+        .avatar-wrap.lg { width: 72px; height: 72px; flex: 0 0 72px; }
+        .avatar-wrap.sm .avatar { width: 48px; height: 48px; }
+        .avatar-wrap.lg .avatar { width: 72px; height: 72px; }
+        .right-badge { position: absolute; top: -4px; right: 0; color: #dc3545; font-size: 26px; font-weight: 900; line-height: 1; z-index: 5; text-shadow: 0 1px 2px rgba(255, 255, 255, 0.95); pointer-events: none; }
+        .avatar-wrap.sm .right-badge { font-size: 22px; top: -5px; right: -1px; }
+        .avatar-wrap.lg .right-badge { font-size: 28px; top: -6px; right: 0; }
+
+        /* 캔버스 래퍼 스타일 */
+        .canvas-wrapper {
+            flex-grow: 1;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+            touch-action: none; /* 모바일에서 캔버스 터치 시 스크롤 방지 */
+        }
+        #memoCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* 접기/펴기 아이콘 회전 애니메이션 */
+        .collapse-icon { transition: transform 0.3s ease; }
+        [aria-expanded="true"] .collapse-icon { transform: rotate(180deg); }
+    </style>
+</head>
+
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    {% include '/common/topnav.html' %}
+
+    <div class="container-fluid px-4 px-lg-5 mt-3 mb-5 page-wrap">
+        <div class="position-relative text-center mb-4">
+            <h1 class="display-5 fw-bolder mb-0">
+                <span class="text-gradient d-inline">방문처 상세 정보(후보자용)</span>
+            </h1>
+            <a href="/viewer/club_view"
+               class="btn btn-outline-secondary fw-bold position-absolute top-50 end-0 translate-middle-y">
+                목록으로 가기
+            </a>
+        </div>
+
+        <div class="row gx-4 justify-content-center">
+
+            <!-- 왼쪽 영역: 예약 정보 및 클럽 회원(방문자) 목록 그리드 -->
+            <div class="col-lg-6 mb-4">
+                <div class="card summary-card mb-4">
+                    <div class="card-body px-4 py-3">
+                        <table class="table summary-table align-middle">
+                            <tbody>
+                            <tr><th>예약번호</th><td>{{ reserv.reservNo }}</td></tr>
+                            <tr><th>예약일시</th><td>{% if reserv.reservFrom %}{{ reserv.reservFrom.strftime('%Y-%m-%d %H:%M') }}{% else %}-{% endif %}</td></tr>
+                            <tr><th>방문자수</th><td>{{ reserv.visitCnt }} 명</td></tr>
+                            <tr><th>방문처</th><td>{{ reserv.visitorName }}</td></tr>
+                            </tbody>
+                        </table>
+                        {% if reserv.reservMemo %}
+                        <div class="mt-2 text-muted small">메모: {{ reserv.reservMemo }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if reserv.clubNo %}
+                {% if clubdtl %}
+                <div class="card summary-card mb-4">
+                    <div class="card-body px-4 py-3">
+                        <table class="table summary-table align-middle">
+                            <tbody>
+                            <tr><th>창립일</th><td>{% if clubdtl.estDate %}{{ clubdtl.estDate.strftime('%Y-%m-%d') }}{% else %}-{% endif %}</td></tr>
+                            <tr><th>소속지역</th><td>{{ clubdtl.regionNo }} 지역</td></tr>
+                            <tr><th>추가정보</th><td style="white-space: pre-wrap;">{{ clubdtl.infoContent }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                    <div class="fw-bolder">클럽 회원 목록</div>
+                    <div class="text-muted small">총 {{ cmembers|length }}명</div>
+                </div>
+
+                <div class="card summary-card mb-4">
+                    <div class="card-body p-0">
+                        <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                            <table class="table table-hover align-middle text-center mb-0">
+                                <thead class="table-light sticky-top" style="z-index: 2;">
+                                <tr><th scope="col" style="width: 80px;">사진</th><th scope="col">이름</th><th scope="col">직책</th><th scope="col">방문여부</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for m in cmembers %}
+                                {% set m_no = m[0] %}
+                                {% set m_name = m[1] %}
+                                {% set m_title = m[3] %}
+                                {% set check = namespace(is_visitor=false, has_right=false) %}
+                                {% for v in visitors %}
+                                    {% if v[0]|string == m_no|string %}
+                                        {% set check.is_visitor = true %}
+                                        {% if v[4] is not none %}{% set check.has_right = true %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if check.is_visitor %}
+                                <tr class="visitor-row">
+                                    <td class="py-2">
+                                        <div class="avatar-wrap sm mx-auto">
+                                            <div class="avatar"><img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                                            {% if check.has_right %}<span class="right-badge">*</span>{% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold">{{ m_name }}</td>
+                                    <td class="text-muted small">{{ m_title }}</td>
+                                    <td><span class="text-primary fw-bolder fs-4" title="방문 예정">○</span></td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% for m in cmembers %}
+                                {% set m_no = m[0] %}
+                                {% set m_name = m[1] %}
+                                {% set m_title = m[3] %}
+                                {% set check = namespace(is_visitor=false, has_right=false) %}
+                                {% for v in visitors %}
+                                    {% if v[0]|string == m_no|string %}
+                                        {% set check.is_visitor = true %}
+                                        {% if v[4] is not none %}{% set check.has_right = true %}{% endif %}
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if not check.is_visitor %}
+                                <tr>
+                                    <td class="py-2">
+                                        <div class="avatar-wrap sm mx-auto">
+                                            <div class="avatar"><img src="/static/img/members/mphoto_{{ m_no }}.png" alt="{{ m_name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                                            {% if check.has_right %}<span class="right-badge">*</span>{% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="fw-bold">{{ m_name }}</td>
+                                    <td class="text-muted small">{{ m_title }}</td>
+                                    <td><span class="text-muted opacity-25 fs-5">-</span></td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if not cmembers %}
+                                <tr><td colspan="4" class="text-muted py-5">등록된 회원 정보가 없습니다.</td></tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {% elif reserv.circleNo %}
+                <div class="d-flex justify-content-between align-items-end mb-2 mt-4">
+                    <div class="fw-bolder">방문자 목록</div>
+                    <div class="text-muted small">총 {{ visitors|length }}명</div>
+                </div>
+
+                <div class="visitors-grid mb-4">
+                    {% for v in visitors %}
+                    {% set memberNo = v[0] %}
+                    {% set name = v[1] %}
+                    {% set org = v[2] %}
+                    {% set title = v[3] %}
+                    {% set rightNo = v[4] if v|length > 4 else none %}
+
+                    <div class="person-card">
+                        <div class="avatar-wrap lg">
+                            <div class="avatar"><img src="/static/img/members/mphoto_{{ memberNo }}.png" alt="{{ name }}" loading="lazy" onerror="this.onerror=null; this.src='/static/img/members/defaultphoto.png';"></div>
+                            {% if rightNo is not none %}<span class="right-badge">*</span>{% endif %}
+                        </div>
+                        <div class="person-text">
+                            <p class="person-name mb-0">{{ name }}</p>
+                            <p class="person-sub mb-0">{{ org }}<br>{{ title }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 오른쪽 영역: 인사말 + 메모장 (접기/펴기 기능 추가) -->
+            <div class="col-lg-6 mb-4 d-flex flex-column gap-3">
+
+                <!-- 상단: 인사말 -->
+                <div class="card summary-card d-flex flex-column flex-grow-1">
+                    <!-- 헤더 (클릭 시 접기/펴기) -->
+                    <div class="card-header d-flex justify-content-between align-items-center py-3"
+                         data-bs-toggle="collapse" data-bs-target="#collapseGreeting"
+                         aria-expanded="true" style="cursor: pointer;">
+                        <h5 class="fw-bolder mb-0">인사말</h5>
+                        <span class="text-muted small d-flex align-items-center gap-1">
+                            접기/펴기 <span class="collapse-icon">▼</span>
+                        </span>
+                    </div>
+                    <!-- 본문 (Collapse) -->
+                    <div id="collapseGreeting" class="collapse show flex-grow-1">
+                        <div class="card-body px-4 py-4 d-flex flex-column h-100" style="min-height: 400px;">
+                            <select id="noteSelect" class="form-select mb-3" onchange="renderNote()">
+                                {% for note in notes %}
+                                <option value="{{ note.noteNo }}">{{ note.noteTitle }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="noteViewer" class="html-viewer">
+                                <div class="h-100 d-flex align-items-center justify-content-center text-muted">
+                                    상단에서 문서를 선택하면 내용이 표시됩니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 하단: 메모장 -->
+                <div class="card summary-card d-flex flex-column">
+                    <!-- 헤더 (클릭 시 접기/펴기, 기본적으로 접혀있도록 aria-expanded="false" 및 collapsed 클래스 적용) -->
+                    <div class="card-header d-flex justify-content-between align-items-center py-3 collapsed"
+                         data-bs-toggle="collapse" data-bs-target="#collapseMemo"
+                         aria-expanded="false" style="cursor: pointer;">
+                        <h5 class="fw-bolder mb-0">메모</h5>
+                        <span class="text-muted small d-flex align-items-center gap-1">
+                            접기/펴기 <span class="collapse-icon">▼</span>
+                        </span>
+                    </div>
+                    <!-- 본문 (Collapse, 기본적으로 접혀있도록 show 클래스 제거) -->
+                    <div id="collapseMemo" class="collapse">
+                        <!-- 높이를 600px로 변경 -->
+                        <div class="card-body px-4 py-3 d-flex flex-column" style="height: 600px;">
+                            <div class="d-flex justify-content-end mb-2">
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="clearCanvas()">지우기</button>
+                                <button class="btn btn-sm btn-primary" onclick="saveMemo()">저장</button>
+                            </div>
+                            <div class="canvas-wrapper" id="canvasContainer">
+                                <canvas id="memoCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+
+<script>
+    // --- 1. 인사말 렌더링 로직 ---
+    const notesData = {{notes | tojson | safe |default('[]')}};
+
+    function renderNote() {
+        const select = document.getElementById('noteSelect');
+        const viewer = document.getElementById('noteViewer');
+        const selectedId = select.value;
+
+        if (!selectedId) {
+            viewer.innerHTML = `<div class="h-100 d-flex align-items-center justify-content-center text-muted">등록된 인사말이 없습니다.</div>`;
+            return;
+        }
+        const note = notesData.find(n => String(n.noteNo) === String(selectedId));
+        if (note && note.noteContents) {
+            viewer.innerHTML = note.noteContents;
+        } else {
+            viewer.innerHTML = `<div class="text-danger">문서 내용을 불러올 수 없습니다.</div>`;
+        }
+    }
+
+    // --- 2. 메모장(Canvas) 로직 ---
+    const canvas = document.getElementById('memoCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvasContainer');
+    let isDrawing = false;
+
+    // 캔버스 크기를 부모 컨테이너에 맞춤
+    function resizeCanvas() {
+        if (!container || container.clientWidth === 0) return; // 닫혀있을 땐 무시
+
+        // 기존에 그려진 내용을 임시 저장
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (canvas.width > 0) {
+            tempCtx.drawImage(canvas, 0, 0);
+        }
+
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        // 배경을 흰색으로 채움
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 리사이즈 후 기존 내용 복구
+        if (canvas.width > 0 && tempCanvas.width > 0) {
+            ctx.drawImage(tempCanvas, 0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    // 좌표 구하기 (마우스 및 터치 지원)
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    function startDrawing(e) {
+        isDrawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        e.preventDefault(); // 스크롤 방지
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.strokeStyle = '#000000'; // 펜 색상
+        ctx.lineWidth = 3;           // 펜 굵기
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        e.preventDefault();
+    }
+
+    function stopDrawing() {
+        isDrawing = false;
+        ctx.closePath();
+    }
+
+    // 캔버스 초기화
+    function clearCanvas() {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // 저장된 메모 불러오기
+    function loadMemo() {
+        if (!container || container.clientWidth === 0) return; // 닫혀있을 땐 불러오지 않음
+
+        const img = new Image();
+        // 브라우저 캐시(이전 이미지 기억) 방지를 위해 현재 시간을 뒤에 붙여줍니다.
+        img.src = `/static/img/memo/{{ reserv.reservNo }}.png?t=` + new Date().getTime();
+
+        img.onload = function() {
+            // 이미지가 존재하면 캔버스 크기에 맞춰서 그려줍니다.
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+
+        img.onerror = function() {
+            console.log("저장된 메모가 없습니다.");
+        };
+    }
+
+    // 메모 저장 (서버로 전송)
+    async function saveMemo() {
+        const reservNo = '{{ reserv.reservNo }}';
+        const dataURL = canvas.toDataURL('image/png');
+
+        try {
+            const response = await fetch('/api/save_memo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reservNo: reservNo,
+                    image: dataURL
+                })
+            });
+
+            if (response.ok) {
+                alert('메모가 성공적으로 저장되었습니다.');
+            } else {
+                alert('메모 저장에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('오류가 발생했습니다.');
+        }
+    }
+
+    // 이벤트 리스너 등록
+    window.addEventListener('resize', resizeCanvas);
+
+    // 마우스 이벤트
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // 터치 이벤트 (모바일 지원)
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    // ★ 부트스트랩 Collapse 이벤트 (메모장이 다시 펼쳐질 때 캔버스 크기 재계산)
+    const memoCollapse = document.getElementById('collapseMemo');
+    if (memoCollapse) {
+        memoCollapse.addEventListener('shown.bs.collapse', function () {
+            resizeCanvas();
+            // 펼쳐질 때 이미지가 날아갈 수 있으므로 다시 불러오기
+            loadMemo();
+        });
+    }
+
+    // ★ 인사말이 접힐 때 메모장을 자동으로 펼치는 이벤트
+    const greetingCollapse = document.getElementById('collapseGreeting');
+    if (greetingCollapse && memoCollapse) {
+        greetingCollapse.addEventListener('hide.bs.collapse', function () {
+            // 인사말 영역이 접히기 시작할 때, 메모장 영역을 펼침
+            let memoInstance = bootstrap.Collapse.getInstance(memoCollapse);
+            if (!memoInstance) {
+                memoInstance = new bootstrap.Collapse(memoCollapse, { toggle: false });
+            }
+            memoInstance.show();
+        });
+    }
+
+    // DOM 로딩 완료 시 실행
+    window.addEventListener('DOMContentLoaded', () => {
+        if (notesData.length > 0) renderNote();
+        setTimeout(() => {
+            resizeCanvas();
+            loadMemo();
+        }, 100);
+    });
+</script>
+
+</body>
+</html>
