@@ -59,11 +59,19 @@
 </style>
 
     <style>
+        /* 💡 기존 이미지와 미리보기 이미지 모두에게 동일한 크기 제한 적용 */
+        .image-container img {
+            max-width: 200px;  /* 최대 너비 */
+            max-height: 250px; /* 최대 높이 */
+            object-fit: contain; /* 비율을 유지하면서 잘리지 않게 영역 안에 맞춤 */
+            border-radius: 8px; /* 모서리를 살짝 둥글게 (선택사항) */
+            border: 1px solid #dee2e6; /* 깔끔한 테두리 추가 (선택사항) */
+            padding: 5px;
+            background-color: #fff;
+        }
+
         #imagePreview {
             display: none; /* 기본적으로 숨김 */
-            max-width: 200px; /* 최대 너비 설정 */
-            max-height: 250px; /* 최대 높이 설정 */
-            margin-top: 10px;
         }
 
         .image-container {
@@ -105,7 +113,7 @@
                                         <input type="file" name="file" accept="image/*" required
                                                onchange="displayFileInfo(this)">
                                         <span id="fileSize"></span>
-                                        <input type="submit" value="회원사진 Upload"></form>
+                                        <input type="submit" value="회원사진 Upload" class="btn btn-sm btn-secondary ms-2"></form>
                                 </td>
                                 </tr>
                             </tbody>
@@ -116,11 +124,11 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td> 회원명 </td>
+                                    <td style="vertical-align: middle;"> 회원명 </td>
                                     <td><input class="form-control" id="membername" name="membername" type="text" required value="{{memberdtl[1]}}"></td>
                                 </tr>
                                 <tr>
-                                    <td> 직책 </td>
+                                    <td style="vertical-align: middle;"> 직책 </td>
                                     <td><select class="form-control selectpicker" data-live-search ="true" id="memberrank" name="memberrank">
                                         {% for rnk in ranks %}
                                         <option value="{{ rnk[0] }}" {% if rnk[0]|int== memberdtl[2]|int %} selected {% endif %}>{{ rnk[1] }}</option>
@@ -128,7 +136,7 @@
                                     </select></td>
                                 </tr>
                                 <tr>
-                                    <td> 소속클럽 </td>
+                                    <td style="vertical-align: middle;"> 소속클럽 </td>
                                     <td>
                                         <select class="form-control selectpicker" data-live-search="true" id="memberclub" name="memberclub" required>
                                             <option value="">클럽선택</option>
