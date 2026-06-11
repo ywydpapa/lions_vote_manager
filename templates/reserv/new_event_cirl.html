@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include '/common/header.html' %}
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+<main class="flex-shrink-0">
+    <!-- Navigation-->
+    {% include '/common/topnav.html' %}
+    <!-- Page Content-->
+    <div class="container px-5 my-5">
+        <div class="text-center mb-5">
+            {% set s = dateno|string %}
+            {% set mm = s[0:2] %}
+            {% set dd = s[2:4] %}
+            {% set ap = '오전' if s[4:5] == '1' else '오후' if s[4:5] == '2' else '' %}
+            <h1 class="display-5 fw-bolder mb-0">
+                <span class="text-gradient d-inline">{{ mm }}월 {{ dd }}일{% if ap %} ({{ ap }}){% endif %}
+                    모임 방문 접수</span>
+            </h1>
+        </div>
+        <div class="row gx-5 justify-content-center">
+            <div class="col-lg-11 col-xl-9 col-xxl-8">
+                <section>
+                    {# ===== 서클 선택 (카드 상부) ===== #}
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body p-4">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-12 col-lg-6">
+                                    <label for="circlen" class="form-label fw-semibold mb-1">모임 선택</label>
+                                    <select class="form-select form-select-lg" id="circlen" name="circlen">
+                                        {% for circle in circles %}
+                                            <option value="{{ circle[0] }}">{{ circle[1] }}</option>
+                                        {% endfor %}
+                                        <option value="__custom__">직접입력</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-lg-6">
+                                    <label class="form-label fw-semibold mb-1">직접입력</label>
+                                    <div class="input-group input-group-lg">
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="circle_custom"
+                                                name="circle_custom"
+                                                placeholder="직접 입력을 선택하면 여기에 입력하세요"
+                                                disabled
+                                        />
+                                        <button class="btn btn-outline-primary" type="button" id="btnCircleSave"
+                                                disabled>
+                                            저장
+                                        </button>
+                                    </div>
+                                    <div class="form-text">“직접입력” 선택 후 입력하고 저장을 누르세요.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card shadow border-0 rounded-4 mb-5">
+                        <div class="card-body p-5">
+                            <div class="mb-5">
+                                <div class="d-flex align-items-center mb-4">
+                                    <div class="row g-4">
+                                        <div class="col-12 col-lg-4">
+                                            <div class="card h-100 shadow-sm border-0 rounded-4">
+                                                <div class="card-body p-4">
+                                                    <h5 class="fw-bolder mb-3">방문 예정 시간 선택</h5>
+                                                    <div class="mb-2 text-muted">
+                                                        선택 구간:
+                                                        {% if ap == '오전' %}
+                                                            오전 09:00 ~ 12:00 (30분 간격)
+                                                        {% elif ap == '오후' %}
+                                                            오후 13:00 ~ 17:00 (30분 간격)
+                                                        {% else %}
+                                                            (오전/오후 정보 없음)
+                                                        {% endif %}
+                                                    </div>
+                                                    <label for="visit_time"
+                                                           class="form-label fw-semibold">방문예정시간</label>
+                                                    <select class="form-select" id="visit_time" name="visit_time"
+                                                            required>
+                                                        {% if ap == '오전' %}
+                                                            {% for h in range(9, 12) %}
+                                                                {% for m in [0,30] %}
+                                                                    {% set mm = "%02d"|format(m) %}
+                                                                    <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
+                                                                {% endfor %}
+                                                            {% endfor %}
+                                                            <option value="12:00">12:00</option>
+                                                        {% elif ap == '오후' %}
+                                                            {% for h in range(13, 17) %}
+                                                                {% for m in [0,30] %}
+                                                                    {% set mm = "%02d"|format(m) %}
+                                                                    <option value="{{ "%02d"|format(h) }}:{{ mm }}">{{ "%02d"|format(h) }}:{{ mm }}</option>
+                                                                {% endfor %}
+                                                            {% endfor %}
+                                                            <option value="18:00">18:00</option>
+                                                        {% else %}
+                                                            <option value="" selected disabled>오전/오후를 확인할 수 없습니다
+                                                            </option>
+                                                        {% endif %}
+                                                    </select>
+                                                    <div class="form-text mt-2">
+                                                        30분 단위로 선택됩니다.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 col-lg-8">
+                                            <div class="card h-100 shadow-sm border-0 rounded-4">
+                                                <div class="card-body p-4">
+                                                    <h5 class="fw-bolder mb-3">방문 회원 선택</h5>
+
+                                                    <div class="row g-3">
+                                                        <!-- 왼쪽: 검색 + 검색결과 -->
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <label class="form-label fw-semibold mb-0">회원 검색</label>
+                                                                <small class="text-muted" id="searchCount">0명</small>
+                                                            </div>
+
+                                                            <input id="memberSearch" class="form-control mb-2"
+                                                                   type="text"
+                                                                   placeholder="이름/기수/전화 일부로 검색 (예: 홍길동, 23기, 010-)"/>
+
+                                                            <select class="form-select" id="memberPool"
+                                                                    size="12"></select>
+
+                                                            <div class="form-text mt-2">
+                                                                더블클릭: 선택목록으로 추가
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- 오른쪽: 선택된 방문회원 -->
+                                                        <div class="col-12 col-lg-6">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <label class="form-label fw-semibold mb-0">선택된
+                                                                    방문회원</label>
+                                                                <small class="text-muted" id="pickedCount">선택 0명</small>
+                                                            </div>
+
+                                                            <select class="form-select" id="memberPicked"
+                                                                    size="12"></select>
+
+                                                            <div class="d-flex gap-2 mt-2">
+                                                                <button type="button"
+                                                                        class="btn btn-outline-secondary btn-sm"
+                                                                        id="btnRemoveSelected">
+                                                                    선택 제거
+                                                                </button>
+                                                                <button type="button"
+                                                                        class="btn btn-outline-danger btn-sm"
+                                                                        id="btnClearPicked">
+                                                                    전체 비우기
+                                                                </button>
+                                                            </div>
+
+                                                            <div class="form-text mt-2">
+                                                                더블클릭: 검색목록으로 되돌리기(제거)
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-3 align-items-end mt-4">
+                                <div class="col-12 col-lg-9">
+                                    <label for="reservMemo" class="form-label fw-semibold mb-1">방문메모</label>
+                                    <textarea id="reservMemo" class="form-control" rows="2" maxlength="200" placeholder="예) 검색안되는 방문자 기록등"></textarea>
+                                    <div class="form-text">최대 200자</div>
+                                </div>
+                                <div class="col-12 col-lg-3 d-flex justify-content-lg-end">
+                                    <button id="btnSubmit" class="btn btn-primary rounded-pill w-100 w-lg-auto" type="button">신청</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+            </div>
+        </div>
+        {# ===== 예약 내역 카드 ===== #}
+        <div class="card shadow border-0 rounded-4 mb-5">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bolder mb-0">방문 예약 내역</h5>
+                    <small class="text-muted">최근/현재 예약</small>
+                </div>
+
+                <div id="reservListArea">
+                    <div class="text-muted">모임을 선택하면 예약 내역이 표시됩니다.</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</main>
+<!-- Footer-->
+{% include '/common/footer.html' %}
+{% include '/common/adscript.html' %}
+<script>
+  // ===== 서버 템플릿 변수 =====
+  const clubNo = "{{ clubno }}";
+  const dateno = "{{ dateno }}"; // "MMDD{1|2}"
+
+  // membersData: [{id,label,position}, ...]
+  const membersData = [
+    {% for m in members %}
+      {
+        id: {{ m[0] }},
+        label: "{{ (m[5] ~ ' / ' ~ m[1])|replace('\\', '\\\\')|replace('"', '\\"') }}",
+        position: "{{ (m[4] or '')|replace('\\', '\\\\')|replace('"', '\\"') }}"
+      },
+    {% endfor %}
+  ];
+
+  // ===== DOM =====
+  const circleSelect = document.getElementById('circlen');
+  const customInput = document.getElementById('circle_custom');
+  const btnCircleSave = document.getElementById('btnCircleSave');
+
+  const elSearch = document.getElementById('memberSearch');
+  const elPool = document.getElementById('memberPool');
+  const elPicked = document.getElementById('memberPicked');
+  const elSearchCount = document.getElementById('searchCount');
+  const elPickedCount = document.getElementById('pickedCount');
+  const btnRemoveSelected = document.getElementById('btnRemoveSelected');
+  const btnClearPicked = document.getElementById('btnClearPicked');
+
+  const reservListArea = document.getElementById('reservListArea');
+  const visitTimeSelect = document.getElementById('visit_time');
+  const btnSubmit = document.getElementById('btnSubmit');
+
+  // ===== 상태 =====
+  const pickedSet = new Set();        // 선택된 회원
+  let currentReservList = [];         // 현재 선택된 circle의 예약 목록(서버에서 받은 원본)
+  let currentReservIndex = new Map(); // key(dateno__HH:MM) -> {reservNo, dateno, time}
+
+  // ===== 유틸: 문자열 정규화 =====
+  function normalizeName(s) {
+    return (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+  }
+
+  function normalize(s) {
+    return (s || '').toLowerCase().trim();
+  }
+
+  // ===== 1) Circle UI (직접입력/저장) =====
+  function syncCircleUI() {
+    const isCustom = circleSelect.value === '__custom__';
+    customInput.disabled = !isCustom;
+    btnCircleSave.disabled = !isCustom;
+
+    if (!isCustom) customInput.value = '';
+    if (isCustom) customInput.focus();
+  }
+
+  function findCircleValueByName(inputName) {
+    const target = normalizeName(inputName);
+    if (!target) return null;
+
+    for (const opt of circleSelect.options) {
+      if (opt.value === '__custom__') continue;
+      const optName = normalizeName(opt.textContent);
+      if (optName === target) return opt.value; // "0"여도 OK
+    }
+    return null;
+  }
+
+  async function reloadCirclesAndSelectByName(circleName) {
+    const res = await fetch('/circles');
+    if (!res.ok) throw new Error(await res.text());
+    const circles = await res.json(); // [{id, name}, ...]
+
+    circleSelect.innerHTML = '';
+    for (const c of circles) {
+      const opt = document.createElement('option');
+      opt.value = String(c.id);
+      opt.textContent = c.name;
+      circleSelect.appendChild(opt);
+    }
+    const customOpt = document.createElement('option');
+    customOpt.value = '__custom__';
+    customOpt.textContent = '직접입력';
+    circleSelect.appendChild(customOpt);
+
+    const found = circles.find(c => (c.name || '').trim() === circleName.trim());
+    circleSelect.value = found ? String(found.id) : '__custom__';
+
+    syncCircleUI();
+  }
+
+  // ===== 2) Member picker (검색/선택) =====
+  function matches(member, q) {
+    if (!q) return true;
+    const hay = normalize(member.label + ' ' + (member.position || ''));
+    return hay.includes(q);
+  }
+
+  function renderMembers() {
+    const q = normalize(elSearch.value);
+
+    // pool: picked 아닌 것 중 검색 매치
+    const poolList = membersData
+      .filter(m => !pickedSet.has(m.id))
+      .filter(m => matches(m, q))
+      .slice(0, 500);
+
+    elPool.innerHTML = '';
+    for (const m of poolList) {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = m.label;
+      elPool.appendChild(opt);
+    }
+    elSearchCount.textContent = `${poolList.length}명`;
+
+    const pickedList = membersData.filter(m => pickedSet.has(m.id));
+    elPicked.innerHTML = '';
+    for (const m of pickedList) {
+      const opt = document.createElement('option');
+      opt.value = String(m.id);
+      opt.textContent = m.label;
+      elPicked.appendChild(opt);
+    }
+    elPickedCount.textContent = `선택 ${pickedList.length}명`;
+  }
+
+  function addPicked(idStr) {
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return;
+    pickedSet.add(id);
+    renderMembers();
+  }
+
+  function removePicked(idStr) {
+    const id = Number(idStr);
+    if (!Number.isFinite(id)) return;
+    pickedSet.delete(id);
+    renderMembers();
+  }
+
+  // ===== 3) 예약 중복 방지: reservFrom(문자열) -> dateno/time 계산 =====
+  function toDatenoAndTimeFromReservFrom(reservFrom) {
+    const d = new Date(reservFrom);
+    if (Number.isNaN(d.getTime())) return null;
+
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+
+    // 기존 규칙 유지: 12:00은 오전(1), 13:00부터 오후(2)
+    const ap = (d.getHours() <= 12) ? '1' : '2';
+    return { dateno: `${mm}${dd}${ap}`, time: `${hh}:${mi}` };
+  }
+
+  function rebuildReservIndexFromCurrentList() {
+    const map = new Map();
+    for (const r of (currentReservList || [])) {
+      const reservNo = Number(r.reservNo);
+      const reservFrom = r.reservFrom;
+      const parsed = toDatenoAndTimeFromReservFrom(reservFrom);
+      if (!parsed || !Number.isFinite(reservNo)) continue;
+      const key = `${parsed.dateno}__${parsed.time}`;
+      // 같은 키가 여러 개면(이미 중복이 발생한 상태) 마지막 것을 넣되, 존재 자체가 중요
+      map.set(key, { reservNo, dateno: parsed.dateno, time: parsed.time });
+    }
+    currentReservIndex = map;
+  }
+
+  function disableReservedTimesForThisDateno() {
+    for (const opt of visitTimeSelect.options) {
+      const t = (opt.value || '').trim();
+      if (!t) continue;
+      const key = `${dateno}__${t}`;
+      const reserved = currentReservIndex.has(key);
+      opt.disabled = reserved;
+      if (reserved && opt.selected) opt.selected = false;
+    }
+  }
+
+  function getHitReservation(selectedTime) {
+    const key = `${dateno}__${selectedTime}`;
+    return currentReservIndex.get(key) || null;
+  }
+
+  // ===== 4) 예약 목록 렌더링/로딩 =====
+  function renderReservList(list) {
+    if (!Array.isArray(list) || list.length === 0) {
+      reservListArea.innerHTML = '<div class="text-muted">예약 내역이 없습니다.</div>';
+      return;
+    }
+
+    const items = list.map(r => {
+      const reservNo = r.reservNo;
+      const reservFrom = r.reservFrom;
+      const visitorCount = r.visitorCount;
+
+      return `
+        <div class="list-group-item px-0">
+          <div class="d-flex justify-content-between align-items-center gap-3">
+            <div>
+              <div class="fw-semibold">
+                <a href="/view_reservsimple/${reservNo}">예약번호: <span class="text-primary">${reservNo}</span></a>
+              </div>
+              <div class="text-muted small">
+                일자: ${reservFrom}
+                <span class="mx-2">|</span>
+                방문자수: ${visitorCount}
+              </div>
+            </div>
+            <button type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    data-action="cancel"
+                    data-reservno="${reservNo}">
+              취소
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    reservListArea.innerHTML = `<div class="list-group list-group-flush">${items}</div>`;
+  }
+
+  async function loadCircleReservs() {
+    const circleNo = circleSelect.value;
+
+    // 모임 선택이 유효하지 않으면 UI 안내 + 인덱스 비우기 + 시간 disable 초기화
+    if (!circleNo || circleNo === '__custom__') {
+      reservListArea.innerHTML = '<div class="text-muted">모임(서클)을 선택(또는 저장)해주세요.</div>';
+      currentReservList = [];
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/circle_reservs/${encodeURIComponent(circleNo)}`);
+      if (!res.ok) throw new Error(await res.text());
+      const list = await res.json();
+
+      currentReservList = Array.isArray(list) ? list : [];
+      renderReservList(currentReservList);
+
+      // 목록 기반으로 중복 인덱스 생성 후, 시간 옵션 disable 반영
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
+    } catch (e) {
+      currentReservList = [];
+      rebuildReservIndexFromCurrentList();
+      disableReservedTimesForThisDateno();
+      reservListArea.innerHTML = `<div class="text-danger">예약 내역 로드 실패: ${e?.message || e}</div>`;
+    }
+  }
+
+  // ===== 5) API: 취소/신청 =====
+  async function cancelReservation(reservNo) {
+    if (!confirm(`예약번호 ${reservNo} 를 취소하시겠습니까?`)) return;
+
+    const res = await fetch(`/reserv_canc/${encodeURIComponent(reservNo)}`, { method: 'POST' });
+    if (!res.ok) return alert('취소 실패: ' + await res.text());
+
+    const data = await res.json();
+    if (!data.canceled) return alert('취소 처리 실패');
+
+    // 취소 후: 현재 circle 예약 목록만 다시 로드(전체 reload 대신)
+    await loadCircleReservs();
+  }
+
+  async function submitReservation() {
+    if (btnSubmit.dataset.busy === '1') return;
+
+    const visitTime = visitTimeSelect.value;
+    const circleNo = circleSelect.value;
+    const reservMemo = (document.getElementById('reservMemo').value || '').trim();
+
+    if (!circleNo || circleNo === '__custom__') {
+      return alert('모임(서클)을 선택(또는 저장)해주세요.');
+    }
+    if (!visitTime) return alert('방문예정시간을 선택해주세요.');
+
+    // 중복(동일 dateno+time) 검사
+    const hit = getHitReservation(visitTime);
+    if (hit) {
+      return alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+    }
+
+    const memberNos = Array.from(pickedSet);
+    if (memberNos.length === 0) return alert('방문 회원을 1명 이상 선택해주세요.');
+
+    try {
+      btnSubmit.dataset.busy = '1';
+      btnSubmit.disabled = true;
+
+      const res = await fetch(`/reg_reservc/${encodeURIComponent(circleNo)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dateno,
+          visitTime,
+          visitorCount: memberNos.length,
+          memberNos,
+            reservMemo
+        })
+      });
+
+      if (!res.ok) return alert('신청 실패: ' + await res.text());
+
+      const data = await res.json();
+      alert(`신청 완료! 예약번호: ${data.reservNo}`);
+
+      // 신청 후: 현재 circle 예약 목록 다시 로드(시간 disable 갱신까지 자동)
+      await loadCircleReservs();
+    } finally {
+      btnSubmit.dataset.busy = '0';
+      btnSubmit.disabled = false;
+    }
+  }
+
+  // ===== 이벤트 바인딩 =====
+
+  // circle 직접입력 UI
+  circleSelect.addEventListener('change', async () => {
+    syncCircleUI();
+    await loadCircleReservs();
+  });
+
+  btnCircleSave.addEventListener('click', async () => {
+    if (circleSelect.value !== '__custom__') return;
+
+    const name = customInput.value.trim();
+    if (!name) return alert('모임명을 입력해주세요.');
+
+    // 프론트 중복 확인: 있으면 선택하고 예약 로드
+    const existingValue = findCircleValueByName(name);
+    if (existingValue !== null) {
+      circleSelect.value = existingValue;
+      syncCircleUI();
+      await loadCircleReservs();
+      return alert('이미 목록에 존재합니다. 해당 모임을 선택했습니다.');
+    }
+
+    btnCircleSave.disabled = true;
+    try {
+      const res = await fetch('/insert_newcircle', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ circlename: name })
+      });
+      if (!res.ok) return alert('저장 실패: ' + await res.text());
+
+      const data = await res.json();
+      if (!data.inserted) return alert('저장 처리 실패');
+
+      await reloadCirclesAndSelectByName(name);
+      await loadCircleReservs();
+      alert('저장 완료! 목록에 추가하고 선택했습니다.');
+    } catch (e) {
+      alert('오류: ' + (e?.message || e));
+    } finally {
+      btnCircleSave.disabled = (circleSelect.value !== '__custom__');
+    }
+  });
+
+  // member picker
+  elSearch.addEventListener('input', renderMembers);
+
+  elPool.addEventListener('dblclick', () => {
+    const opt = elPool.selectedOptions[0];
+    if (!opt) return;
+    addPicked(opt.value);
+  });
+
+  elPicked.addEventListener('dblclick', () => {
+    const opt = elPicked.selectedOptions[0];
+    if (!opt) return;
+    removePicked(opt.value);
+  });
+
+  btnRemoveSelected.addEventListener('click', () => {
+    const ids = Array.from(elPicked.selectedOptions).map(o => o.value);
+    for (const id of ids) removePicked(id);
+  });
+
+  btnClearPicked.addEventListener('click', () => {
+    pickedSet.clear();
+    renderMembers();
+  });
+
+  // 시간 변경 시 즉시 안내
+  visitTimeSelect.addEventListener('change', function() {
+    const hit = getHitReservation(this.value);
+    if (hit) {
+      alert(`이미 같은 시간 예약이 있습니다. (예약번호: ${hit.reservNo})\n먼저 취소 후 다시 신청해주세요.`);
+      this.value = '';
+    }
+  });
+
+  // 신청
+  btnSubmit.addEventListener('click', submitReservation);
+
+  // 예약 취소 버튼 (이벤트 위임)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action="cancel"][data-reservno]');
+    if (!btn) return;
+    const reservNo = Number(btn.dataset.reservno);
+    if (!Number.isFinite(reservNo)) return;
+    cancelReservation(reservNo);
+  });
+
+  // ===== 초기화 =====
+  (function init() {
+    syncCircleUI();
+    renderMembers();
+    loadCircleReservs(); // 첫 로드 1회
+  })();
+</script>
+</body>
+</html>

@@ -199,6 +199,16 @@ async def get_reservations(candino: int,db: AsyncSession):
         raise HTTPException(status_code=500, detail="Database query failed(RESERV_LIST)")
 
 
+async def get_events(candino: int,db: AsyncSession):
+    try:
+        query = text("select * from voteEvent where attrib not like :attpatt and candino = :candino order by eventFrom")
+        result = await db.execute(query, {"attpatt": "%XXX%", "candino": candino})
+        reserv_list = result.fetchall()
+        return reserv_list
+    except:
+        raise HTTPException(status_code=500, detail="Database query failed(Event_LIST)")
+
+
 async def get_apireserv(db: AsyncSession):
     try:
         query = text("select a.*, b.circleName, c.clubName from voteReserv a left join lionsCircle b on a.circleNo = b.circleNo left join lionsaddr.lionsClub c on a.clubNo = c.clubNo where a.attrib not like :attpatt order by a.reservFrom")
@@ -553,6 +563,13 @@ async def reservations(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse("reserv/resume.html", {"request": request, "reservations": reservs})
 
 
+@app.get("/eventcal", response_class=HTMLResponse)
+async def eventcal(request: Request, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    reservs = await get_reservations(candino,db)
+    return templates.TemplateResponse("reserv/eventcal.html", {"request": request, "reservations": reservs})
+
+
 @app.get("/circle_reservs/{circleno}")
 async def circle_reservs(circleno: int, db: AsyncSession = Depends(get_db)):
     rows = await get_circle_reserv(circleno, db)
@@ -564,6 +581,13 @@ async def new_reservations(request: Request, dateno: str, db: AsyncSession = Dep
     candino = int(os.getenv("candiNo"))
     clubs = await get_clublist(db)
     return templates.TemplateResponse("reserv/new_reserv.html", {"request": request, "candino": candino, "dateno": dateno, "clubs": clubs})
+
+
+@app.get("/event_new/{dateno}", response_class=HTMLResponse)
+async def new_event(request: Request, dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    clubs = await get_clublist(db)
+    return templates.TemplateResponse("reserv/new_event.html", {"request": request, "candino": candino, "dateno": dateno, "clubs": clubs})
 
 @app.post("/reserv_canc/{reservno}")
 async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db)):
@@ -581,6 +605,26 @@ async def cancel_reservations(reservno: int, db: AsyncSession = Depends(get_db))
         await db.commit()
         reserv_dict = {"reservNo": reservno, "reservFrom":'' , "visitCnt": ''}
         await hub.broadcast("reserv_deleted", reserv_dict)
+        return JSONResponse({"canceled": True})
+    except Exception as e:
+        return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
+
+@app.post("/event_canc/{eventno}")
+async def cancel_event(eventno: int, db: AsyncSession = Depends(get_db)):
+    try:
+        query = text("""
+            update voteEvent
+            set modDate = :now, attrib = :attr
+            where eventNo = :eventno
+        """)
+        await db.execute(query, {
+            "now": datetime.now(),
+            "attr": "XXXCAXXXNC",
+            "eventno": eventno,
+        })
+        await db.commit()
+        event_dict = {"eventNo": eventno, "eventFrom":'' , "visitCnt": ''}
+        await hub.broadcast("event_deleted", event_dict)
         return JSONResponse({"canceled": True})
     except Exception as e:
         return JSONResponse({"canceled": False, "error": str(e)}, status_code=500)
@@ -642,6 +686,22 @@ async def new_reservations(request: Request,dateno: str, db: AsyncSession = Depe
     members = await get_distmembers(db)
     circlelist = await get_circlelist(db)
     return templates.TemplateResponse("reserv/new_reserv_cirl.html", {"request": request, "candino": candino, "dateno": dateno, "members": members, "circles": circlelist})
+
+
+@app.get("/event_newclub/{clubno}/{dateno}", response_class=HTMLResponse)
+async def new_eventclubs(request: Request,clubno:int ,dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    cmembers = await get_clubmembers(clubno,db)
+    reservs = await get_club_reserv(clubno,db)
+    return templates.TemplateResponse("reserv/new_event_club.html", {"request": request, "candino": candino, "dateno": dateno, "clubno": clubno, "cmembers": cmembers, "reservs": reservs})
+
+
+@app.get("/event_newcircle/{dateno}", response_class=HTMLResponse)
+async def new_eventclicle(request: Request,dateno: str, db: AsyncSession = Depends(get_db)):
+    candino = int(os.getenv("candiNo"))
+    members = await get_distmembers(db)
+    circlelist = await get_circlelist(db)
+    return templates.TemplateResponse("reserv/new_event_cirl.html", {"request": request, "candino": candino, "dateno": dateno, "members": members, "circles": circlelist})
 
 
 @app.get("/history", response_class=HTMLResponse)
@@ -1041,7 +1101,6 @@ async def insert_circ(
         name = circlename.strip()
         if not name:
             raise HTTPException(status_code=400, detail="circlename is empty")
-
         query = text("""
             INSERT INTO lionsCircle (circleName, circleType)
             VALUES (:circlename, 'VOTEC')
@@ -1592,10 +1651,8 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
                 event_nos.add(event_no)
             except ValueError:
                 continue
-
     if not event_nos:
         return JSONResponse([])
-
     query = text("""
                  SELECT a.reservNo, a.reservFrom, b.circleName, c.clubName
                  FROM voteReserv a
@@ -1606,7 +1663,6 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
                  """)
     result = await db.execute(query, {"event_nos": tuple(event_nos)})
     rows = result.fetchall()
-
     events = []
     for row in rows:
         dt = row[1]
@@ -1616,7 +1672,6 @@ async def get_gstbook_events(db: AsyncSession = Depends(get_db)):
             "reservNo": row[0],
             "label": f"[{dt_str}] {name} (예약번호: {row[0]})"
         })
-
     return JSONResponse(events)
 
 
@@ -1625,7 +1680,6 @@ async def get_ephoto_photos(reserv_no: int):
     photo_dir = Path("static/img/event_photos")
     if not photo_dir.exists():
         return JSONResponse([])
-
     photos = []
     for file in photo_dir.glob(f"{reserv_no}-*.*"):
         if file.suffix.lower() in [".jpg", ".jpeg", ".png", ".webp"]:
