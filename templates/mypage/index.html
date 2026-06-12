@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>국제라이온스협회 355-A 부산지구 제2부총재 전희충</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e30f3;
+      --secondary: #e21e80;
+      --indigo: #6610f2;
+      --purple: #6f42c1;
+      --dark-purple: #2d1b69;
+      --light-bg: #f8f9fc;
+      --gradient-main: linear-gradient(135deg, #1e30f3 0%, #6610f2 50%, #e21e80 100%);
+      --gradient-soft: linear-gradient(135deg, #6f42c1 0%, #e21e80 100%);
+      --gradient-deep: linear-gradient(135deg, #2d1b69 0%, #1e30f3 100%);
+    }
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Plus Jakarta Sans', 'Noto Sans KR', sans-serif; color: #333; }
+    h1, h2, h3, .serif { font-family: 'Noto Serif KR', serif; }
+    .text-gradient { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    /* Navbar */
+    .navbar { background: white !important; box-shadow: 0 2px 15px rgba(102, 16, 242, 0.1); padding: 15px 0; }
+    .navbar-brand { font-weight: 800; font-size: 1.1rem; }
+    .navbar-brand .text-gradient { font-weight: 900; }
+    .nav-link { color: #333 !important; font-weight: 600; margin: 0 8px; transition: color 0.3s; }
+    .nav-link:hover { color: var(--secondary) !important; }
+
+    /* Hero */
+    .hero { background: var(--gradient-deep); color: white; padding: 140px 0 90px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -50%; right: -10%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(226,30,128,0.3) 0%, transparent 70%); border-radius: 50%; }
+    .hero::after { content: ''; position: absolute; bottom: -30%; left: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(102,16,242,0.4) 0%, transparent 70%); border-radius: 50%; }
+    .hero-content { position: relative; z-index: 2; }
+    .badge-grad { background: var(--gradient-soft); color: white; padding: 8px 22px; font-size: 0.85rem; font-weight: 700; border-radius: 30px; display: inline-block; margin-bottom: 20px; letter-spacing: 2px; text-transform: uppercase; }
+    .hero h1 { font-size: 3rem; font-weight: 900; margin-bottom: 20px; line-height: 1.3; }
+    .hero h1 .name-highlight { background: linear-gradient(135deg, #fff 0%, #f8b4d9 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero .subtitle { font-size: 1.25rem; color: #f8b4d9; font-weight: 600; margin-bottom: 20px; }
+    .hero p.lead { font-size: 1.05rem; opacity: 0.9; line-height: 1.8; margin-bottom: 30px; }
+    .btn-grad { background: var(--gradient-soft); color: white; font-weight: 700; padding: 13px 32px; border: none; border-radius: 30px; transition: all 0.3s; box-shadow: 0 5px 20px rgba(226,30,128,0.4); }
+    .btn-grad:hover { color: white; transform: translateY(-3px); box-shadow: 0 10px 30px rgba(226,30,128,0.5); }
+    .btn-outline-light-custom { border: 2px solid white; color: white; font-weight: 600; padding: 11px 30px; border-radius: 30px; margin-left: 10px; transition: all 0.3s; }
+    .btn-outline-light-custom:hover { background: white; color: var(--purple); }
+    .profile-image-wrap { position: relative; text-align: center; }
+    .profile-image { width: 100%; max-width: 380px; border-radius: 20px; border: 5px solid rgba(255,255,255,0.3); box-shadow: 0 25px 60px rgba(0,0,0,0.5); position: relative; z-index: 2; }
+    .profile-decoration { position: absolute; top: -25px; right: 8%; background: var(--gradient-soft); color: white; padding: 18px 22px; border-radius: 50%; font-weight: 900; font-size: 0.9rem; text-align: center; line-height: 1.2; box-shadow: 0 10px 25px rgba(226,30,128,0.5); z-index: 3; }
+    .profile-blob { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110%; height: 110%; background: var(--gradient-soft); border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%; opacity: 0.5; z-index: 1; animation: blob 8s ease-in-out infinite; }
+    @keyframes blob { 0%, 100% { border-radius: 40% 60% 65% 35% / 40% 45% 55% 60%; } 50% { border-radius: 60% 40% 35% 65% / 55% 60% 40% 45%; } }
+
+    /* Section common */
+    .section { padding: 90px 0; }
+    .section-title { text-align: center; margin-bottom: 60px; }
+    .section-title .small-title { font-weight: 800; letter-spacing: 4px; font-size: 0.85rem; margin-bottom: 10px; text-transform: uppercase; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .section-title h2 { font-size: 2.3rem; font-weight: 900; color: var(--dark-purple); position: relative; display: inline-block; padding-bottom: 15px; }
+    .section-title h2::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 70px; height: 4px; background: var(--gradient-soft); border-radius: 2px; }
+
+    /* About */
+    .about-section { background: var(--light-bg); }
+    .info-card { background: white; border-left: 4px solid; border-image: var(--gradient-soft) 1; padding: 22px 28px; margin-bottom: 18px; border-radius: 5px; box-shadow: 0 5px 20px rgba(102,16,242,0.08); transition: all 0.3s; }
+    .info-card:hover { transform: translateX(5px); box-shadow: 0 8px 30px rgba(226,30,128,0.15); }
+    .info-card h5 { color: var(--purple); font-weight: 700; margin-bottom: 8px; font-size: 1.05rem; }
+    .info-card h5 i { background: var(--gradient-soft); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-right: 10px; }
+    .info-card p { margin-bottom: 0; color: #555; }
+
+    /* Vision */
+    .vision-card { background: white; padding: 40px 30px; text-align: center; border-radius: 15px; box-shadow: 0 8px 30px rgba(102,16,242,0.08); height: 100%; transition: all 0.3s; position: relative; overflow: hidden; }
+    .vision-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gradient-soft); transform: scaleX(0); transition: transform 0.3s; transform-origin: left; }
+    .vision-card:hover::before { transform: scaleX(1); }
+    .vision-card:hover { transform: translateY(-10px); box-shadow: 0 15px 40px rgba(226,30,128,0.2); }
+    .vision-icon { width: 80px; height: 80px; background: var(--gradient-soft); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 25px; box-shadow: 0 10px 25px rgba(226,30,128,0.3); }
+    .vision-card h4 { color: var(--dark-purple); font-weight: 700; margin-bottom: 15px; font-size: 1.2rem; }
+    .vision-card p { color: #666; line-height: 1.7; }
+
+    /* Career timeline */
+    .career-section { background: var(--gradient-deep); color: white; position: relative; overflow: hidden; }
+    .career-section::before { content: ''; position: absolute; top: 10%; right: -5%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(226,30,128,0.2) 0%, transparent 70%); border-radius: 50%; }
+    .career-section .container { position: relative; z-index: 2; }
+    .career-section .section-title h2 { color: white; }
+    .career-section .section-title h2::after { background: linear-gradient(135deg, #f8b4d9 0%, #fff 100%); }
+    .timeline { position: relative; padding-left: 40px; max-width: 800px; margin: 0 auto; }
+    .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, #f8b4d9 0%, var(--secondary) 100%); }
+    .timeline-item { position: relative; padding: 0 0 35px 30px; }
+    .timeline-item::before { content: ''; position: absolute; left: -33px; top: 5px; width: 18px; height: 18px; border-radius: 50%; background: var(--secondary); border: 3px solid white; box-shadow: 0 0 0 3px var(--secondary), 0 0 20px rgba(226,30,128,0.6); }
+    .timeline-year { color: #f8b4d9; font-weight: 700; font-size: 1.05rem; margin-bottom: 5px; }
+    .timeline-title { color: white; font-weight: 600; font-size: 1.1rem; margin-bottom: 5px; }
+    .timeline-desc { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
+
+    /* Achievement */
+    .achievement-section { background: var(--light-bg); }
+    .achievement-card {
+      background: white; padding: 35px 25px; border-radius: 15px; text-align: center;
+      box-shadow: 0 5px 20px rgba(102,16,242,0.08); height: 100%;
+      position: relative; overflow: hidden; transition: all 0.3s;
+      cursor: pointer; border: 2px solid transparent;
+    }
+    .achievement-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(226,30,128,0.2); }
+    .achievement-card.active {
+      border-color: var(--secondary);
+      box-shadow: 0 15px 40px rgba(226,30,128,0.3);
+      transform: translateY(-5px);
+    }
+    .achievement-card.active::before {
+      content: ''; position: absolute; top: 12px; right: 12px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--secondary);
+      box-shadow: 0 0 12px rgba(226,30,128,0.8);
+    }
+    .achievement-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: var(--gradient-soft); }
+    .achievement-card .icon-top {
+      font-size: 1.6rem; margin-bottom: 10px;
+      background: var(--gradient-soft);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .achievement-card .number { font-size: 2.5rem; font-weight: 900; line-height: 1; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .achievement-card h6 { color: #555; margin-top: 12px; font-weight: 600; }
+    .achievement-card .click-hint {
+      margin-top: 10px; font-size: 0.75rem; color: var(--secondary);
+      font-weight: 600; opacity: 0; transition: opacity 0.3s;
+    }
+    .achievement-card:hover .click-hint,
+    .achievement-card.active .click-hint { opacity: 1; }
+
+    /* Detail Table Card */
+    .detail-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(102,16,242,0.12);
+      margin-top: 0;
+      overflow: hidden;
+      opacity: 0;
+      max-height: 0;
+      transition: opacity 0.4s ease, max-height 0.5s ease, margin-top 0.4s ease;
+    }
+    .detail-card.show {
+      opacity: 1;
+      max-height: 800px;
+      margin-top: 40px;
+    }
+    .detail-card-header {
+      background: var(--gradient-soft);
+      color: white;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .detail-card-header h4 { margin: 0; font-weight: 700; font-size: 1.15rem; color: white; }
+    .detail-card-header h4 i { margin-right: 10px; }
+    .detail-card-header .close-btn {
+      background: rgba(255,255,255,0.2); border: none; color: white;
+      width: 32px; height: 32px; border-radius: 50%;
+      cursor: pointer; transition: background 0.3s; font-size: 1rem;
+    }
+    .detail-card-header .close-btn:hover { background: rgba(255,255,255,0.35); }
+
+    .table-wrap { max-height: 420px; overflow-y: auto; }
+    .table-wrap::-webkit-scrollbar { width: 8px; }
+    .table-wrap::-webkit-scrollbar-track { background: var(--light-bg); }
+    .table-wrap::-webkit-scrollbar-thumb { background: var(--purple); border-radius: 4px; }
+    .table-wrap::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
+
+    .detail-card .table { margin: 0; }
+    .detail-card .table thead { position: sticky; top: 0; z-index: 2; }
+    .detail-card .table thead th {
+      background: var(--dark-purple); color: white; font-weight: 600;
+      border: none; padding: 14px 16px; font-size: 0.95rem; white-space: nowrap;
+    }
+    .detail-card .table tbody td {
+      padding: 12px 16px; vertical-align: middle;
+      border-color: #eef0f5; font-size: 0.93rem;
+    }
+    .detail-card .table tbody tr:hover { background: rgba(226,30,128,0.04) !important; }
+    .detail-card .table tbody tr td:first-child { font-weight: 600; color: var(--purple); }
+    .detail-card .badge-status {
+      background: var(--gradient-soft); color: white;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+    .detail-card .text-amount { color: var(--secondary); font-weight: 700; }
+    .detail-card-footer {
+      background: var(--light-bg); padding: 12px 28px;
+      font-size: 0.85rem; color: #666; text-align: right;
+      border-top: 1px solid #e9ecef;
+    }
+
+    /* Activities */
+    .activity-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 8px 25px rgba(102,16,242,0.08); height: 100%; transition: all 0.3s; }
+    .activity-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(226,30,128,0.2); }
+    .activity-img { height: 200px; background: var(--gradient-soft); display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem; position: relative; overflow: hidden; }
+    .activity-img::after { content: ''; position: absolute; top: -50%; right: -30%; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+    .activity-body { padding: 25px; }
+    .activity-body h5 { color: var(--dark-purple); font-weight: 700; margin-bottom: 10px; }
+    .activity-tag { display: inline-block; background: var(--gradient-soft); color: white; padding: 4px 14px; border-radius: 15px; font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; }
+
+    /* Message */
+    .message-section { background: var(--gradient-main); color: white; position: relative; overflow: hidden; }
+    .message-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.15) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.1) 0%, transparent 40%); }
+    .message-quote { text-align: center; max-width: 850px; margin: 0 auto; position: relative; z-index: 2; }
+    .message-quote .quote-icon { font-size: 4rem; opacity: 0.4; }
+    .message-quote p { font-size: 1.2rem; line-height: 2; font-family: 'Noto Serif KR', serif; margin: 20px 0 30px; }
+    .message-quote .signature { color: #f8b4d9; font-weight: 700; font-size: 1.1rem; }
+
+    /* Contact */
+    .contact-section { background: white; }
+    .contact-card { background: var(--light-bg); padding: 35px 25px; text-align: center; border-radius: 15px; height: 100%; transition: all 0.3s; border: 2px solid transparent; }
+    .contact-card:hover { background: white; border-color: var(--secondary); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(226,30,128,0.2); }
+    .contact-icon { width: 70px; height: 70px; background: var(--gradient-soft); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; margin: 0 auto 20px; box-shadow: 0 10px 25px rgba(226,30,128,0.3); }
+    .contact-card h5 { color: var(--dark-purple); font-weight: 700; margin-bottom: 8px; }
+    .contact-card p { color: #555; }
+
+    /* Footer */
+    footer { background: var(--dark-purple); color: rgba(255,255,255,0.8); padding: 50px 0 20px; text-align: center; position: relative; }
+    footer::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gradient-soft); }
+    footer h5 { color: white; font-weight: 700; margin-bottom: 15px; }
+    footer h5 i { color: #f8b4d9; }
+    footer .social-icons a { color: white; font-size: 1.4rem; margin: 0 10px; transition: color 0.3s; }
+    footer .social-icons a:hover { color: #f8b4d9; }
+    footer hr { border-color: rgba(255,255,255,0.2); margin: 25px 0 15px; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2rem; }
+      .hero { padding: 100px 0 60px; }
+      .section-title h2 { font-size: 1.7rem; }
+      .profile-decoration { top: -15px; padding: 12px 15px; font-size: 0.8rem; }
+      .btn-outline-light-custom { margin-left: 0; margin-top: 10px; }
+      .achievement-card .number { font-size: 1.8rem; }
+      .table-wrap { max-height: 350px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand" href="#home">
+        <i class="bi bi-shield-fill-check me-2" style="background: var(--gradient-soft); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+        <span class="text-gradient">355-A 부산지구 제2부총재 전희충L</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navMenu">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="#home">홈</a></li>
+          <li class="nav-item"><a class="nav-link" href="#about">소개</a></li>
+          <li class="nav-item"><a class="nav-link" href="#vision">비전</a></li>
+          <li class="nav-item"><a class="nav-link" href="#career">경력</a></li>
+          <li class="nav-item"><a class="nav-link" href="#activities">활동</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">연락처</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <div class="container hero-content">
+      <div class="row align-items-center">
+        <div class="col-lg-7 mb-5 mb-lg-0">
+          <span class="badge-grad">봉사 · 신뢰 · 화합</span>
+          <h1>봉사로 빛나는 리더십,<br><span class="name-highlight">부산을 더 따뜻하게</span></h1>
+          <p class="subtitle">국제라이온스협회 355-A 부산지구 제2부총재 <strong style="color:#fff;">전희충</strong></p>
+          <p class="lead">
+            "We Serve" 라이온스의 정신으로, 지역사회와 함께 성장하며<br>
+            나눔과 봉사의 가치를 실천해온 발자취.<br>
+            부산지구의 새로운 도약을 위해 헌신하겠습니다.
+          </p>
+          <div class="mt-4">
+            <a href="#about" class="btn btn-grad"><i class="bi bi-person-circle me-1"></i> 인사말 보기</a>
+            <a href="#contact" class="btn btn-outline-light-custom"><i class="bi bi-envelope me-1"></i> 연락하기</a>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="profile-image-wrap">
+            <div class="profile-blob"></div>
+            <div class="profile-decoration">제2<br>부총재</div>
+            <img src="/static/assets/profile.png" alt="제2부총재 전희충 프로필" class="profile-image">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section class="section about-section" id="about">
+    <div class="container">
+      <div class="section-title"><div class="small-title">About</div><h2>인사말 및 소개</h2></div>
+      <div class="row align-items-center">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+          <h3 class="serif" style="color: var(--dark-purple); font-weight: 700; line-height: 1.5;">
+            "<span class="text-gradient">우리는 봉사한다</span>"<br>
+            그 단순한 약속이<br>세상을 바꿉니다.
+          </h3>
+          <p class="mt-4" style="color: #555; line-height: 1.9;">
+            안녕하십니까. 국제라이온스협회 355-A 부산지구 제2부총재 <strong>전희충</strong>입니다.<br><br>
+            지난 수십 년간 부산지구 라이온스 가족 여러분과 함께 봉사의 길을 걸어오며,
+            우리 사회의 그늘진 곳에 작은 빛이 되고자 노력해왔습니다.
+            앞으로도 변함없는 헌신과 열정으로 회원 여러분과 시민들의 행복을 위해
+            최선을 다하겠습니다.
+          </p>
+        </div>
+        <div class="col-lg-6">
+          <div class="info-card"><h5><i class="bi bi-person-badge-fill"></i>현직</h5><p>국제라이온스협회 355-A 부산지구 제2부총재</p></div>
+          <div class="info-card"><h5><i class="bi bi-shield-fill"></i>소속</h5><p>국제라이온스협회(Lions Clubs International) 355-A지구</p></div>
+          <div class="info-card"><h5><i class="bi bi-geo-alt-fill"></i>활동지역</h5><p>부산광역시 전 지역 및 인근 지자체</p></div>
+          <div class="info-card"><h5><i class="bi bi-heart-fill"></i>좌우명</h5><p>"섬김으로 이끌고, 나눔으로 빛나라 (Lead by Service, Shine by Sharing)"</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vision Section -->
+  <section class="section" id="vision">
+    <div class="container">
+      <div class="section-title"><div class="small-title">Vision</div><h2>비전과 목표</h2></div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3"><div class="vision-card"><div class="vision-icon"><i class="bi bi-people-fill"></i></div><h4>회원 화합</h4><p>지구 내 모든 클럽이 하나되는 소통과 화합의 공동체를 만들어가겠습니다.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="vision-card"><div class="vision-icon"><i class="bi bi-heart-pulse-fill"></i></div><h4>지역사회 봉사</h4><p>소외된 이웃과 청소년, 노인 복지를 위한 실질적 봉사활동을 확대합니다.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="vision-card"><div class="vision-icon"><i class="bi bi-globe2"></i></div><h4>국제 협력</h4><p>글로벌 네트워크를 활용한 국제봉사 및 자매결연 사업을 활성화합니다.</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="vision-card"><div class="vision-icon"><i class="bi bi-tree-fill"></i></div><h4>지속가능 봉사</h4><p>환경보호와 미래세대를 위한 지속가능한 봉사 프로젝트를 추진합니다.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Achievement Section -->
+  <section class="section achievement-section">
+    <div class="container">
+      <div class="section-title">
+        <div class="small-title">Achievement</div>
+        <h2>주요 활동 모습</h2>
+        <p class="text-muted mt-2 mb-0" style="font-size:0.95rem;">
+          <i class="bi bi-hand-index-thumb-fill" style="color: var(--secondary);"></i>
+          아래 카드를 클릭하시면 상세 내역을 확인하실 수 있습니다.
+        </p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="achievement-card" data-target="events">
+            <div class="icon-top"><i class="bi bi-calendar-event-fill"></i></div>
+            <div class="number">38+</div>
+            <h6>참여행사</h6>
+            <div class="click-hint"><i class="bi bi-arrow-down-circle"></i> 상세보기</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="achievement-card" data-target="donation">
+            <div class="icon-top"><i class="bi bi-cash-coin"></i></div>
+            <div class="number">120,000<small style="font-size:1rem;">천원+</small></div>
+            <h6>봉사실적</h6>
+            <div class="click-hint"><i class="bi bi-arrow-down-circle"></i> 상세보기</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="achievement-card" data-target="multicultural">
+            <div class="icon-top"><i class="bi bi-globe-asia-australia"></i></div>
+            <div class="number">5+</div>
+            <h6>다문화가족 행사</h6>
+            <div class="click-hint"><i class="bi bi-arrow-down-circle"></i> 상세보기</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Card -->
+      <div class="detail-card" id="detailCard">
+        <div class="detail-card-header">
+          <h4><i class="bi bi-table" id="detailIcon"></i><span id="detailTitle">상세 내역</span></h4>
+          <button class="close-btn" id="closeDetailBtn" aria-label="닫기"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-hover align-middle">
+            <thead id="detailTableHead"></thead>
+            <tbody id="detailTableBody"></tbody>
+          </table>
+        </div>
+        <div class="detail-card-footer">
+          <i class="bi bi-info-circle"></i>
+          총 <strong id="detailCount">0</strong> 건의 데이터가 있습니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Career Section -->
+  <section class="section career-section" id="career">
+    <div class="container">
+      <div class="section-title">
+        <div class="small-title" style="background: linear-gradient(135deg, #f8b4d9 0%, #fff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Career</div>
+        <h2>주요 경력</h2>
+      </div>
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-year">2026 ~ 현재</div><div class="timeline-title">국제라이온스협회 355-A 부산지구 제2부총재</div><div class="timeline-desc">부산지구 운영 및 봉사사업 총괄 지원</div></div>
+        <div class="timeline-item"><div class="timeline-year">2025 ~ 2026</div><div class="timeline-title">355-A 부산지구 지역/기획부총재회 회장</div><div class="timeline-desc">지역 클럽 활성화 및 회원 증강 사업 추진</div></div>
+        <div class="timeline-item"><div class="timeline-year">2024 ~ 2025</div><div class="timeline-title">355-A 부산지구 지대위원장회 회장</div><div class="timeline-desc">지구 봉사사업 지원</div></div>
+        <div class="timeline-item"><div class="timeline-year">2023 ~ 2024</div><div class="timeline-title">세종라이온스클럽 회장 / 사자회 창립회장</div><div class="timeline-desc">클럽 및 지구 봉사사업 실행</div></div>
+        <div class="timeline-item"><div class="timeline-year">2016 ~ 2023</div><div class="timeline-title">세종라이온스 클럽 입회/봉사활동</div><div class="timeline-desc">클럽 봉사 사업 참여</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Activities Section -->
+  <section class="section" id="activities">
+    <div class="container">
+      <div class="section-title"><div class="small-title">Activities</div><h2>주요 봉사활동</h2></div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-mortarboard-fill"></i></div><div class="activity-body"><span class="activity-tag">교육 / 장학</span><h5>청소년 장학사업</h5><p class="text-muted">지역 저소득층 청소년 및 우수 학생들에게 매년 장학금을 전달하여 미래 인재 양성에 기여합니다.</p></div></div></div>
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-eye-fill"></i></div><div class="activity-body"><span class="activity-tag">의료 / 보건</span><h5>시력 보호 캠페인</h5><p class="text-muted">라이온스의 대표 사업인 시력보호 사업으로, 무료 안과 검진 및 안경 지원 활동을 펼치고 있습니다.</p></div></div></div>
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-house-heart-fill"></i></div><div class="activity-body"><span class="activity-tag">사회복지</span><h5>다문화 가족 봉사</h5><p class="text-muted">다문화 가정의 지역사회 정착과 구성원으로서의 역할을 강화하기 위해 매년 다문화 행사를 진행합니다.</p></div></div></div>
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-tree-fill"></i></div><div class="activity-body"><span class="activity-tag">환경</span><h5>환경보호 봉사</h5><p class="text-muted">해운대·광안리 해변 정화활동 및 도시 녹화사업을 통해 부산의 푸른 미래를 만들어갑니다.</p></div></div></div>
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-droplet-fill"></i></div><div class="activity-body"><span class="activity-tag">긴급구호</span><h5>재난 구호활동</h5><p class="text-muted">국내외 재난 발생 시 긴급 구호물품 지원 및 모금 활동을 통해 피해 복구를 돕고 있습니다.</p></div></div></div>
+        <div class="col-md-6 col-lg-4"><div class="activity-card"><div class="activity-img"><i class="bi bi-globe-asia-australia"></i></div><div class="activity-body"><span class="activity-tag">국제봉사</span><h5>국제 자매결연</h5><p class="text-muted">해외 라이온스 클럽과의 교류 및 개발도상국 어린이 후원 사업을 활발히 추진하고 있습니다.</p></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Message Section -->
+  <section class="section message-section">
+    <div class="container">
+      <div class="message-quote">
+        <div class="quote-icon"><i class="bi bi-quote"></i></div>
+        <p>
+          "한 사람의 작은 봉사가 모이면 사회를 바꾸는 큰 물결이 됩니다.<br>
+          라이온스의 빛나는 정신, '<strong style="color: #f8b4d9;">We Serve</strong>'를 가슴에 새기고
+          부산지구 5천여 명의 회원 여러분과 함께<br>
+          더 나은 부산, 더 따뜻한 세상을 만들어가겠습니다."
+        </p>
+        <div class="signature">— 국제라이온스협회 355-A 부산지구 제2부총재 전희충 —</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section class="section contact-section" id="contact">
+    <div class="container">
+      <div class="section-title"><div class="small-title">Contact</div><h2>연락처</h2></div>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3"><div class="contact-card"><div class="contact-icon"><i class="bi bi-telephone-fill"></i></div><h5>전화</h5><p class="mb-0">051-000-0000</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="contact-card"><div class="contact-icon"><i class="bi bi-envelope-fill"></i></div><h5>이메일</h5><p class="mb-0">lions355a@busan.kr</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="contact-card"><div class="contact-icon"><i class="bi bi-geo-alt-fill"></i></div><h5>사무실</h5><p class="mb-0">부산광역시 라이온스회관</p></div></div>
+        <div class="col-md-6 col-lg-3"><div class="contact-card"><div class="contact-icon"><i class="bi bi-clock-fill"></i></div><h5>운영시간</h5><p class="mb-0">평일 09:00 - 18:00</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <h5><i class="bi bi-shield-fill-check"></i> 국제라이온스협회 355-A 부산지구 제2부총재 전희충</h5>
+      <p>We Serve · 우리는 봉사한다</p>
+      <div class="social-icons">
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-instagram"></i></a>
+        <a href="#"><i class="bi bi-youtube"></i></a>
+        <a href="#"><i class="bi bi-link-45deg"></i></a>
+      </div>
+      <hr>
+      <small>© 2026 Lions Clubs International District 355-A Busan. All Rights Reserved.</small>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // ====== 샘플 데이터 (실제 데이터로 교체하시면 됩니다) ======
+    const detailData = {
+      events: {
+        title: '참여행사 상세 내역',
+        icon: 'bi-calendar-event-fill',
+        headers: ['일자', '행사명', '장소', '주최', '역할'],
+        rows: [
+          ['2026-05-18', '355-A지구 연차대회', '부산 BEXCO', '355-A지구', '<span class="badge-status">참석/축사</span>'],
+          ['2026-04-22', '지구 봉사대상 시상식', '롯데호텔 부산', '355-A지구', '<span class="badge-status">시상자</span>'],
+          ['2026-03-15', '신입회원 입회식', '부산 라이온스회관', '세종라이온스클럽', '<span class="badge-status">주관</span>'],
+          ['2026-02-08', '청소년 선도 캠페인', '해운대 일대', '부산경찰청·라이온스', '<span class="badge-status">공동주관</span>'],
+          ['2026-01-20', '신년 합동 다과회', '부산시민회관', '부산지구', '<span class="badge-status">진행</span>'],
+          ['2025-12-22', '연말 사랑의 김장 나눔', '부산 동구청', '동구청·라이온스', '<span class="badge-status">봉사자</span>'],
+          ['2025-11-10', '국제 라이온스의 날 행사', '서울 코엑스', '국제협회 한국연합회', '<span class="badge-status">대표 참석</span>'],
+          ['2025-10-05', '제57회 지구 정기대회', '울산 컨벤션센터', '355-A지구', '<span class="badge-status">의전</span>'],
+          ['2025-09-12', '추석맞이 독거노인 위문', '부산 영도구', '세종라이온스클럽', '<span class="badge-status">봉사단장</span>'],
+          ['2025-08-15', '광복절 기념 헌혈 캠페인', '서면 일대', '부산지구·적십자', '<span class="badge-status">주관</span>'],
+          ['2025-07-20', '여름 청소년 캠프', '기장 캠핑장', '청소년위원회', '<span class="badge-status">인솔</span>'],
+          ['2025-06-15', '시각장애인의 날 행사', '부산시청 광장', '355-A지구', '<span class="badge-status">봉사</span>'],
+          ['2025-05-30', '환경보호 해변정화', '광안리 해수욕장', '환경위원회', '<span class="badge-status">참여</span>']
+        ]
+      },
+      donation: {
+        title: '봉사실적 (기부·후원 내역)',
+        icon: 'bi-cash-coin',
+        headers: ['일자', '사업명', '대상', '금액(원)', '상태'],
+        rows: [
+          ['2026-05-10', '청소년 장학금 전달', '부산 지역 고교생 12명', '<span class="text-amount">24,000,000</span>', '<span class="badge-status">완료</span>'],
+          ['2026-04-05', '시각장애인 안경 지원', '부산 시각장애인협회', '<span class="text-amount">8,500,000</span>', '<span class="badge-status">완료</span>'],
+          ['2026-03-20', '독거노인 생필품 지원', '동구·서구 어르신 80명', '<span class="text-amount">6,400,000</span>', '<span class="badge-status">완료</span>'],
+          ['2026-02-14', '다문화 가정 학용품 지원', '부산 다문화센터', '<span class="text-amount">3,200,000</span>', '<span class="badge-status">완료</span>'],
+          ['2026-01-08', '저소득층 난방비 지원', '부산 사회복지공동모금회', '<span class="text-amount">12,000,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-12-25', '연말 사랑의 쌀 나눔', '부산진구 복지시설', '<span class="text-amount">5,800,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-11-18', '소아암 환아 의료비 지원', '부산대학교병원', '<span class="text-amount">15,000,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-10-22', '아동복지시설 후원', '부산 보육원 3개소', '<span class="text-amount">9,000,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-09-15', '추석 명절 위문품 전달', '독거노인 100가구', '<span class="text-amount">7,500,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-08-30', '재해복구 성금', '경북 산불 피해 지역', '<span class="text-amount">10,000,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-07-10', '청소년 멘토링 프로그램', '부산 중·고교 5개교', '<span class="text-amount">4,800,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-06-20', '시력보호 무료 검진', '부산 노인복지관', '<span class="text-amount">3,500,000</span>', '<span class="badge-status">완료</span>'],
+          ['2025-05-15', '환경보호 캠페인 물품', '해변정화 봉사단', '<span class="text-amount">2,300,000</span>', '<span class="badge-status">완료</span>']
+        ]
+      },
+      multicultural: {
+        title: '다문화가족 행사 내역',
+        icon: 'bi-globe-asia-australia',
+        headers: ['일자', '행사명', '참여 가정수', '장소', '주요내용'],
+        rows: [
+          ['2026-05-05', '다문화 가족 어린이날 한마당', '45가정', '부산시민공원', '문화체험·놀이마당'],
+          ['2026-03-08', '세계여성의 날 다문화 어머니 행사', '38가정', '부산 라이온스회관', '간담회·꽃 선물'],
+          ['2025-11-30', '다문화 가족 김장 나눔', '52가정', '부산 동구 다문화센터', '김장 담그기·전달'],
+          ['2025-09-22', '추석맞이 다문화 한가위 잔치', '60가정', '부산진구 청년회관', '한복체험·전통음식'],
+          ['2026-05-05', '다문화 가족 어린이날 한마당', '45가정', '부산시민공원', '문화체험·놀이마당'],
+          ['2026-03-08', '세계여성의 날 다문화 어머니 행사', '38가정', '부산 라이온스회관', '간담회·꽃 선물'],
+          ['2025-11-30', '다문화 가족 김장 나눔', '52가정', '부산 동구 다문화센터', '김장 담그기·전달'],
+          ['2025-09-22', '추석맞이 다문화 한가위 잔치', '60가정', '부산진구 청년회관', '한복체험·전통음식'],
+          ['2025-07-15', '다문화 청소년 진로 캠프', '30명', '경남 양산 수련원', '진로상담·체험학습'],
+          ['2025-05-12', '어버이날 다문화 어머니 초청', '40가정', '해운대 호텔', '카네이션·선물'],
+          ['2024-12-20', '다문화 가족 송년 음악회', '55가정', '부산문화회관', '공연관람·다과회'],
+          ['2024-09-10', '다문화 어린이 한국어 교실', '25명', '부산 다문화센터', '한국어·전통놀이'],
+          ['2024-06-05', '다문화 가족 부산 투어', '35가정', '감천문화마을 외', '관광·문화체험'],
+          ['2024-04-13', '다문화 가족 운동회', '48가정', '부산 사직체육관', '체육대회·점심식사'],
+          ['2023-10-28', '다문화 가족 추석맞이 송편 빚기', '42가정', '동래구 복지관', '전통음식 만들기'],
+          ['2023-07-22', '다문화 청소년 영어 캠프', '28명', '부산외국어대학교', '영어학습·교류']
+          ]
+        }
+      };
+
+      // ====== 인터랙션 스크립트 ======
+      const cards = document.querySelectorAll('.achievement-card');
+      const detailCard = document.getElementById('detailCard');
+      const detailTitle = document.getElementById('detailTitle');
+      const detailIcon = document.getElementById('detailIcon');
+      const detailTableHead = document.getElementById('detailTableHead');
+      const detailTableBody = document.getElementById('detailTableBody');
+      const detailCount = document.getElementById('detailCount');
+      const closeBtn = document.getElementById('closeDetailBtn');
+
+      let currentTarget = null;
+
+      function renderDetail(targetKey) {
+        const data = detailData[targetKey];
+        if (!data) return;
+
+        // 아이콘 변경
+        detailIcon.className = 'bi ' + data.icon;
+        detailIcon.style.marginRight = '10px';
+
+        // 제목
+        detailTitle.textContent = ' ' + data.title;
+
+        // 테이블 헤더
+        detailTableHead.innerHTML = '<tr>' +
+          data.headers.map(h => `<th>${h}</th>`).join('') +
+          '</tr>';
+
+        // 테이블 본문
+        detailTableBody.innerHTML = data.rows.map(row =>
+          '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
+        ).join('');
+
+        // 카운트
+        detailCount.textContent = data.rows.length;
+      }
+
+      function showDetail(targetKey, cardElement) {
+        // 같은 카드 다시 클릭 시 닫기
+        if (currentTarget === targetKey && detailCard.classList.contains('show')) {
+          closeDetail();
+          return;
+        }
+
+        // 모든 카드 active 해제 후, 현재 카드만 active
+        cards.forEach(c => c.classList.remove('active'));
+        cardElement.classList.add('active');
+
+        renderDetail(targetKey);
+        detailCard.classList.add('show');
+        currentTarget = targetKey;
+
+        // 부드럽게 detail-card 위치로 스크롤
+        setTimeout(() => {
+          detailCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+      }
+
+      function closeDetail() {
+        detailCard.classList.remove('show');
+        cards.forEach(c => c.classList.remove('active'));
+        currentTarget = null;
+      }
+
+      // 카드 클릭 이벤트 바인딩
+      cards.forEach(card => {
+        card.addEventListener('click', () => {
+          const target = card.getAttribute('data-target');
+          showDetail(target, card);
+        });
+      });
+
+      // 닫기 버튼
+      closeBtn.addEventListener('click', closeDetail);
+
+      // ESC 키로 닫기
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && detailCard.classList.contains('show')) {
+          closeDetail();
+        }
+      });
+    </script>
+  </body>
+  </html>

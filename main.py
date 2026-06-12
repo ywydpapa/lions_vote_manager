@@ -1871,6 +1871,12 @@ async def upload_member_photo_batch(photo: UploadFile = File(...)):
     return {"filename": filename, "url": url_path}
 
 
+@app.get("/new_page", response_class=HTMLResponse)
+async def new_page(request: Request, db: AsyncSession = Depends(get_db)):
+    if not request.session.get("vote_user_No"):
+        return RedirectResponse(url="/login", status_code=303)
+    return templates.TemplateResponse("mypage/index.html", {"request": request})
+
 if __name__ == "__main__":
     import uvicorn
 
