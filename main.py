@@ -33,6 +33,7 @@ from pydantic import BaseModel
 dotenv.load_dotenv()
 DATABASE_URL = os.getenv("dburl")
 candiNo = int(os.getenv("candiNo"))
+mode = int(os.getenv("mode"))
 engine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -485,13 +486,19 @@ async def favicon():
 
 @app.api_route("/", response_class=HTMLResponse, methods=["GET", "POST"])
 async def login_form(request: Request):
-    if not request.session.get("vote_user_No"):
-        return RedirectResponse(url="/noname", status_code=303)
-    return RedirectResponse(url="/success", status_code=303)
-
+    if mode == 1:
+        return RedirectResponse(url="/new_page", status_code=303)
+    else:
+        if not request.session.get("vote_user_No"):
+            return RedirectResponse(url="/noname", status_code=303)
+        else:
+            return RedirectResponse(url="/success", status_code=303)
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_get(request: Request, next: str = Query(default="/success")):
+    if mode == 1:
+        return RedirectResponse(url="/new_page", status_code=303)
+
     return templates.TemplateResponse("login/login.html", {"request": request, "next": next})
 
 
@@ -1873,9 +1880,10 @@ async def upload_member_photo_batch(photo: UploadFile = File(...)):
 
 @app.get("/new_page", response_class=HTMLResponse)
 async def new_page(request: Request, db: AsyncSession = Depends(get_db)):
-    if not request.session.get("vote_user_No"):
+    if mode != 1 and not request.session.get("vote_user_No"):
         return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse("mypage/index.html", {"request": request})
+
 
 if __name__ == "__main__":
     import uvicorn
